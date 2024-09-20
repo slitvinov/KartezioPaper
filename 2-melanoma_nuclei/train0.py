@@ -1,4 +1,4 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 from builtins import print
 from dataclasses import dataclass, field
 from dataclasses import InitVar, dataclass, field
@@ -60,7 +60,6 @@ class KartezioNode(KartezioComponent, ABC):
         self.args = args
         self.sources = sources
 
-    @abstractmethod
     def call(self, x: List, args: List = None):
         pass
 
@@ -73,7 +72,6 @@ class KartezioNode(KartezioComponent, ABC):
             "kwargs": self._to_json_kwargs(),
         }
 
-    @abstractmethod
     def _to_json_kwargs(self) -> dict:
         pass
 
@@ -99,7 +97,6 @@ class KartezioBundle(KartezioComponent, ABC):
         self.__nodes = {}
         self.fill()
 
-    @abstractmethod
     def fill(self):
         pass
 
@@ -131,29 +128,10 @@ class EmptyBundle(KartezioBundle):
 
 
 class Prototype(ABC):
-    """
-    Using Prototype Pattern to duplicate:
-    https://refactoring.guru/design-patterns/prototype
-    """
-
-    @abstractmethod
     def clone(self):
         pass
 
-
 class KartezioGenome(KartezioComponent, Prototype):
-    """
-    Only store "DNA" in a numpy array
-    No metadata stored in DNA to avoid duplicates
-    Avoiding RAM overload: https://refactoring.guru/design-patterns/flyweight
-    Default genome would be: 3 inputs, 10 function nodes (2 connections and 2 parameters), 1 output,
-    so with shape (14, 5)
-    Args:
-        Prototype ([type]): [description]
-    Returns:
-        [type]: [description]
-    """
-
     def dumps(self) -> dict:
         pass
 
@@ -402,7 +380,6 @@ class KartezioStacker(KartezioNode, ABC):
             y.append(self.post_stack(self.stack(Y), i))
         return y
 
-    @abstractmethod
     def stack(self, Y: List):
         pass
 
@@ -421,7 +398,6 @@ class ExportableNode(KartezioNode, ABC):
     def _to_json_kwargs(self) -> dict:
         return {}
 
-    @abstractmethod
     def to_python(self, input_nodes: List, p: List, node_name: str):
         """
         Parameters
@@ -432,7 +408,6 @@ class ExportableNode(KartezioNode, ABC):
         """
         pass
 
-    @abstractmethod
     def to_cpp(self, input_nodes: List, p: List, node_name: str):
         """
         :param input_nodes:
@@ -450,7 +425,6 @@ class Observer(ABC):
     The Observer interface declares the update method, used by subjects.
     """
 
-    @abstractmethod
     def update(self, event):
         """
         Receive update from subject.
@@ -474,7 +448,6 @@ class KartezioCallback(KartezioComponent, Observer, ABC):
     def dumps(self) -> dict:
         return {}
 
-    @abstractmethod
     def _callback(self, n, e_name, e_content):
         pass
 
@@ -1417,7 +1390,6 @@ class DataReader:
             filepath = str(self.directory / filename)
         return self._read(filepath, shape)
 
-    @abstractmethod
     def _read(self, filepath, shape=None):
         pass
 
@@ -1836,18 +1808,15 @@ class KartezioMutation(GenomeReaderWriter, ABC):
     def mutate_output(self, genome: KartezioGenome, idx: int):
         self.write_output_connection(genome, idx, self.random_output)
 
-    @abstractmethod
     def mutate(self, genome: KartezioGenome):
         pass
 
 
 class KartezioES(ABC):
 
-    @abstractmethod
     def selection(self):
         pass
 
-    @abstractmethod
     def reproduction(self):
         pass
 
@@ -2003,7 +1972,6 @@ class KartezioPopulation(KartezioComponent, ABC):
     def dumps(self) -> dict:
         return {}
 
-    @abstractmethod
     def get_best_individual(self):
         pass
 
@@ -2377,7 +2345,6 @@ STACKER_DEFAULT_SEGMENTATION = StackerMean()
 
 class ModelML(ABC):
 
-    @abstractmethod
     def fit(self, x: List, y: List):
         pass
 
