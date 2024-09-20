@@ -1603,85 +1603,6 @@ class BundleOpenCV(KartezioBundle):
             self.add_node(node_abbv)
 
 BUNDLE_OPENCV = BundleOpenCV()
-class ParserSequential(KartezioParser):
-    """TODO: default Parser, KartezioParser becomes ABC"""
-
-    pass
-
-
-class ParserChain(KartezioParser):
-
-    def __init__(self, shape, bundle, stacker, endpoint):
-        super().__init__(shape, bundle, endpoint)
-        self.stacker = stacker
-
-    def parse(self, genome, x):
-        """Decode the Genome given a list of inputs
-        Args:
-            genome (KartezioGenome): [description]
-            x (List): [description]
-        Returns:
-            [type]: [description]
-        """
-        all_y_pred = []
-        all_times = []
-        graphs = self.parse_to_graphs(genome)
-        for series in x:
-            start_time = time.time()
-            y_pred_series = []
-            # for each image
-
-            for xi in series:
-                y_pred = self._parse_one(genome, graphs, xi)
-                y_pred_series.append(y_pred)
-
-            y_pred = self.endpoint.call(self.stacker.call(y_pred_series))
-
-            all_times.append(time.time() - start_time)
-            all_y_pred.append(y_pred)
-
-        whole_time = np.mean(np.array(all_times))
-        return all_y_pred, whole_time
-
-    def dumps(self) -> dict:
-        json_data = super().dumps()
-        json_data["mode"] = "series"
-        json_data["stacker"] = self.stacker.dumps()
-        return json_data
-
-
-class KartezioToCode(KartezioParser):
-
-    def to_python_class(self, node_name, genome):
-        pass
-
-
-class KartezioStacker(KartezioNode, ABC):
-
-    def __init__(self, name: str, symbol: str, arity: int):
-        super().__init__(name, symbol, arity, 0)
-
-    def call(self, x: List, args: List = None):
-        y = []
-        for i in range(self.arity):
-            Y = [xi[i] for xi in x]
-            y.append(self.post_stack(self.stack(Y), i))
-        return y
-
-    @abstractmethod
-    def stack(self, Y: List):
-        pass
-
-    def post_stack(self, x, output_index):
-        return x
-
-    @staticmethod
-    def from_json(json_data):
-        return registry.stackers.instantiate(json_data["abbv"],
-                                             arity=json_data["arity"],
-                                             **json_data["kwargs"])
-
-
 def register_stackers():
     print(
         f"[Kartezio - INFO] -  {len(registry.stackers.list())} stackers registered."
@@ -1800,38 +1721,6 @@ class MeanKartezioStackerForWatershed(KartezioStacker):
             # supposed markers
             yi = morph_erode(yi, half_kernel_size=self.half_kernel_size)
         return threshold_tozero(yi, self.threshold)
-
-
-class ExportableNode(KartezioNode, ABC):
-
-    def _to_json_kwargs(self) -> dict:
-        return {}
-
-    @abstractmethod
-    def to_python(self, input_nodes: List, p: List, node_name: str):
-        """
-
-        Parameters
-        ----------
-        input_nodes :
-        p :
-        node_name :
-        """
-        pass
-
-    @abstractmethod
-    def to_cpp(self, input_nodes: List, p: List, node_name: str):
-        """
-
-        :param input_nodes:
-        :type input_nodes:
-        :param p:
-        :type p:
-        :param node_name:
-        :type node_name:
-        """
-        pass
-
 
 class KartezioCallback(KartezioComponent, Observer, ABC):
 
