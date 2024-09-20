@@ -1,22 +1,20 @@
-import cv2
-from typing import List, NewType
-import numpy as np
-from numena.enums import IMAGE_UINT8_COLOR_1C
-from numena.image.basics import image_new
-from numena.image.contour import contours_find
-from numena.image.morphology import WatershedSkimage
-from numena.image.threshold import threshold_tozero
 from abc import ABC, abstractmethod
 from abc import abstractmethod
 from builtins import print
 from dataclasses import dataclass, field
 from dataclasses import InitVar, dataclass, field
+from numena.enums import IMAGE_UINT8_COLOR_1C
+from numena.image.basics import image_new
 from numena.image.basics import image_new, image_split
 from numena.image.color import bgr2hed, bgr2hsv, gray2rgb, rgb2bgr
+from numena.image.contour import contours_find
+from numena.image.morphology import WatershedSkimage
+from numena.image.threshold import threshold_tozero
 from numena.io.drive import Directory
 from numena.io.json import json_read, json_write
 from numena.io.json import Serializable
 from typing import List
+from typing import List, NewType
 from typing import List, Tuple
 import argparse
 import ast
@@ -26,9 +24,8 @@ import numpy as np
 import os
 import pandas as pd
 import random
+import simplejson
 import time
-from abc import ABC, abstractmethod
-from typing import List
 from numena.image.drawing import (
     draw_overlay,
     fill_ellipses_as_labels,
@@ -4011,7 +4008,7 @@ class JsonSaver:
     def save_population(self, filepath, population):
         json_data = {
             "dataset": self.dataset_json,
-            "population": json.from_population(population),
+            "population": from_population(population),
             "decoding": self.parser_as_json,
         }
         json_write(filepath, json_data)
@@ -4019,7 +4016,7 @@ class JsonSaver:
     def save_individual(self, filepath, individual):
         json_data = {
             "dataset": self.dataset_json,
-            "individual": json.from_individual(individual),
+            "individual": from_individual(individual),
             "decoding": self.parser_as_json,
         }
         json_write(filepath, json_data)
