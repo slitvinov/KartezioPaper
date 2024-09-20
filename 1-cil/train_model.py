@@ -10,7 +10,6 @@ MODELS = "./models"
 CHANNELS = [1, 2]
 preprocessing = SelectChannels(CHANNELS)
 
-
 generations = 100
 _lambda = 5
 frequency = 5
