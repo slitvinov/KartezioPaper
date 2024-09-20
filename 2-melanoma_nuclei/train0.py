@@ -437,43 +437,6 @@ class ParserSequential(KartezioParser):
     pass
 
 
-class ParserChain(KartezioParser):
-
-    def __init__(self, shape, bundle, stacker, endpoint):
-        super().__init__(shape, bundle, endpoint)
-        self.stacker = stacker
-
-    def parse(self, genome, x):
-        """Decode the Genome given a list of inputs
-        Args:
-            genome (KartezioGenome): [description]
-            x (List): [description]
-        Returns:
-            [type]: [description]
-        """
-        all_y_pred = []
-        all_times = []
-        graphs = self.parse_to_graphs(genome)
-        for series in x:
-            start_time = time.time()
-            y_pred_series = []
-            # for each image
-            for xi in series:
-                y_pred = self._parse_one(genome, graphs, xi)
-                y_pred_series.append(y_pred)
-            y_pred = self.endpoint.call(self.stacker.call(y_pred_series))
-            all_times.append(time.time() - start_time)
-            all_y_pred.append(y_pred)
-        whole_time = np.mean(np.array(all_times))
-        return all_y_pred, whole_time
-
-    def dumps(self) -> dict:
-        json_data = super().dumps()
-        json_data["mode"] = "series"
-        json_data["stacker"] = self.stacker.dumps()
-        return json_data
-
-
 class KartezioToCode(KartezioParser):
 
     def to_python_class(self, node_name, genome):
@@ -2236,14 +2199,8 @@ class ModelContext:
         self.fitness = fitness
 
     def compile_parser(self, series_mode, series_stacker):
-        if series_mode:
-            if type(series_stacker) == str:
-                series_stacker = registry.stackers.instantiate(series_stacker)
-            parser = ParserChain(self.genome_shape, self.bundle,
-                                 series_stacker, self.endpoint)
-        else:
-            parser = KartezioParser(self.genome_shape, self.bundle,
-                                    self.endpoint)
+        parser = KartezioParser(self.genome_shape, self.bundle,
+                                self.endpoint)
         self.parser = parser
         self.series_mode = series_mode
 
@@ -2570,19 +2527,6 @@ class ModelCGP(ModelML, Observable):
             "force": force,
         }
         self.notify(event)
-
-    def evaluate(self, x, y):
-        y_pred, t = self.predict(x)
-        return self.strategy.fitness.compute(y, [y_pred])
-
-    def predict(self, x):
-        return self.parser.parse(self.strategy.elite, x)
-
-    def save_elite(self, filepath, dataset):
-        JsonSaver(dataset, self.parser).save_individual(
-            filepath,
-            self.strategy.population.history().individuals[0])
-
 
 def train_model(
     model,
