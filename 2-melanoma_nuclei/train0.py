@@ -43,13 +43,8 @@ from scipy.stats import kurtosis, skew
 from skimage.morphology import remove_small_holes, remove_small_objects
 from kartezio.model.registry import registry
 
-Score = NewType("Score", float)
-ScoreList = List[Score]
-
-
 class KartezioComponent(Serializable, ABC):
     pass
-
 
 class KartezioNode(KartezioComponent, ABC):
 
@@ -1809,23 +1804,23 @@ class KartezioFitness(KartezioNode, ABC):
     def add_metric(self, metric: KartezioMetric):
         self.metrics.append(metric)
 
-    def call(self, y_true, y_pred) -> ScoreList:
-        scores: ScoreList = []
+    def call(self, y_true, y_pred):
+        scores = []
         for yi_pred in y_pred:
             scores.append(self.compute_one(y_true, yi_pred))
         return scores
 
-    def compute_one(self, y_true, y_pred) -> Score:
+    def compute_one(self, y_true, y_pred):
         score = 0.0
         y_size = len(y_true)
         for i in range(y_size):
             _y_true = y_true[i].copy()
             _y_pred = y_pred[i]
             score += self.__fitness_sum(_y_true, _y_pred)
-        return Score(score / y_size)
+        return score / y_size
 
-    def __fitness_sum(self, y_true, y_pred) -> Score:
-        score = Score(0.0)
+    def __fitness_sum(self, y_true, y_pred):
+        score = 0.0
         for metric in self.metrics:
             score += metric.call(y_true, y_pred)
         return score
