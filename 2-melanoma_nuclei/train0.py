@@ -2822,49 +2822,6 @@ class TrainingArgs:
 
 
 kartezio_parser = TrainingArgs()
-
-
-def get_args():
-    return kartezio_parser.parse()
-
-
-class KartezioTraining:
-
-    def __init__(self,
-                 model: ModelCGP,
-                 reformat_x=None,
-                 frequency=1,
-                 preview=False):
-        self.args = get_args()
-        self.model = model
-        self.dataset = read_dataset(
-            self.args.dataset_directory,
-            counting=True,
-            preview=preview,
-            indices=self.args.indices,
-        )
-        if frequency < 1:
-            frequency = 1
-        self.callbacks = [
-            CallbackVerbose(frequency=frequency),
-            CallbackSave(self.args.output_directory,
-                         self.dataset,
-                         frequency=frequency),
-        ]
-        self.reformat_x = reformat_x
-
-    def run(self):
-        train_x, train_y = self.dataset.train_xy
-        if self.reformat_x:
-            train_x = self.reformat_x(train_x)
-        if self.callbacks:
-            for callback in self.callbacks:
-                callback.set_parser(self.model.parser)
-                self.model.attach(callback)
-        elite, history = self.model.fit(train_x, train_y)
-        return elite
-
-
 def train_model(
     model,
     dataset,
