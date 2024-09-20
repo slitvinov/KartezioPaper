@@ -55,15 +55,6 @@ from kartezio.model.registry import registry
 from kartezio.model.types import Score, ScoreList
 from kartezio.mutation import GoldmanWrapper, MutationAllRandom
 from kartezio.population import PopulationWithElite
-
-from kartezio.image.kernel import (
-    ROBERT_CROSS_H_KERNEL,
-    ROBERT_CROSS_V_KERNEL,
-    SHARPEN_KERNEL,
-    correct_ksize,
-    gabor_kernel,
-    kernel_from_parameters,
-)
 from kartezio.model.components import ExportableNode, KartezioNode
 from kartezio.model.registry import registry
 
