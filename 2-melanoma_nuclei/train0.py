@@ -1,4 +1,3 @@
-from abc import ABC
 from builtins import print
 from dataclasses import dataclass, field
 from dataclasses import InitVar, dataclass, field
@@ -43,10 +42,10 @@ from scipy.stats import kurtosis, skew
 from skimage.morphology import remove_small_holes, remove_small_objects
 from kartezio.model.registry import registry
 
-class KartezioComponent(Serializable, ABC):
+class KartezioComponent(Serializable):
     pass
 
-class KartezioNode(KartezioComponent, ABC):
+class KartezioNode(KartezioComponent):
 
     def __init__(self,
                  name: str,
@@ -76,12 +75,7 @@ class KartezioNode(KartezioComponent, ABC):
         pass
 
 
-class KartezioEndpoint(KartezioNode, ABC):
-    """
-    Terminal KartezioNode, executed after graph parsing.
-    Not submitted to evolution.
-    """
-
+class KartezioEndpoint(KartezioNode):
     def __init__(self, name: str, symbol: str, arity: int, outputs_keys: list):
         super().__init__(name, symbol, arity, 0)
         self.outputs_keys = outputs_keys
@@ -91,7 +85,7 @@ class KartezioEndpoint(KartezioNode, ABC):
         return registry.endpoints.instantiate(json_data["abbv"],
                                               **json_data["kwargs"])
 
-class KartezioBundle(KartezioComponent, ABC):
+class KartezioBundle(KartezioComponent):
 
     def __init__(self):
         self.__nodes = {}
@@ -127,7 +121,7 @@ class EmptyBundle(KartezioBundle):
         pass
 
 
-class Prototype(ABC):
+class Prototype():
     def clone(self):
         pass
 
@@ -173,7 +167,7 @@ class GenomeFactory(Factory):
         super().__init__(prototype)
 
 
-class GenomeAdapter(KartezioComponent, ABC):
+class GenomeAdapter(KartezioComponent):
     def __init__(self, shape):
         self.shape = shape
 
@@ -358,9 +352,7 @@ class KartezioParser(GenomeReader):
 
 
 class ParserSequential(KartezioParser):
-    """TODO: default Parser, KartezioParser becomes ABC"""
     pass
-
 
 class KartezioToCode(KartezioParser):
 
@@ -368,7 +360,7 @@ class KartezioToCode(KartezioParser):
         pass
 
 
-class KartezioStacker(KartezioNode, ABC):
+class KartezioStacker(KartezioNode):
 
     def __init__(self, name: str, symbol: str, arity: int):
         super().__init__(name, symbol, arity, 0)
@@ -393,38 +385,18 @@ class KartezioStacker(KartezioNode, ABC):
                                              **json_data["kwargs"])
 
 
-class ExportableNode(KartezioNode, ABC):
-
-    def _to_json_kwargs(self) -> dict:
+class ExportableNode(KartezioNode):
+    def _to_json_kwargs(self):
         return {}
 
     def to_python(self, input_nodes: List, p: List, node_name: str):
-        """
-        Parameters
-        ----------
-        input_nodes :
-        p :
-        node_name :
-        """
         pass
 
     def to_cpp(self, input_nodes: List, p: List, node_name: str):
-        """
-        :param input_nodes:
-        :type input_nodes:
-        :param p:
-        :type p:
-        :param node_name:
-        :type node_name:
-        """
         pass
 
 
-class Observer(ABC):
-    """
-    The Observer interface declares the update method, used by subjects.
-    """
-
+class Observer:
     def update(self, event):
         """
         Receive update from subject.
@@ -432,7 +404,7 @@ class Observer(ABC):
         pass
 
 
-class KartezioCallback(KartezioComponent, Observer, ABC):
+class KartezioCallback(KartezioComponent, Observer):
 
     def __init__(self, frequency=1):
         self.frequency = frequency
@@ -452,9 +424,8 @@ class KartezioCallback(KartezioComponent, Observer, ABC):
         pass
 
 
-class NodeImageProcessing(KartezioNode, ABC):
-
-    def _to_json_kwargs(self) -> dict:
+class NodeImageProcessing(KartezioNode):
+    def _to_json_kwargs(self):
         return {}
 
 
@@ -1115,7 +1086,7 @@ def singleton(cls):
     return wrapper
 
 
-class Observable(ABC):
+class Observable:
     def __init__(self):
         self._observers: List[Observer] = []
 
@@ -1697,7 +1668,7 @@ class CallbackSave(KartezioCallback):
             self.save_elite(e_content.individuals[0])
 
 
-class KartezioMetric(KartezioNode, ABC):
+class KartezioMetric(KartezioNode):
 
     def __init__(
         self,
@@ -1711,7 +1682,7 @@ class KartezioMetric(KartezioNode, ABC):
         pass
 
 
-class KartezioFitness(KartezioNode, ABC):
+class KartezioFitness(KartezioNode):
 
     def __init__(
         self,
@@ -1753,7 +1724,7 @@ class KartezioFitness(KartezioNode, ABC):
         pass
 
 
-class KartezioMutation(GenomeReaderWriter, ABC):
+class KartezioMutation(GenomeReaderWriter):
 
     def __init__(self, shape, n_functions):
         super().__init__(shape)
@@ -1812,7 +1783,7 @@ class KartezioMutation(GenomeReaderWriter, ABC):
         pass
 
 
-class KartezioES(ABC):
+class KartezioES:
 
     def selection(self):
         pass
@@ -1959,7 +1930,7 @@ class PopulationHistory:
         return self.individuals.items()
 
 
-class KartezioPopulation(KartezioComponent, ABC):
+class KartezioPopulation(KartezioComponent):
 
     def __init__(self, size):
         self.size = size
@@ -2343,12 +2314,12 @@ BUNDLE_DEFAULT_SEGMENTATION = BUNDLE_OPENCV
 STACKER_DEFAULT_SEGMENTATION = StackerMean()
 
 
-class ModelML(ABC):
+class ModelML:
 
     def fit(self, x: List, y: List):
         pass
 
-class ModelGA(ABC):
+class ModelGA:
 
     def __init__(self, strategy, generations):
         self.strategy = strategy
