@@ -1423,17 +1423,6 @@ class InRange(NodeImageProcessing):
 
 
 IMAGE_NODES_ABBV_LIST = registry.nodes.list().keys()
-
-def to_metadata(json_data):
-    return GenomeShape(
-        json_data["n_in"],
-        json_data["columns"],
-        json_data["n_out"],
-        json_data["n_conn"],
-        json_data["n_para"],
-    )
-
-
 def to_genome(json_data):
     sequence = np.asarray(ast.literal_eval(json_data["sequence"]))
     return KartezioGenome(sequence=sequence)
@@ -1727,23 +1716,6 @@ JSON_HISTORY = "history.json"
 JSON_META = "META.json"
 CSV_DATASET = "dataset.csv"
 DIR_PREVIEW = "__preview__"
-
-
-def singleton(cls):
-    """
-    https://towardsdatascience.com/10-fabulous-python-decorators-ab674a732871
-    """
-    instances = {}
-
-    def wrapper(*args, **kwargs):
-        if cls not in instances:
-            instances[cls] = cls(*args, **kwargs)
-        return instances[cls]
-
-    return wrapper
-
-
-
 class Dataset:
 
     class SubSet:
