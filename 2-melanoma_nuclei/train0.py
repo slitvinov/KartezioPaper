@@ -1433,22 +1433,11 @@ def singleton(cls):
 
 
 class Observable(ABC):
-    """
-    For the sake of simplicity, the Observable state, essential to all
-    subscribers, is stored in this variable.
-    """
-
     def __init__(self):
         self._observers: List[Observer] = []
 
     def attach(self, observer: Observer) -> None:
         self._observers.append(observer)
-
-    def detach(self, observer: Observer) -> None:
-        self._observers.remove(observer)
-
-    def clear(self) -> None:
-        self._observers = []
 
     def notify(self, event) -> None:
         for observer in self._observers:
