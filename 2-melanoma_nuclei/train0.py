@@ -46,11 +46,13 @@ from kartezio.model.registry import registry
 Score = NewType("Score", float)
 ScoreList = List[Score]
 
+
 class KartezioComponent(Serializable, ABC):
     pass
 
 
 class KartezioNode(KartezioComponent, ABC):
+
     def __init__(self,
                  name: str,
                  symbol: str,
@@ -210,10 +212,8 @@ class KartezioGenome(KartezioComponent, Prototype):
     Avoiding RAM overload: https://refactoring.guru/design-patterns/flyweight
     Default genome would be: 3 inputs, 10 function nodes (2 connections and 2 parameters), 1 output,
     so with shape (14, 5)
-
     Args:
         Prototype ([type]): [description]
-
     Returns:
         [type]: [description]
     """
@@ -251,6 +251,7 @@ class KartezioGenome(KartezioComponent, Prototype):
         sequence = np.asarray(ast.literal_eval(json_data["sequence"]))
         return KartezioGenome(sequence=sequence)
 
+
 def to_metadata(json_data):
     return GenomeShape(
         json_data["n_in"],
@@ -259,6 +260,7 @@ def to_metadata(json_data):
         json_data["n_conn"],
         json_data["n_para"],
     )
+
 
 class Factory:
     """
@@ -453,7 +455,6 @@ class KartezioParser(GenomeReader):
                 inputs = [output_map[c] for c in connections]
                 p = self.read_parameters(genome, node_index)
                 value = self.function_bundle.execute(function_index, inputs, p)
-
                 output_map[node] = value
         return output_map
 
@@ -514,7 +515,6 @@ class KartezioParser(GenomeReader):
     def get_first_node(self, genome):
         graphs_list = self.parse_to_graphs(genome)
         input_functions = []
-
         for graph in graphs_list:
             for node in graph:
                 if node < self.shape.inputs:
@@ -557,7 +557,6 @@ class KartezioParser(GenomeReader):
                         else:
                             pair = (f"{fname}-{k}", in_name)
                         """
-
                     else:
                         f2_index = self.read_function(genome,
                                                       c - self.shape.inputs)
@@ -570,7 +569,6 @@ class KartezioParser(GenomeReader):
                         """
                         pair = (f"{fname}", f2_name)
                     bigram_list.append(pair)
-
             f_last = self.read_function(genome,
                                         outputs[i][1] - self.shape.inputs)
             fname = self.function_bundle.symbol_of(f_last)
@@ -613,18 +611,15 @@ class KartezioParser(GenomeReader):
 
     def parse(self, genome, x):
         """Decode the Genome given a list of inputs
-
         Args:
             genome (KartezioGenome): [description]
             x (List): [description]
-
         Returns:
             [type]: [description]
         """
         all_y_pred = []
         all_times = []
         graphs = self.parse_to_graphs(genome)
-
         # for each image
         for xi in x:
             start_time = time.time()
@@ -639,7 +634,6 @@ class KartezioParser(GenomeReader):
 
 class ParserSequential(KartezioParser):
     """TODO: default Parser, KartezioParser becomes ABC"""
-
     pass
 
 
@@ -664,16 +658,12 @@ class ParserChain(KartezioParser):
             start_time = time.time()
             y_pred_series = []
             # for each image
-
             for xi in series:
                 y_pred = self._parse_one(genome, graphs, xi)
                 y_pred_series.append(y_pred)
-
             y_pred = self.endpoint.call(self.stacker.call(y_pred_series))
-
             all_times.append(time.time() - start_time)
             all_y_pred.append(y_pred)
-
         whole_time = np.mean(np.array(all_times))
         return all_y_pred, whole_time
 
@@ -724,7 +714,6 @@ class ExportableNode(KartezioNode, ABC):
     @abstractmethod
     def to_python(self, input_nodes: List, p: List, node_name: str):
         """
-
         Parameters
         ----------
         input_nodes :
@@ -736,7 +725,6 @@ class ExportableNode(KartezioNode, ABC):
     @abstractmethod
     def to_cpp(self, input_nodes: List, p: List, node_name: str):
         """
-
         :param input_nodes:
         :type input_nodes:
         :param p:
@@ -1109,7 +1097,6 @@ class FluoTopHat(NodeImageProcessing):
             p2, p98 = np.percentile(img, (15, 99.5), interpolation="linear")
         else:
             p2, p98 = np.percentile(img, (15, 100), interpolation="linear")
-
         return self._rescale_intensity(img, p2, p98)
 
 
@@ -1124,11 +1111,9 @@ class RelativeDifference(NodeImageProcessing):
         img = x[0]
         max_img = np.max(img)
         min_img = np.min(img)
-
         ksize = correct_ksize(args[0])
         gb = cv2.GaussianBlur(img, (ksize, ksize), 0)
         gb = np.float32(gb)
-
         img = np.divide(img, gb + 1e-15, dtype=np.float32)
         img = cv2.normalize(img, img, max_img, min_img, cv2.NORM_MINMAX)
         return img.astype(np.uint8)
@@ -1404,6 +1389,8 @@ class InRange(NodeImageProcessing):
 
 
 IMAGE_NODES_ABBV_LIST = registry.nodes.list().keys()
+
+
 def to_genome(json_data):
     sequence = np.asarray(ast.literal_eval(json_data["sequence"]))
     return KartezioGenome(sequence=sequence)
@@ -1472,6 +1459,7 @@ def register_endpoints():
     print(
         f"[Kartezio - INFO] -  {len(registry.endpoints.list())} endpoints registered."
     )
+
 
 class TransformToHSV(KartezioPreprocessing):
 
@@ -1565,6 +1553,7 @@ class Format3D(KartezioPreprocessing):
     def _to_json_kwargs(self) -> dict:
         pass
 
+
 @singleton
 class BundleOpenCV(KartezioBundle):
 
@@ -1572,7 +1561,10 @@ class BundleOpenCV(KartezioBundle):
         for node_abbv in IMAGE_NODES_ABBV_LIST:
             self.add_node(node_abbv)
 
+
 BUNDLE_OPENCV = BundleOpenCV()
+
+
 def register_stackers():
     print(
         f"[Kartezio - INFO] -  {len(registry.stackers.list())} stackers registered."
@@ -1692,11 +1684,14 @@ class MeanKartezioStackerForWatershed(KartezioStacker):
             yi = morph_erode(yi, half_kernel_size=self.half_kernel_size)
         return threshold_tozero(yi, self.threshold)
 
+
 JSON_ELITE = "elite.json"
 JSON_HISTORY = "history.json"
 JSON_META = "META.json"
 CSV_DATASET = "dataset.csv"
 DIR_PREVIEW = "__preview__"
+
+
 class Dataset:
 
     class SubSet:
@@ -2026,7 +2021,6 @@ class DatasetReader(Directory):
             print(
                 f"Inconsistent size of inputs for this dataset: sizes: {input_sizes}"
             )
-
         if self.preview:
             for i in range(len(training.x)):
                 visual = training.v[i]
@@ -2265,6 +2259,7 @@ class KartezioES(ABC):
     def reproduction(self):
         pass
 
+
 @registry.endpoints.add("TRSH")
 class EndpointThreshold(KartezioEndpoint):
 
@@ -2311,6 +2306,7 @@ class EndpointWatershed(KartezioEndpoint):
             "markers_distance": self.wt.markers_distance,
             "markers_area": self.wt.markers_area,
         }
+
 
 def pack_one_directory(directory_path):
     directory = Directory(directory_path)
@@ -2465,6 +2461,7 @@ class KartezioPopulation(KartezioComponent, ABC):
         return np.array(score_list,
                         dtype=[("fitness", float), ("time", float)])
 
+
 class PopulationWithElite(KartezioPopulation):
 
     def __init__(self, _lambda):
@@ -2617,7 +2614,6 @@ class MutationClassic(KartezioMutation):
                                             self.n_mutations,
                                             replace=False)
         sampling_indices = self.all_indices[sampling_indices]
-
         for idx, mutation_parameter_index in sampling_indices:
             if mutation_parameter_index == 0:
                 self.mutate_function(genome, idx)
@@ -2726,27 +2722,22 @@ class ModelBuilder:
         mutation_method = self.__context.mutation_method
         fitness = self.__context.fitness
         parser = self.__context.parser
-
         if parser.endpoint.arity != parser.shape.outputs:
             raise ValueError(
                 f"Endpoint [{parser.endpoint.name}] requires {parser.endpoint.arity} output nodes. ({parser.shape.outputs} given)"
             )
-
         if self.__context.series_mode:
             if not isinstance(parser.stacker, KartezioStacker):
                 raise ValueError(
                     f"Stacker {parser.stacker} has not been properly set.")
-
             if parser.stacker.arity != parser.shape.outputs:
                 raise ValueError(
                     f"Stacker [{parser.stacker.name}] requires {parser.stacker.arity} output nodes. ({parser.shape.outputs} given)"
                 )
-
         if dataset_inputs and (dataset_inputs != parser.shape.inputs):
             raise ValueError(
                 f"Model has {parser.shape.inputs} input nodes. ({dataset_inputs} given by the dataset)"
             )
-
         strategy = OnePlusLambda(_lambda, factory, instance_method,
                                  mutation_method, fitness)
         model = ModelCGP(generations, strategy, parser)
@@ -2995,7 +2986,6 @@ class KartezioTraining:
         train_x, train_y = self.dataset.train_xy
         if self.reformat_x:
             train_x = self.reformat_x(train_x)
-
         if self.callbacks:
             for callback in self.callbacks:
                 callback.set_parser(self.model.parser)
@@ -3025,15 +3015,12 @@ def train_model(
         for callback in callbacks:
             callback.set_parser(model.parser)
             model.attach(callback)
-
     train_x, train_y = dataset.train_xy
     if preprocessing:
         train_x = preprocessing.call(train_x)
-
     res = model.fit(train_x, train_y)
     if pack:
         pack_one_directory(workdir)
-
     return res
 
 
