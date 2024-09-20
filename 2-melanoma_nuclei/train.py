@@ -14,10 +14,9 @@ from kartezio.training import train_model
 from numena.io.drive import Directory
 
 RUNS = 10
-ITERATIONS = 20000
+ITERATIONS = 10
 LAMBDA = 5
 COLORS_SCALES = ["RGB", "HSV", "HED"]
-
 
 parser = argparse.ArgumentParser()
 parser.add_argument("output")
@@ -43,9 +42,11 @@ elif endpoint_name == "LMW":
 elif endpoint_name == "ELLIPSE":
     endpoint = EndpointEllipse(min_axis=10, max_axis=65)
 elif endpoint_name == "HCT":
-    endpoint = EndpointHoughCircle(
-        min_dist=15, p1=32, p2=16, min_radius=5, max_radius=32
-    )
+    endpoint = EndpointHoughCircle(min_dist=15,
+                                   p1=32,
+                                   p2=16,
+                                   min_radius=5,
+                                   max_radius=32)
 elif endpoint_name == "LABELS":
     endpoint = EndpointLabels()
 
@@ -63,6 +64,7 @@ model = create_instance_segmentation_model(
     endpoint=endpoint,
 )
 dataset = read_dataset(dataset_path)
-elite, _ = train_model(
-    model, dataset, str(output_directory._path), preprocessing=preprocessing
-)
+elite, _ = train_model(model,
+                       dataset,
+                       str(output_directory._path),
+                       preprocessing=preprocessing)
