@@ -21,7 +21,6 @@ import argparse
 import ast
 import copy
 import cv2
-import kartezio.utils.json_utils as json
 import numpy as np
 import os
 import pandas as pd
@@ -42,9 +41,8 @@ from enum import Enum
 from numena.io.drive import Directory
 from numena.time import eventid
 
-from kartezio.model.registry import registry
+import kartezio.utils.json_utils as json
 from kartezio.image.bundle import BUNDLE_OPENCV
-from kartezio.model.registry import registry
 from kartezio.model.types import Score, ScoreList
 from kartezio.mutation import GoldmanWrapper, MutationAllRandom
 from kartezio.population import PopulationWithElite
@@ -52,7 +50,83 @@ from kartezio.preprocessing import TransformToHED, TransformToHSV
 from kartezio.stacker import MeanKartezioStackerForWatershed
 from kartezio.stacker import StackerMean
 from kartezio.utils.io import JsonSaver
+from kartezio.model.helpers import singleton
 from kartezio.model.registry import registry
+
+@dataclass
+class GenomeShape:
+    inputs: int = 3
+    nodes: int = 10
+    outputs: int = 1
+    connections: int = 2
+    parameters: int = 2
+    in_idx: int = field(init=False, repr=False)
+    func_idx: int = field(init=False, repr=False)
+    con_idx: int = field(init=False, repr=False)
+    nodes_idx = None
+    out_idx = None
+    para_idx = None
+    w: int = field(init=False)
+    h: int = field(init=False)
+    prototype = None
+
+    def __post_init__(self):
+        self.in_idx = 0
+        self.func_idx = 0
+        self.con_idx = 1
+        self.nodes_idx = self.inputs
+        self.out_idx = self.nodes_idx + self.nodes
+        self.para_idx = self.con_idx + self.connections
+        self.w = 1 + self.connections + self.parameters
+        self.h = self.inputs + self.nodes + self.outputs
+        self.prototype = KartezioGenome(shape=(self.h, self.w))
+
+    @staticmethod
+    def from_json(json_data):
+        return GenomeShape(
+            json_data["n_in"],
+            json_data["columns"],
+            json_data["n_out"],
+            json_data["n_conn"],
+            json_data["n_para"],
+        )
+
+
+def to_metadata(json_data):
+    return GenomeShape(
+        json_data["n_in"],
+        json_data["columns"],
+        json_data["n_out"],
+        json_data["n_conn"],
+        json_data["n_para"],
+    )
+
+
+def to_genome(json_data):
+    sequence = np.asarray(ast.literal_eval(json_data["sequence"]))
+    return KartezioGenome(sequence=sequence)
+
+
+def from_individual(individual):
+    return {
+        "sequence": simplejson.dumps(individual.sequence.tolist()),
+        "fitness": individual.fitness,
+    }
+
+
+def from_population(population: List):
+    json_data = []
+    for individual_idx, individual in population:
+        json_data.append(from_individual(individual))
+    return json_data
+
+
+def from_dataset(dataset):
+    return {
+        "name": dataset.name,
+        "label_name": dataset.label_name,
+        "indices": dataset.indices,
+    }
 
 def singleton(cls):
     """
@@ -404,44 +478,6 @@ class GenomeReader(GenomeAdapter):
 class GenomeReaderWriter(GenomeReader, GenomeWriter):
     pass
 
-
-@dataclass
-class GenomeShape:
-    inputs: int = 3
-    nodes: int = 10
-    outputs: int = 1
-    connections: int = 2
-    parameters: int = 2
-    in_idx: int = field(init=False, repr=False)
-    func_idx: int = field(init=False, repr=False)
-    con_idx: int = field(init=False, repr=False)
-    nodes_idx = None
-    out_idx = None
-    para_idx = None
-    w: int = field(init=False)
-    h: int = field(init=False)
-    prototype = None
-
-    def __post_init__(self):
-        self.in_idx = 0
-        self.func_idx = 0
-        self.con_idx = 1
-        self.nodes_idx = self.inputs
-        self.out_idx = self.nodes_idx + self.nodes
-        self.para_idx = self.con_idx + self.connections
-        self.w = 1 + self.connections + self.parameters
-        self.h = self.inputs + self.nodes + self.outputs
-        self.prototype = KartezioGenome(shape=(self.h, self.w))
-
-    @staticmethod
-    def from_json(json_data):
-        return GenomeShape(
-            json_data["n_in"],
-            json_data["columns"],
-            json_data["n_out"],
-            json_data["n_conn"],
-            json_data["n_para"],
-        )
 
 
 class KartezioParser(GenomeReader):
