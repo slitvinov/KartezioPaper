@@ -1,8 +1,16 @@
+Dependencies
 ```
 python -m pip install --no-deps opencv-python scikit-image lazy_loader simplejson numba llvmlite czifile tifffile roifile
 python -m pip install pandas
 ```
 
+To plot graphs
+```
+sudo apt install libgraphviz-dev -y
+python -m pip install --no-deps pygraphviz
+```
+
+Data
 ```
 wget -q -O data.zip https://figshare.com/ndownloader/files/42287322
 unzip -q data.zip
