@@ -98,16 +98,7 @@ class KartezioBundle:
     def ordered_list(self):
         return [self.__nodes[i].name for i in range(self.size)]
 
-
-class EmptyBundle(KartezioBundle):
-    pass
-
-
-class Prototype:
-    pass
-
-
-class KartezioGenome(Prototype):
+class KartezioGenome:
 
     def __init__(self, shape: tuple = (14, 5), sequence: np.ndarray = None):
         if sequence is not None:
@@ -1662,47 +1653,6 @@ class KartezioMetric(KartezioNode):
         pass
 
 
-class KartezioFitness(KartezioNode):
-
-    def __init__(
-        self,
-        name: str,
-        symbol: str,
-        arity: int,
-        default_metric: KartezioMetric = None,
-    ):
-        super().__init__(name, symbol, arity, 0)
-        self.metrics: MetricList = []
-        if default_metric:
-            self.add_metric(default_metric)
-
-    def add_metric(self, metric: KartezioMetric):
-        self.metrics.append(metric)
-
-    def call(self, y_true, y_pred):
-        scores = []
-        for yi_pred in y_pred:
-            scores.append(self.compute_one(y_true, yi_pred))
-        return scores
-
-    def compute_one(self, y_true, y_pred):
-        score = 0.0
-        y_size = len(y_true)
-        for i in range(y_size):
-            _y_true = y_true[i].copy()
-            _y_pred = y_pred[i]
-            score += self.__fitness_sum(_y_true, _y_pred)
-        return score / y_size
-
-    def __fitness_sum(self, y_true, y_pred):
-        score = 0.0
-        for metric in self.metrics:
-            score += metric.call(y_true, y_pred)
-        return score
-
-    def _to_json_kwargs(self) -> dict:
-        pass
-
 
 class KartezioMutation(GenomeReaderWriter):
 
@@ -2025,7 +1975,6 @@ class ModelContext:
     genome_factory: GenomeFactory = field(init=False)
     instance_method: KartezioMutation = field(init=False)
     mutation_method: KartezioMutation = field(init=False)
-    fitness: KartezioFitness = field(init=False)
     stacker: KartezioStacker = field(init=False)
     endpoint: KartezioEndpoint = field(init=False)
     bundle: KartezioBundle = field(init=False)
