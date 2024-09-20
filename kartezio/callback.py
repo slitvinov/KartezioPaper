@@ -18,15 +18,11 @@ class Event(Enum):
 class CallbackVerbose(KartezioCallback):
     def _callback(self, n, e_name, e_content):
         fitness, time = e_content.get_best_fitness()
-        if time == 0:
-            fps = "'inf' "
-        else:
-            fps = int(round(1.0 / time))
         if e_name == Event.END_STEP:
-            verbose = f"[G {n:04}] {fitness:.16f} {time:.6f}s {fps}fps"
+            verbose = f"[G {n:04}] {fitness:.16f}"
             print(verbose)
         elif e_name == Event.END_LOOP:
-            verbose = f"[G {n:04}] {fitness:.16f} {time:.6f}s {fps}fps, loop done."
+            verbose = f"[G {n:04}] {fitness:.16f}, loop done."
             print(verbose)
 
 
