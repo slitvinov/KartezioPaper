@@ -10,7 +10,6 @@ from numena.image.morphology import WatershedSkimage
 from numena.image.threshold import threshold_tozero
 from numena.io.drive import Directory
 from numena.io.json import json_read, json_write
-from numena.io.json import Serializable
 from typing import List
 from typing import List, NewType
 from typing import List, Tuple
@@ -42,12 +41,7 @@ from scipy.stats import kurtosis, skew
 from skimage.morphology import remove_small_holes, remove_small_objects
 from kartezio.model.registry import registry
 
-
-class KartezioComponent(Serializable):
-    pass
-
-
-class KartezioNode(KartezioComponent):
+class KartezioNode:
 
     def __init__(self,
                  name: str,
@@ -78,7 +72,7 @@ class KartezioEndpoint(KartezioNode):
         self.outputs_keys = outputs_keys
 
 
-class KartezioBundle(KartezioComponent):
+class KartezioBundle:
 
     def __init__(self):
         self.__nodes = {}
@@ -113,7 +107,7 @@ class Prototype:
     pass
 
 
-class KartezioGenome(KartezioComponent, Prototype):
+class KartezioGenome(Prototype):
 
     def __init__(self, shape: tuple = (14, 5), sequence: np.ndarray = None):
         if sequence is not None:
@@ -158,7 +152,7 @@ class GenomeFactory(Factory):
         super().__init__(prototype)
 
 
-class GenomeAdapter(KartezioComponent):
+class GenomeAdapter:
 
     def __init__(self, shape):
         self.shape = shape
@@ -383,7 +377,7 @@ class Observer:
         pass
 
 
-class KartezioCallback(KartezioComponent, Observer):
+class KartezioCallback(Observer):
 
     def __init__(self, frequency=1):
         self.frequency = frequency
@@ -1916,7 +1910,7 @@ class PopulationHistory:
         return self.individuals.items()
 
 
-class KartezioPopulation(KartezioComponent):
+class KartezioPopulation:
 
     def __init__(self, size):
         self.size = size
