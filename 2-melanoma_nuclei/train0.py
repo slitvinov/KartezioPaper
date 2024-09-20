@@ -279,33 +279,6 @@ def to_metadata(json_data):
         json_data["n_para"],
     )
 
-
-def to_genome(json_data):
-    sequence = np.asarray(ast.literal_eval(json_data["sequence"]))
-    return KartezioGenome(sequence=sequence)
-
-
-def from_individual(individual):
-    return {
-        "sequence": simplejson.dumps(individual.sequence.tolist()),
-        "fitness": individual.fitness,
-    }
-
-
-def from_population(population: List):
-    json_data = []
-    for individual_idx, individual in population:
-        json_data.append(from_individual(individual))
-    return json_data
-
-
-def from_dataset(dataset):
-    return {
-        "name": dataset.name,
-        "label_name": dataset.label_name,
-        "indices": dataset.indices,
-    }
-
 class Factory:
     """
     Using Factory Pattern:
@@ -1451,46 +1424,6 @@ class InRange(NodeImageProcessing):
 
 IMAGE_NODES_ABBV_LIST = registry.nodes.list().keys()
 
-
-@dataclass
-class GenomeShape:
-    inputs: int = 3
-    nodes: int = 10
-    outputs: int = 1
-    connections: int = 2
-    parameters: int = 2
-    in_idx: int = field(init=False, repr=False)
-    func_idx: int = field(init=False, repr=False)
-    con_idx: int = field(init=False, repr=False)
-    nodes_idx = None
-    out_idx = None
-    para_idx = None
-    w: int = field(init=False)
-    h: int = field(init=False)
-    prototype = None
-
-    def __post_init__(self):
-        self.in_idx = 0
-        self.func_idx = 0
-        self.con_idx = 1
-        self.nodes_idx = self.inputs
-        self.out_idx = self.nodes_idx + self.nodes
-        self.para_idx = self.con_idx + self.connections
-        self.w = 1 + self.connections + self.parameters
-        self.h = self.inputs + self.nodes + self.outputs
-        self.prototype = KartezioGenome(shape=(self.h, self.w))
-
-    @staticmethod
-    def from_json(json_data):
-        return GenomeShape(
-            json_data["n_in"],
-            json_data["columns"],
-            json_data["n_out"],
-            json_data["n_conn"],
-            json_data["n_para"],
-        )
-
-
 def to_metadata(json_data):
     return GenomeShape(
         json_data["n_in"],
@@ -1542,47 +1475,6 @@ def singleton(cls):
     return wrapper
 
 
-class Prototype(ABC):
-    """
-    Using Prototype Pattern to duplicate:
-    https://refactoring.guru/design-patterns/prototype
-    """
-
-    @abstractmethod
-    def clone(self):
-        pass
-
-
-class Factory:
-    """
-    Using Factory Pattern:
-    https://refactoring.guru/design-patterns/factory-method
-    """
-
-    def __init__(self, prototype):
-        self._prototype = None
-        self.set_prototype(prototype)
-
-    def set_prototype(self, prototype):
-        self._prototype = prototype
-
-    def create(self):
-        return self._prototype.clone()
-
-
-class Observer(ABC):
-    """
-    The Observer interface declares the update method, used by subjects.
-    """
-
-    @abstractmethod
-    def update(self, event):
-        """
-        Receive update from subject.
-        """
-        pass
-
-
 class Observable(ABC):
     """
     For the sake of simplicity, the Observable state, essential to all
@@ -1610,33 +1502,6 @@ def register_endpoints():
     print(
         f"[Kartezio - INFO] -  {len(registry.endpoints.list())} endpoints registered."
     )
-
-
-class KartezioEndpoint(KartezioNode, ABC):
-    """
-    Terminal KartezioNode, executed after graph parsing.
-    Not submitted to evolution.
-    """
-
-    def __init__(self, name: str, symbol: str, arity: int, outputs_keys: list):
-        super().__init__(name, symbol, arity, 0)
-        self.outputs_keys = outputs_keys
-
-    @staticmethod
-    def from_json(json_data):
-        return registry.endpoints.instantiate(json_data["abbv"],
-                                              **json_data["kwargs"])
-
-
-class KartezioPreprocessing(KartezioNode, ABC):
-    """
-    First KartezioNode, executed before evolution loop.
-    Not submitted to evolution.
-    """
-
-    def __init__(self, name: str, symbol: str):
-        super().__init__(name, symbol, 1, 0)
-
 
 class TransformToHSV(KartezioPreprocessing):
 
@@ -1730,14 +1595,6 @@ class Format3D(KartezioPreprocessing):
     def _to_json_kwargs(self) -> dict:
         pass
 
-
-
-class EmptyBundle(KartezioBundle):
-
-    def fill(self):
-        pass
-
-
 @singleton
 class BundleOpenCV(KartezioBundle):
 
@@ -1745,117 +1602,7 @@ class BundleOpenCV(KartezioBundle):
         for node_abbv in IMAGE_NODES_ABBV_LIST:
             self.add_node(node_abbv)
 
-
 BUNDLE_OPENCV = BundleOpenCV()
-
-
-class KartezioGenome(KartezioComponent, Prototype):
-    """
-    Only store "DNA" in a numpy array
-    No metadata stored in DNA to avoid duplicates
-    Avoiding RAM overload: https://refactoring.guru/design-patterns/flyweight
-    Default genome would be: 3 inputs, 10 function nodes (2 connections and 2 parameters), 1 output,
-    so with shape (14, 5)
-
-    Args:
-        Prototype ([type]): [description]
-
-    Returns:
-        [type]: [description]
-    """
-
-    def dumps(self) -> dict:
-        pass
-
-    def __init__(self, shape: tuple = (14, 5), sequence: np.ndarray = None):
-        if sequence is not None:
-            self.sequence = sequence
-        else:
-            self.sequence = np.zeros(shape=shape, dtype=np.uint8)
-
-    def __copy__(self):
-        new = self.__class__(*self.sequence.shape)
-        new.__dict__.update(self.__dict__)
-        return new
-
-    def __deepcopy__(self, memo={}):
-        new = self.__class__(*self.sequence.shape)
-        new.sequence = self.sequence.copy()
-        return new
-
-    def __getitem__(self, item):
-        return self.sequence.__getitem__(item)
-
-    def __setitem__(self, key, value):
-        return self.sequence.__setitem__(key, value)
-
-    def clone(self):
-        return copy.deepcopy(self)
-
-    @staticmethod
-    def from_json(json_data):
-        sequence = np.asarray(ast.literal_eval(json_data["sequence"]))
-        return KartezioGenome(sequence=sequence)
-
-
-class GenomeFactory(Factory):
-
-    def __init__(self, prototype: KartezioGenome):
-        super().__init__(prototype)
-
-
-class GenomeAdapter(KartezioComponent, ABC):
-    """
-    Adpater Design Pattern: https://refactoring.guru/design-patterns/adapter
-    """
-
-    def __init__(self, shape):
-        self.shape = shape
-
-
-class GenomeWriter(GenomeAdapter):
-
-    def write_function(self, genome, node, function_id):
-        genome[self.shape.nodes_idx + node, self.shape.func_idx] = function_id
-
-    def write_connections(self, genome, node, connections):
-        genome[self.shape.nodes_idx + node,
-               self.shape.con_idx:self.shape.para_idx] = connections
-
-    def write_parameters(self, genome, node, parameters):
-        genome[self.shape.nodes_idx + node, self.shape.para_idx:] = parameters
-
-    def write_output_connection(self, genome, output_index, connection):
-        genome[self.shape.out_idx + output_index,
-               self.shape.con_idx] = connection
-
-
-class GenomeReader(GenomeAdapter):
-
-    def read_function(self, genome, node):
-        return genome[self.shape.nodes_idx + node, self.shape.func_idx]
-
-    def read_connections(self, genome, node):
-        return genome[self.shape.nodes_idx + node,
-                      self.shape.con_idx:self.shape.para_idx]
-
-    def read_active_connections(self, genome, node, active_connections):
-        return genome[
-            self.shape.nodes_idx + node,
-            self.shape.con_idx:self.shape.con_idx + active_connections,
-        ]
-
-    def read_parameters(self, genome, node):
-        return genome[self.shape.nodes_idx + node, self.shape.para_idx:]
-
-    def read_outputs(self, genome):
-        return genome[self.shape.out_idx:, :]
-
-
-class GenomeReaderWriter(GenomeReader, GenomeWriter):
-    pass
-
-
 class KartezioParser(GenomeReader):
 
     def __init__(self, shape, function_bundle, endpoint):
@@ -2400,23 +2147,6 @@ class Prototype(ABC):
     @abstractmethod
     def clone(self):
         pass
-
-
-class Factory:
-    """
-    Using Factory Pattern:
-    https://refactoring.guru/design-patterns/factory-method
-    """
-
-    def __init__(self, prototype):
-        self._prototype = None
-        self.set_prototype(prototype)
-
-    def set_prototype(self, prototype):
-        self._prototype = prototype
-
-    def create(self):
-        return self._prototype.clone()
 
 
 class Observer(ABC):
@@ -3102,56 +2832,6 @@ class EmptyBundle(KartezioBundle):
     def fill(self):
         pass
 
-
-class KartezioGenome(KartezioComponent, Prototype):
-    """
-    Only store "DNA" in a numpy array
-    No metadata stored in DNA to avoid duplicates
-    Avoiding RAM overload: https://refactoring.guru/design-patterns/flyweight
-    Default genome would be: 3 inputs, 10 function nodes (2 connections and 2 parameters), 1 output,
-    so with shape (14, 5)
-
-    Args:
-        Prototype ([type]): [description]
-
-    Returns:
-        [type]: [description]
-    """
-
-    def dumps(self) -> dict:
-        pass
-
-    def __init__(self, shape: tuple = (14, 5), sequence: np.ndarray = None):
-        if sequence is not None:
-            self.sequence = sequence
-        else:
-            self.sequence = np.zeros(shape=shape, dtype=np.uint8)
-
-    def __copy__(self):
-        new = self.__class__(*self.sequence.shape)
-        new.__dict__.update(self.__dict__)
-        return new
-
-    def __deepcopy__(self, memo={}):
-        new = self.__class__(*self.sequence.shape)
-        new.sequence = self.sequence.copy()
-        return new
-
-    def __getitem__(self, item):
-        return self.sequence.__getitem__(item)
-
-    def __setitem__(self, key, value):
-        return self.sequence.__setitem__(key, value)
-
-    def clone(self):
-        return copy.deepcopy(self)
-
-    @staticmethod
-    def from_json(json_data):
-        sequence = np.asarray(ast.literal_eval(json_data["sequence"]))
-        return KartezioGenome(sequence=sequence)
-
-
 class GenomeFactory(Factory):
 
     def __init__(self, prototype: KartezioGenome):
@@ -3165,23 +2845,6 @@ class GenomeAdapter(KartezioComponent, ABC):
 
     def __init__(self, shape):
         self.shape = shape
-
-
-class GenomeWriter(GenomeAdapter):
-
-    def write_function(self, genome, node, function_id):
-        genome[self.shape.nodes_idx + node, self.shape.func_idx] = function_id
-
-    def write_connections(self, genome, node, connections):
-        genome[self.shape.nodes_idx + node,
-               self.shape.con_idx:self.shape.para_idx] = connections
-
-    def write_parameters(self, genome, node, parameters):
-        genome[self.shape.nodes_idx + node, self.shape.para_idx:] = parameters
-
-    def write_output_connection(self, genome, output_index, connection):
-        genome[self.shape.out_idx + output_index,
-               self.shape.con_idx] = connection
 
 
 class GenomeReader(GenomeAdapter):
