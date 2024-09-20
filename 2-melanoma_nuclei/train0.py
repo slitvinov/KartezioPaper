@@ -12,6 +12,8 @@ from kartezio.model.components import (
     KartezioNode,
 )
 from abc import ABC, abstractmethod
+from typing import List
+from abc import ABC, abstractmethod
 from dataclasses import InitVar, dataclass, field
 from numena.io.drive import Directory
 from numena.io.drive import Directory
@@ -30,36 +32,6 @@ from dataclasses import dataclass, field
 from typing import List
 import numpy as np
 from numena.io.json import Serializable
-
-from kartezio.endpoint import EndpointThreshold
-from kartezio.enums import CSV_DATASET
-from kartezio.image.bundle import BUNDLE_OPENCV
-from kartezio.model.helpers import Factory, Observer, Prototype
-from kartezio.model.helpers import Observable
-from kartezio.model.helpers import singleton
-from kartezio.model.registry import registry
-from kartezio.model.types import Score, ScoreList
-from kartezio.mutation import GoldmanWrapper, MutationAllRandom
-from kartezio.population import PopulationWithElite
-from kartezio.preprocessing import TransformToHED, TransformToHSV
-from kartezio.stacker import MeanKartezioStackerForWatershed
-from kartezio.stacker import StackerMean
-
-from enum import Enum
-
-from numena.io.drive import Directory
-from numena.time import eventid
-
-from kartezio.enums import JSON_ELITE
-from kartezio.model.components import KartezioCallback
-from kartezio.utils.io import JsonSaver
-
-import ast
-from abc import abstractmethod
-from dataclasses import dataclass, field
-from typing import List, Tuple
-
-import cv2
 import numpy as np
 import pandas as pd
 from numena.image.basics import image_new, image_split
@@ -73,10 +45,106 @@ from numena.io.drive import Directory
 from numena.io.image import imread_color, imread_grayscale, imread_tiff
 from numena.io.imagej import read_ellipses_from_csv, read_polygons_from_roi
 from numena.io.json import json_read, json_write
+from enum import Enum
+from numena.io.drive import Directory
+from numena.time import eventid
+import ast
+from abc import abstractmethod
+from dataclasses import dataclass, field
+from typing import List, Tuple
+import cv2
 
+from kartezio.endpoint import EndpointThreshold
+from kartezio.enums import CSV_DATASET
 from kartezio.enums import CSV_DATASET, DIR_PREVIEW, JSON_META
+from kartezio.enums import JSON_ELITE
+from kartezio.image.bundle import BUNDLE_OPENCV
+from kartezio.model.components import KartezioCallback
 from kartezio.model.registry import registry
+from kartezio.model.types import Score, ScoreList
+from kartezio.mutation import GoldmanWrapper, MutationAllRandom
+from kartezio.population import PopulationWithElite
+from kartezio.preprocessing import TransformToHED, TransformToHSV
+from kartezio.stacker import MeanKartezioStackerForWatershed
+from kartezio.stacker import StackerMean
+from kartezio.utils.io import JsonSaver
 
+def singleton(cls):
+    """
+    https://towardsdatascience.com/10-fabulous-python-decorators-ab674a732871
+    """
+    instances = {}
+
+    def wrapper(*args, **kwargs):
+        if cls not in instances:
+            instances[cls] = cls(*args, **kwargs)
+        return instances[cls]
+
+    return wrapper
+
+
+class Prototype(ABC):
+    """
+    Using Prototype Pattern to duplicate:
+    https://refactoring.guru/design-patterns/prototype
+    """
+
+    @abstractmethod
+    def clone(self):
+        pass
+
+
+class Factory:
+    """
+    Using Factory Pattern:
+    https://refactoring.guru/design-patterns/factory-method
+    """
+
+    def __init__(self, prototype):
+        self._prototype = None
+        self.set_prototype(prototype)
+
+    def set_prototype(self, prototype):
+        self._prototype = prototype
+
+    def create(self):
+        return self._prototype.clone()
+
+
+class Observer(ABC):
+    """
+    The Observer interface declares the update method, used by subjects.
+    """
+
+    @abstractmethod
+    def update(self, event):
+        """
+        Receive update from subject.
+        """
+        pass
+
+
+class Observable(ABC):
+    """
+    For the sake of simplicity, the Observable state, essential to all
+    subscribers, is stored in this variable.
+    """
+
+    def __init__(self):
+        self._observers: List[Observer] = []
+
+    def attach(self, observer: Observer) -> None:
+        self._observers.append(observer)
+
+    def detach(self, observer: Observer) -> None:
+        self._observers.remove(observer)
+
+    def clear(self) -> None:
+        self._observers = []
+
+    def notify(self, event) -> None:
+        for observer in self._observers:
+            observer.update(event)
 
 class Dataset:
     class SubSet:
