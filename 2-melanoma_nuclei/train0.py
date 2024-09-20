@@ -1,4 +1,5 @@
 import cv2
+from typing import List, NewType
 import numpy as np
 from numena.enums import IMAGE_UINT8_COLOR_1C
 from numena.image.basics import image_new
@@ -50,10 +51,10 @@ from skimage.morphology import remove_small_holes, remove_small_objects
 import cv2
 import numpy as np
 
-import kartezio.utils.json_utils as json
-from kartezio.model.types import Score, ScoreList
 from kartezio.model.registry import registry
 
+Score = NewType("Score", float)
+ScoreList = List[Score]
 
 def register_nodes():
     """Force decorators to wrap Nodes"""
@@ -280,6 +281,41 @@ class KartezioGenome(KartezioComponent, Prototype):
         sequence = np.asarray(ast.literal_eval(json_data["sequence"]))
         return KartezioGenome(sequence=sequence)
 
+def to_metadata(json_data):
+    return GenomeShape(
+        json_data["n_in"],
+        json_data["columns"],
+        json_data["n_out"],
+        json_data["n_conn"],
+        json_data["n_para"],
+    )
+
+
+def to_genome(json_data):
+    sequence = np.asarray(ast.literal_eval(json_data["sequence"]))
+    return KartezioGenome(sequence=sequence)
+
+
+def from_individual(individual):
+    return {
+        "sequence": simplejson.dumps(individual.sequence.tolist()),
+        "fitness": individual.fitness,
+    }
+
+
+def from_population(population: List):
+    json_data = []
+    for individual_idx, individual in population:
+        json_data.append(from_individual(individual))
+    return json_data
+
+
+def from_dataset(dataset):
+    return {
+        "name": dataset.name,
+        "label_name": dataset.label_name,
+        "indices": dataset.indices,
+    }
 
 class Factory:
     """
@@ -3969,7 +4005,7 @@ class JsonLoader:
 class JsonSaver:
 
     def __init__(self, dataset, parser):
-        self.dataset_json = json.from_dataset(dataset)
+        self.dataset_json = from_dataset(dataset)
         self.parser_as_json = parser.dumps()
 
     def save_population(self, filepath, population):
