@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from abc import abstractmethod
 from builtins import print
 from dataclasses import dataclass, field
 from dataclasses import InitVar, dataclass, field
@@ -31,7 +30,6 @@ from numena.image.drawing import (
     fill_ellipses_as_labels,
     fill_polygons_as_labels,
 )
-from abc import ABC
 from enum import Enum
 from numena.image.basics import image_ew_max, image_ew_mean, image_ew_min
 from numena.image.basics import image_split
@@ -835,51 +833,6 @@ class KartezioCallback(KartezioComponent, Observer, ABC):
         pass
 
 
-class KartezioNode(KartezioComponent, ABC):
-    """
-    Single graph node for the Cartesian Graph.
-    One node can be a simple function (e.g. Threshold, Subtract...), but also a more complex function such as an KartezioEndpoint.
-    """
-
-    def __init__(self,
-                 name: str,
-                 symbol: str,
-                 arity: int,
-                 args: int,
-                 sources=None):
-        """
-        Args:
-            name (str): Name of the node
-            symbol (str): Abbreviation of the node, it must be written in capital letters with 3 or 4 characters (e.g. "ADD", "NOT", "OPEN"..)
-            arity (int): Number of inputs the node needs (e.g. 2 for addition (x1+x2), 1 for sqrt (sqrt(x1)))
-            args (int): Number of parameters the node needs (e.g. 0 for addition (x1+x2), 1 for threshold (threshold(x1, p1)))
-        >>> threshold_node = Threshold("threshold", "TRSH", 1, 1)
-        >>> watershed_endpoint = Watershed("watershed", "WSHD", 2, 0)
-        """
-        self.name = name
-        self.symbol = symbol
-        self.arity = arity
-        self.args = args
-        self.sources = sources
-
-    @abstractmethod
-    def call(self, x: List, args: List = None):
-        pass
-
-    def dumps(self) -> dict:
-        return {
-            "name": self.name,
-            "abbv": self.symbol,
-            "arity": self.arity,
-            "args": self.args,
-            "kwargs": self._to_json_kwargs(),
-        }
-
-    @abstractmethod
-    def _to_json_kwargs(self) -> dict:
-        pass
-
-
 class NodeImageProcessing(KartezioNode, ABC):
 
     def _to_json_kwargs(self) -> dict:
@@ -1663,55 +1616,6 @@ def register_endpoints():
     print(
         f"[Kartezio - INFO] -  {len(registry.endpoints.list())} endpoints registered."
     )
-
-
-class KartezioComponent(Serializable, ABC):
-    pass
-
-
-class KartezioNode(KartezioComponent, ABC):
-    """
-    Single graph node for the Cartesian Graph.
-    One node can be a simple function (e.g. Threshold, Subtract...), but also a more complex function such as an KartezioEndpoint.
-    """
-
-    def __init__(self,
-                 name: str,
-                 symbol: str,
-                 arity: int,
-                 args: int,
-                 sources=None):
-        """
-        Args:
-            name (str): Name of the node
-            symbol (str): Abbreviation of the node, it must be written in capital letters with 3 or 4 characters (e.g. "ADD", "NOT", "OPEN"..)
-            arity (int): Number of inputs the node needs (e.g. 2 for addition (x1+x2), 1 for sqrt (sqrt(x1)))
-            args (int): Number of parameters the node needs (e.g. 0 for addition (x1+x2), 1 for threshold (threshold(x1, p1)))
-        >>> threshold_node = Threshold("threshold", "TRSH", 1, 1)
-        >>> watershed_endpoint = Watershed("watershed", "WSHD", 2, 0)
-        """
-        self.name = name
-        self.symbol = symbol
-        self.arity = arity
-        self.args = args
-        self.sources = sources
-
-    @abstractmethod
-    def call(self, x: List, args: List = None):
-        pass
-
-    def dumps(self) -> dict:
-        return {
-            "name": self.name,
-            "abbv": self.symbol,
-            "arity": self.arity,
-            "args": self.args,
-            "kwargs": self._to_json_kwargs(),
-        }
-
-    @abstractmethod
-    def _to_json_kwargs(self) -> dict:
-        pass
 
 
 class KartezioEndpoint(KartezioNode, ABC):
@@ -3206,51 +3110,6 @@ class KartezioES(ABC):
 
 class KartezioComponent(Serializable, ABC):
     pass
-
-
-class KartezioNode(KartezioComponent, ABC):
-    """
-    Single graph node for the Cartesian Graph.
-    One node can be a simple function (e.g. Threshold, Subtract...), but also a more complex function such as an KartezioEndpoint.
-    """
-
-    def __init__(self,
-                 name: str,
-                 symbol: str,
-                 arity: int,
-                 args: int,
-                 sources=None):
-        """
-        Args:
-            name (str): Name of the node
-            symbol (str): Abbreviation of the node, it must be written in capital letters with 3 or 4 characters (e.g. "ADD", "NOT", "OPEN"..)
-            arity (int): Number of inputs the node needs (e.g. 2 for addition (x1+x2), 1 for sqrt (sqrt(x1)))
-            args (int): Number of parameters the node needs (e.g. 0 for addition (x1+x2), 1 for threshold (threshold(x1, p1)))
-        >>> threshold_node = Threshold("threshold", "TRSH", 1, 1)
-        >>> watershed_endpoint = Watershed("watershed", "WSHD", 2, 0)
-        """
-        self.name = name
-        self.symbol = symbol
-        self.arity = arity
-        self.args = args
-        self.sources = sources
-
-    @abstractmethod
-    def call(self, x: List, args: List = None):
-        pass
-
-    def dumps(self) -> dict:
-        return {
-            "name": self.name,
-            "abbv": self.symbol,
-            "arity": self.arity,
-            "args": self.args,
-            "kwargs": self._to_json_kwargs(),
-        }
-
-    @abstractmethod
-    def _to_json_kwargs(self) -> dict:
-        pass
 
 
 class KartezioEndpoint(KartezioNode, ABC):
