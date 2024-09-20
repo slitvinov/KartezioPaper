@@ -99,13 +99,6 @@ class KartezioBundle(KartezioComponent, ABC):
         self.__nodes = {}
         self.fill()
 
-    @staticmethod
-    def from_json(json_data):
-        bundle = EmptyBundle()
-        for node_name in json_data:
-            bundle.add_node(node_name)
-        return bundle
-
     @abstractmethod
     def fill(self):
         pass
@@ -113,52 +106,11 @@ class KartezioBundle(KartezioComponent, ABC):
     def add_node(self, node_name):
         self.__nodes[len(self.__nodes)] = registry.nodes.instantiate(node_name)
 
-    def add_bundle(self, bundle):
-        for f in bundle.nodes:
-            self.add_node(f.name)
-
-    def name_of(self, i):
-        return self.__nodes[i].name
-
-    def symbol_of(self, i):
-        return self.__nodes[i].symbol
-
     def arity_of(self, i):
         return self.__nodes[i].arity
 
-    def parameters_of(self, i):
-        return self.__nodes[i].p
-
     def execute(self, name, x, args):
         return self.__nodes[name].call(x, args)
-
-    def show(self):
-        for i, node in self.__nodes.items():
-            print(f"[{i}] - {node.abbv}")
-
-    @property
-    def random_index(self):
-        return random.choice(self.keys)
-
-    @property
-    def last_index(self):
-        return len(self.__nodes) - 1
-
-    @property
-    def nodes(self):
-        return list(self.__nodes.values())
-
-    @property
-    def keys(self):
-        return list(self.__nodes.keys())
-
-    @property
-    def max_arity(self):
-        return max([self.arity_of(i) for i in self.keys])
-
-    @property
-    def max_parameters(self):
-        return max([self.parameters_of(i) for i in self.keys])
 
     @property
     def size(self):
