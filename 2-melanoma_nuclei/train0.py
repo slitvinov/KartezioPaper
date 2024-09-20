@@ -36,16 +36,11 @@ from numena.image.basics import image_split
 from numena.image.color import bgr2hed, bgr2hsv, rgb2bgr, rgb2hed
 from numena.image.morphology import morph_fill
 from numena.image.threshold import threshold_binary, threshold_tozero
-from numena.io.drive import Directory
 from numena.io.image import imread_color, imread_grayscale, imread_tiff
 from numena.io.imagej import read_ellipses_from_csv, read_polygons_from_roi
-from numena.io.json import json_read, json_write
 from numena.time import eventid
 from scipy.stats import kurtosis, skew
 from skimage.morphology import remove_small_holes, remove_small_objects
-import cv2
-import numpy as np
-
 from kartezio.model.registry import registry
 
 Score = NewType("Score", float)
@@ -56,26 +51,12 @@ class KartezioComponent(Serializable, ABC):
 
 
 class KartezioNode(KartezioComponent, ABC):
-    """
-    Single graph node for the Cartesian Graph.
-    One node can be a simple function (e.g. Threshold, Subtract...), but also a more complex function such as an KartezioEndpoint.
-    """
-
     def __init__(self,
                  name: str,
                  symbol: str,
                  arity: int,
                  args: int,
                  sources=None):
-        """
-        Args:
-            name (str): Name of the node
-            symbol (str): Abbreviation of the node, it must be written in capital letters with 3 or 4 characters (e.g. "ADD", "NOT", "OPEN"..)
-            arity (int): Number of inputs the node needs (e.g. 2 for addition (x1+x2), 1 for sqrt (sqrt(x1)))
-            args (int): Number of parameters the node needs (e.g. 0 for addition (x1+x2), 1 for threshold (threshold(x1, p1)))
-        >>> threshold_node = Threshold("threshold", "TRSH", 1, 1)
-        >>> watershed_endpoint = Watershed("watershed", "WSHD", 2, 0)
-        """
         self.name = name
         self.symbol = symbol
         self.arity = arity
