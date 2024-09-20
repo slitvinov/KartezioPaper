@@ -23,10 +23,10 @@ class CallbackVerbose(KartezioCallback):
         else:
             fps = int(round(1.0 / time))
         if e_name == Event.END_STEP:
-            verbose = f"[G {n:04}] {fitness:.4f} {time:.6f}s {fps}fps"
+            verbose = f"[G {n:04}] {fitness:.16f} {time:.6f}s {fps}fps"
             print(verbose)
         elif e_name == Event.END_LOOP:
-            verbose = f"[G {n:04}] {fitness:.4f} {time:.6f}s {fps}fps, loop done."
+            verbose = f"[G {n:04}] {fitness:.16f} {time:.6f}s {fps}fps, loop done."
             print(verbose)
 
 
