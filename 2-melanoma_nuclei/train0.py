@@ -53,1494 +53,13 @@ import numpy as np
 import kartezio.utils.json_utils as json
 from kartezio.model.registry import registry
 from kartezio.model.types import Score, ScoreList
-from kartezio.mutation import GoldmanWrapper, MutationAllRandom
-from kartezio.population import PopulationWithElite
 from kartezio.model.registry import registry
+
 
 def register_nodes():
     """Force decorators to wrap Nodes"""
-    print(f"[Kartezio - INFO] -  {len(registry.nodes.list())} nodes registered.")
-
-class KartezioComponent(Serializable, ABC):
-    pass
-
-
-class KartezioNode(KartezioComponent, ABC):
-    """
-    Single graph node for the Cartesian Graph.
-    One node can be a simple function (e.g. Threshold, Subtract...), but also a more complex function such as an KartezioEndpoint.
-    """
-
-    def __init__(self, name: str, symbol: str, arity: int, args: int, sources=None):
-        """
-        Args:
-            name (str): Name of the node
-            symbol (str): Abbreviation of the node, it must be written in capital letters with 3 or 4 characters (e.g. "ADD", "NOT", "OPEN"..)
-            arity (int): Number of inputs the node needs (e.g. 2 for addition (x1+x2), 1 for sqrt (sqrt(x1)))
-            args (int): Number of parameters the node needs (e.g. 0 for addition (x1+x2), 1 for threshold (threshold(x1, p1)))
-        >>> threshold_node = Threshold("threshold", "TRSH", 1, 1)
-        >>> watershed_endpoint = Watershed("watershed", "WSHD", 2, 0)
-        """
-        self.name = name
-        self.symbol = symbol
-        self.arity = arity
-        self.args = args
-        self.sources = sources
-
-    @abstractmethod
-    def call(self, x: List, args: List = None):
-        pass
-
-    def dumps(self) -> dict:
-        return {
-            "name": self.name,
-            "abbv": self.symbol,
-            "arity": self.arity,
-            "args": self.args,
-            "kwargs": self._to_json_kwargs(),
-        }
-
-    @abstractmethod
-    def _to_json_kwargs(self) -> dict:
-        pass
-
-
-class KartezioEndpoint(KartezioNode, ABC):
-    """
-    Terminal KartezioNode, executed after graph parsing.
-    Not submitted to evolution.
-    """
-
-    def __init__(self, name: str, symbol: str, arity: int, outputs_keys: list):
-        super().__init__(name, symbol, arity, 0)
-        self.outputs_keys = outputs_keys
-
-    @staticmethod
-    def from_json(json_data):
-        return registry.endpoints.instantiate(json_data["abbv"], **json_data["kwargs"])
-
-
-class KartezioPreprocessing(KartezioNode, ABC):
-    """
-    First KartezioNode, executed before evolution loop.
-    Not submitted to evolution.
-    """
-
-    def __init__(self, name: str, symbol: str):
-        super().__init__(name, symbol, 1, 0)
-
-
-class KartezioBundle(KartezioComponent, ABC):
-    def __init__(self):
-        self.__nodes = {}
-        self.fill()
-
-    @staticmethod
-    def from_json(json_data):
-        bundle = EmptyBundle()
-        for node_name in json_data:
-            bundle.add_node(node_name)
-        return bundle
-
-    @abstractmethod
-    def fill(self):
-        pass
-
-    def add_node(self, node_name):
-        self.__nodes[len(self.__nodes)] = registry.nodes.instantiate(node_name)
-
-    def add_bundle(self, bundle):
-        for f in bundle.nodes:
-            self.add_node(f.name)
-
-    def name_of(self, i):
-        return self.__nodes[i].name
-
-    def symbol_of(self, i):
-        return self.__nodes[i].symbol
-
-    def arity_of(self, i):
-        return self.__nodes[i].arity
-
-    def parameters_of(self, i):
-        return self.__nodes[i].p
-
-    def execute(self, name, x, args):
-        return self.__nodes[name].call(x, args)
-
-    def show(self):
-        for i, node in self.__nodes.items():
-            print(f"[{i}] - {node.abbv}")
-
-    @property
-    def random_index(self):
-        return random.choice(self.keys)
-
-    @property
-    def last_index(self):
-        return len(self.__nodes) - 1
-
-    @property
-    def nodes(self):
-        return list(self.__nodes.values())
-
-    @property
-    def keys(self):
-        return list(self.__nodes.keys())
-
-    @property
-    def max_arity(self):
-        return max([self.arity_of(i) for i in self.keys])
-
-    @property
-    def max_parameters(self):
-        return max([self.parameters_of(i) for i in self.keys])
-
-    @property
-    def size(self):
-        return len(self.__nodes)
-
-    @property
-    def ordered_list(self):
-        return [self.__nodes[i].name for i in range(self.size)]
-
-    def dumps(self) -> dict:
-        return {}
-
-
-class EmptyBundle(KartezioBundle):
-    def fill(self):
-        pass
-
-class Prototype(ABC):
-    """
-    Using Prototype Pattern to duplicate:
-    https://refactoring.guru/design-patterns/prototype
-    """
-
-    @abstractmethod
-    def clone(self):
-        pass
-
-class KartezioGenome(KartezioComponent, Prototype):
-    """
-    Only store "DNA" in a numpy array
-    No metadata stored in DNA to avoid duplicates
-    Avoiding RAM overload: https://refactoring.guru/design-patterns/flyweight
-    Default genome would be: 3 inputs, 10 function nodes (2 connections and 2 parameters), 1 output,
-    so with shape (14, 5)
-
-    Args:
-        Prototype ([type]): [description]
-
-    Returns:
-        [type]: [description]
-    """
-
-    def dumps(self) -> dict:
-        pass
-
-    def __init__(self, shape: tuple = (14, 5), sequence: np.ndarray = None):
-        if sequence is not None:
-            self.sequence = sequence
-        else:
-            self.sequence = np.zeros(shape=shape, dtype=np.uint8)
-
-    def __copy__(self):
-        new = self.__class__(*self.sequence.shape)
-        new.__dict__.update(self.__dict__)
-        return new
-
-    def __deepcopy__(self, memo={}):
-        new = self.__class__(*self.sequence.shape)
-        new.sequence = self.sequence.copy()
-        return new
-
-    def __getitem__(self, item):
-        return self.sequence.__getitem__(item)
-
-    def __setitem__(self, key, value):
-        return self.sequence.__setitem__(key, value)
-
-    def clone(self):
-        return copy.deepcopy(self)
-
-    @staticmethod
-    def from_json(json_data):
-        sequence = np.asarray(ast.literal_eval(json_data["sequence"]))
-        return KartezioGenome(sequence=sequence)
-
-
-class Factory:
-    """
-    Using Factory Pattern:
-    https://refactoring.guru/design-patterns/factory-method
-    """
-
-    def __init__(self, prototype):
-        self._prototype = None
-        self.set_prototype(prototype)
-
-    def set_prototype(self, prototype):
-        self._prototype = prototype
-
-    def create(self):
-        return self._prototype.clone()
-    
-class GenomeFactory(Factory):
-    def __init__(self, prototype: KartezioGenome):
-        super().__init__(prototype)
-
-
-class GenomeAdapter(KartezioComponent, ABC):
-    """
-    Adpater Design Pattern: https://refactoring.guru/design-patterns/adapter
-    """
-
-    def __init__(self, shape):
-        self.shape = shape
-
-
-class GenomeWriter(GenomeAdapter):
-    def write_function(self, genome, node, function_id):
-        genome[self.shape.nodes_idx + node, self.shape.func_idx] = function_id
-
-    def write_connections(self, genome, node, connections):
-        genome[
-            self.shape.nodes_idx + node, self.shape.con_idx : self.shape.para_idx
-        ] = connections
-
-    def write_parameters(self, genome, node, parameters):
-        genome[self.shape.nodes_idx + node, self.shape.para_idx :] = parameters
-
-    def write_output_connection(self, genome, output_index, connection):
-        genome[self.shape.out_idx + output_index, self.shape.con_idx] = connection
-
-
-class GenomeReader(GenomeAdapter):
-    def read_function(self, genome, node):
-        return genome[self.shape.nodes_idx + node, self.shape.func_idx]
-
-    def read_connections(self, genome, node):
-        return genome[
-            self.shape.nodes_idx + node, self.shape.con_idx : self.shape.para_idx
-        ]
-
-    def read_active_connections(self, genome, node, active_connections):
-        return genome[
-            self.shape.nodes_idx + node,
-            self.shape.con_idx : self.shape.con_idx + active_connections,
-        ]
-
-    def read_parameters(self, genome, node):
-        return genome[self.shape.nodes_idx + node, self.shape.para_idx :]
-
-    def read_outputs(self, genome):
-        return genome[self.shape.out_idx :, :]
-
-
-class GenomeReaderWriter(GenomeReader, GenomeWriter):
-    pass
-
-
-@dataclass
-class GenomeShape:
-    inputs: int = 3
-    nodes: int = 10
-    outputs: int = 1
-    connections: int = 2
-    parameters: int = 2
-    in_idx: int = field(init=False, repr=False)
-    func_idx: int = field(init=False, repr=False)
-    con_idx: int = field(init=False, repr=False)
-    nodes_idx = None
-    out_idx = None
-    para_idx = None
-    w: int = field(init=False)
-    h: int = field(init=False)
-    prototype = None
-
-    def __post_init__(self):
-        self.in_idx = 0
-        self.func_idx = 0
-        self.con_idx = 1
-        self.nodes_idx = self.inputs
-        self.out_idx = self.nodes_idx + self.nodes
-        self.para_idx = self.con_idx + self.connections
-        self.w = 1 + self.connections + self.parameters
-        self.h = self.inputs + self.nodes + self.outputs
-        self.prototype = KartezioGenome(shape=(self.h, self.w))
-
-    @staticmethod
-    def from_json(json_data):
-        return GenomeShape(
-            json_data["n_in"],
-            json_data["columns"],
-            json_data["n_out"],
-            json_data["n_conn"],
-            json_data["n_para"],
-        )
-
-
-class KartezioParser(GenomeReader):
-    def __init__(self, shape, function_bundle, endpoint):
-        super().__init__(shape)
-        self.function_bundle = function_bundle
-        self.endpoint = endpoint
-
-    def to_series_parser(self, stacker):
-        return ParserChain(self.shape, self.function_bundle, stacker, self.endpoint)
-
-    def dumps(self) -> dict:
-        return {
-            "metadata": {
-                "rows": 1,  # single row CGP
-                "columns": self.shape.nodes,
-                "n_in": self.shape.inputs,
-                "n_out": self.shape.outputs,
-                "n_para": self.shape.parameters,
-                "n_conn": self.shape.connections,
-            },
-            "functions": self.function_bundle.ordered_list,
-            "endpoint": self.endpoint.dumps(),
-            "mode": "default",
-        }
-
-    @staticmethod
-    def from_json(json_data):
-        shape = GenomeShape.from_json(json_data["metadata"])
-        bundle = KartezioBundle.from_json(json_data["functions"])
-        endpoint = KartezioEndpoint.from_json(json_data["endpoint"])
-        if json_data["mode"] == "series":
-            stacker = KartezioStacker.from_json(json_data["stacker"])
-            return ParserChain(shape, bundle, stacker, endpoint)
-        return KartezioParser(shape, bundle, endpoint)
-
-    def _parse_one_graph(self, genome, graph_source):
-        next_indices = graph_source.copy()
-        output_tree = graph_source.copy()
-        while next_indices:
-            next_index = next_indices.pop()
-            if next_index < self.shape.inputs:
-                continue
-            function_index = self.read_function(genome, next_index - self.shape.inputs)
-            active_connections = self.function_bundle.arity_of(function_index)
-            next_connections = set(
-                self.read_active_connections(
-                    genome, next_index - self.shape.inputs, active_connections
-                )
-            )
-            next_indices = next_indices.union(next_connections)
-            output_tree = output_tree.union(next_connections)
-        return sorted(list(output_tree))
-
-    def parse_to_graphs(self, genome):
-        outputs = self.read_outputs(genome)
-        graphs_list = [
-            self._parse_one_graph(genome, {output[self.shape.con_idx]})
-            for output in outputs
-        ]
-        return graphs_list
-
-    def _x_to_output_map(self, genome: KartezioGenome, graphs_list: List, x: List):
-        output_map = {i: x[i].copy() for i in range(self.shape.inputs)}
-        for graph in graphs_list:
-            for node in graph:
-                # inputs are already in the map
-                if node < self.shape.inputs:
-                    continue
-                node_index = node - self.shape.inputs
-                # fill the map with active nodes
-                function_index = self.read_function(genome, node_index)
-                arity = self.function_bundle.arity_of(function_index)
-                connections = self.read_active_connections(genome, node_index, arity)
-                inputs = [output_map[c] for c in connections]
-                p = self.read_parameters(genome, node_index)
-                value = self.function_bundle.execute(function_index, inputs, p)
-
-                output_map[node] = value
-        return output_map
-
-    def _parse_one(self, genome: KartezioGenome, graphs_list: List, x: List):
-        # fill output_map with inputs
-        output_map = self._x_to_output_map(genome, graphs_list, x)
-        return [
-            output_map[output_gene[self.shape.con_idx]]
-            for output_gene in self.read_outputs(genome)
-        ]
-
-    def active_size(self, genome):
-        node_list = []
-        graphs_list = self.parse_to_graphs(genome)
-        for graph in graphs_list:
-            for node in graph:
-                if node < self.shape.inputs:
-                    continue
-                if node < self.shape.out_idx:
-                    node_list.append(node)
-                else:
-                    continue
-        return len(node_list)
-
-    def node_histogram(self, genome):
-        nodes = {}
-        graphs_list = self.parse_to_graphs(genome)
-        for graph in graphs_list:
-            for node in graph:
-                # inputs are already in the map
-                if node < self.shape.inputs:
-                    continue
-                node_index = node - self.shape.inputs
-                # fill the map with active nodes
-                function_index = self.read_function(genome, node_index)
-                function_name = self.function_bundle.symbol_of(function_index)
-                if function_name not in nodes.keys():
-                    nodes[function_name] = 0
-                nodes[function_name] += 1
-        return nodes
-
-    def get_last_node(self, genome):
-        graphs_list = self.parse_to_graphs(genome)
-        output_functions = []
-        for graph in graphs_list:
-            for node in graph[-1:]:
-                # inputs are already in the map
-                if node < self.shape.inputs:
-                    print(f"output {node} directly connected to input.")
-                    continue
-                node_index = node - self.shape.inputs
-                # fill the map with active nodes
-                function_index = self.read_function(genome, node_index)
-                function_name = self.function_bundle.symbol_of(function_index)
-                output_functions.append(function_name)
-        return output_functions
-
-    def get_first_node(self, genome):
-        graphs_list = self.parse_to_graphs(genome)
-        input_functions = []
-
-        for graph in graphs_list:
-            for node in graph:
-                if node < self.shape.inputs:
-                    print(f"output {node} directly connected to input.")
-                    continue
-                node_index = node - self.shape.inputs
-                # fill the map with active nodes
-                function_index = self.read_function(genome, node_index)
-                function_name = self.function_bundle.symbol_of(function_index)
-                arity = self.function_bundle.arity_of(function_index)
-                connections = self.read_active_connections(genome, node_index, arity)
-                for c in connections:
-                    if c < self.shape.inputs:
-                        input_functions.append(function_name)
-        return input_functions
-
-    def bigrams(self, genome):
-        graphs_list = self.parse_to_graphs(genome)
-        outputs = self.read_outputs(genome)
-        print(graphs_list)
-        bigram_list = []
-        for i, graph in enumerate(graphs_list):
-            for j, node in enumerate(graph):
-                if node < self.shape.inputs:
-                    continue
-                node_index = node - self.shape.inputs
-                function_index = self.read_function(genome, node_index)
-                fname = self.function_bundle.symbol_of(function_index)
-                arity = self.function_bundle.arity_of(function_index)
-                connections = self.read_active_connections(genome, node_index, arity)
-                for k, c in enumerate(connections):
-                    if c < self.shape.inputs:
-                        in_name = f"IN-{c}"
-                        pair = (f"{fname}", in_name)
-                        """
-                        if arity == 1:
-                            pair = (f"{fname}", in_name)
-                        else:
-                            pair = (f"{fname}-{k}", in_name)
-                        """
-
-                    else:
-                        f2_index = self.read_function(genome, c - self.shape.inputs)
-                        f2_name = self.function_bundle.symbol_of(f2_index)
-                        """
-                        if arity == 1:
-                            pair = (f"{fname}", f2_name)
-                        else:
-                            pair = (f"{fname}-{k}", f2_name)
-                        """
-                        pair = (f"{fname}", f2_name)
-                    bigram_list.append(pair)
-
-            f_last = self.read_function(genome, outputs[i][1] - self.shape.inputs)
-            fname = self.function_bundle.symbol_of(f_last)
-            pair = (f"OUT-{i}", fname)
-            bigram_list.append(pair)
-        print(bigram_list)
-        return bigram_list
-
-    def function_distribution(self, genome):
-        graphs_list = self.parse_to_graphs(genome)
-        active_list = []
-        for graph in graphs_list:
-            for node in graph:
-                if node < self.shape.inputs:
-                    continue
-                if node >= self.shape.out_idx:
-                    continue
-                active_list.append(node)
-        functions = []
-        is_active = []
-        for i, _ in enumerate(genome.sequence):
-            if i < self.shape.inputs:
-                continue
-            if i >= self.shape.out_idx:
-                continue
-            node_index = i - self.shape.inputs
-            function_index = self.read_function(genome, node_index)
-            function_name = self.function_bundle.symbol_of(function_index)
-            functions.append(function_name)
-            is_active.append(i in active_list)
-        return functions, is_active
-
-    def parse_population(self, population, x):
-        y_pred = []
-        for i in range(len(population.individuals)):
-            y, t = self.parse(population.individuals[i], x)
-            population.set_time(i, t)
-            y_pred.append(y)
-        return y_pred
-
-    def parse(self, genome, x):
-        """Decode the Genome given a list of inputs
-
-        Args:
-            genome (KartezioGenome): [description]
-            x (List): [description]
-
-        Returns:
-            [type]: [description]
-        """
-        all_y_pred = []
-        all_times = []
-        graphs = self.parse_to_graphs(genome)
-
-        # for each image
-        for xi in x:
-            start_time = time.time()
-            y_pred = self._parse_one(genome, graphs, xi)
-            if self.endpoint is not None:
-                y_pred = self.endpoint.call(y_pred)
-            all_times.append(time.time() - start_time)
-            all_y_pred.append(y_pred)
-        whole_time = np.mean(np.array(all_times))
-        return all_y_pred, whole_time
-
-
-class ParserSequential(KartezioParser):
-    """TODO: default Parser, KartezioParser becomes ABC"""
-
-    pass
-
-
-class ParserChain(KartezioParser):
-    def __init__(self, shape, bundle, stacker, endpoint):
-        super().__init__(shape, bundle, endpoint)
-        self.stacker = stacker
-
-    def parse(self, genome, x):
-        """Decode the Genome given a list of inputs
-        Args:
-            genome (KartezioGenome): [description]
-            x (List): [description]
-        Returns:
-            [type]: [description]
-        """
-        all_y_pred = []
-        all_times = []
-        graphs = self.parse_to_graphs(genome)
-        for series in x:
-            start_time = time.time()
-            y_pred_series = []
-            # for each image
-
-            for xi in series:
-                y_pred = self._parse_one(genome, graphs, xi)
-                y_pred_series.append(y_pred)
-
-            y_pred = self.endpoint.call(self.stacker.call(y_pred_series))
-
-            all_times.append(time.time() - start_time)
-            all_y_pred.append(y_pred)
-
-        whole_time = np.mean(np.array(all_times))
-        return all_y_pred, whole_time
-
-    def dumps(self) -> dict:
-        json_data = super().dumps()
-        json_data["mode"] = "series"
-        json_data["stacker"] = self.stacker.dumps()
-        return json_data
-
-
-class KartezioToCode(KartezioParser):
-    def to_python_class(self, node_name, genome):
-        pass
-
-
-class KartezioStacker(KartezioNode, ABC):
-    def __init__(self, name: str, symbol: str, arity: int):
-        super().__init__(name, symbol, arity, 0)
-
-    def call(self, x: List, args: List = None):
-        y = []
-        for i in range(self.arity):
-            Y = [xi[i] for xi in x]
-            y.append(self.post_stack(self.stack(Y), i))
-        return y
-
-    @abstractmethod
-    def stack(self, Y: List):
-        pass
-
-    def post_stack(self, x, output_index):
-        return x
-
-    @staticmethod
-    def from_json(json_data):
-        return registry.stackers.instantiate(
-            json_data["abbv"], arity=json_data["arity"], **json_data["kwargs"]
-        )
-
-
-class ExportableNode(KartezioNode, ABC):
-    def _to_json_kwargs(self) -> dict:
-        return {}
-
-    @abstractmethod
-    def to_python(self, input_nodes: List, p: List, node_name: str):
-        """
-
-        Parameters
-        ----------
-        input_nodes :
-        p :
-        node_name :
-        """
-        pass
-
-    @abstractmethod
-    def to_cpp(self, input_nodes: List, p: List, node_name: str):
-        """
-
-        :param input_nodes:
-        :type input_nodes:
-        :param p:
-        :type p:
-        :param node_name:
-        :type node_name:
-        """
-        pass
-
-class Observer(ABC):
-    """
-    The Observer interface declares the update method, used by subjects.
-    """
-
-    @abstractmethod
-    def update(self, event):
-        """
-        Receive update from subject.
-        """
-        pass
-
-class KartezioCallback(KartezioComponent, Observer, ABC):
-    def __init__(self, frequency=1):
-        self.frequency = frequency
-        self.parser = None
-
-    def set_parser(self, parser):
-        self.parser = parser
-
-    def update(self, event):
-        if event["n"] % self.frequency == 0 or event["force"]:
-            self._callback(event["n"], event["name"], event["content"])
-
-    def dumps(self) -> dict:
-        return {}
-
-    @abstractmethod
-    def _callback(self, n, e_name, e_content):
-        pass
-
-class KartezioNode(KartezioComponent, ABC):
-    """
-    Single graph node for the Cartesian Graph.
-    One node can be a simple function (e.g. Threshold, Subtract...), but also a more complex function such as an KartezioEndpoint.
-    """
-
-    def __init__(self, name: str, symbol: str, arity: int, args: int, sources=None):
-        """
-        Args:
-            name (str): Name of the node
-            symbol (str): Abbreviation of the node, it must be written in capital letters with 3 or 4 characters (e.g. "ADD", "NOT", "OPEN"..)
-            arity (int): Number of inputs the node needs (e.g. 2 for addition (x1+x2), 1 for sqrt (sqrt(x1)))
-            args (int): Number of parameters the node needs (e.g. 0 for addition (x1+x2), 1 for threshold (threshold(x1, p1)))
-        >>> threshold_node = Threshold("threshold", "TRSH", 1, 1)
-        >>> watershed_endpoint = Watershed("watershed", "WSHD", 2, 0)
-        """
-        self.name = name
-        self.symbol = symbol
-        self.arity = arity
-        self.args = args
-        self.sources = sources
-
-    @abstractmethod
-    def call(self, x: List, args: List = None):
-        pass
-
-    def dumps(self) -> dict:
-        return {
-            "name": self.name,
-            "abbv": self.symbol,
-            "arity": self.arity,
-            "args": self.args,
-            "kwargs": self._to_json_kwargs(),
-        }
-
-    @abstractmethod
-    def _to_json_kwargs(self) -> dict:
-        pass
-
-class NodeImageProcessing(KartezioNode, ABC):
-    def _to_json_kwargs(self) -> dict:
-        return {}
-
-@registry.nodes.add("max")
-class Max(NodeImageProcessing):
-    def __init__(self):
-        super().__init__("max", "MAX", 2, 0, sources="OpenCV")
-
-    def call(self, x, args=None):
-        return image_ew_max(x[0], x[1])
-
-
-@registry.nodes.add("min")
-class Min(NodeImageProcessing):
-    def __init__(self):
-        super().__init__("min", "MIN", 2, 0, sources="OpenCV")
-
-    def call(self, x, args=None):
-        return image_ew_min(x[0], x[1])
-
-
-@registry.nodes.add("mean")
-class Mean(NodeImageProcessing):
-    def __init__(self):
-        super().__init__("mean", "MEAN", 2, 0, sources="OpenCV")
-
-    def call(self, x, args=None):
-        return image_ew_mean(x[0], x[1])
-
-
-@registry.nodes.add("add")
-class Add(ExportableNode):
-    def __init__(self):
-        super().__init__("add", "ADD", 2, 0, sources="OpenCV")
-
-    def call(self, x, args=None):
-        return cv2.add(x[0], x[1])
-
-    def to_python(self, input_names, p, output_name):
-        return "{output_name} = cv2.add({input_names[0]}, {input_names[1]})"
-
-    def to_cpp(self, input_names, p, output_name):
-        return "cv::add({input_names[0]}, {input_names[1]}, {output_name});"
-
-
-@registry.nodes.add("subtract")
-class Subtract(ExportableNode):
-    def __init__(self):
-        super().__init__("subtract", "SUB", 2, 0, sources="OpenCV")
-
-    def call(self, x, args=None):
-        return cv2.subtract(x[0], x[1])
-
-    def to_python(self, input_names, p, output_name):
-        return "{output_name} = cv2.subtract({input_names[0]}, {input_names[1]})"
-
-    def to_cpp(self, input_names, p, output_name):
-        return "cv::subtract({input_names[0]}, {input_names[1]}, {output_name});"
-
-
-@registry.nodes.add("bitwise_not")
-class BitwiseNot(ExportableNode):
-    def __init__(self):
-        super().__init__("bitwise_not", "NOT", 1, 0, sources="OpenCV")
-
-    def call(self, x, args=None):
-        return cv2.bitwise_not(x[0])
-
-    def to_python(self, input_names, p, output_name):
-        return "{output_name} = cv2.bitwise_not({input_names[0]})"
-
-    def to_cpp(self, input_names, p, output_name):
-        return "cv::bitwise_not({input_names[0]}, {output_name});"
-
-
-@registry.nodes.add("bitwise_or")
-class BitwiseOr(ExportableNode):
-    def __init__(self):
-        super().__init__("bitwise_or", "BOR", 2, 0, sources="OpenCV")
-
-    def call(self, x, args=None):
-        return cv2.bitwise_or(x[0], x[1])
-
-    def to_python(self, input_names, p, output_name):
-        return "{output_name} = cv2.bitwise_or({input_names[0]}, {input_names[1]})"
-
-    def to_cpp(self, input_names, p, output_name):
-        return "cv::bitwise_or({input_names[0]}, {input_names[1]}, {output_name});"
-
-
-@registry.nodes.add("bitwise_and")
-class BitwiseAnd(ExportableNode):
-    def __init__(self):
-        super().__init__("bitwise_and", "BAND", 2, 0, sources="OpenCV")
-
-    def call(self, x, args=None):
-        return cv2.bitwise_and(x[0], x[1])
-
-    def to_python(self, input_names, p, output_name):
-        return "{output_name} = cv2.bitwise_and({input_names[0]}, {input_names[1]})"
-
-    def to_cpp(self, input_names, p, output_name):
-        return "cv::bitwise_and({input_names[0]}, {input_names[1]}, {output_name});"
-
-
-@registry.nodes.add("bitwise_and_mask")
-class BitwiseAndMask(ExportableNode):
-    def __init__(self):
-        super().__init__("bitwise_and_mask", "ANDM", 2, 0, sources="OpenCV")
-
-    def call(self, x, args=None):
-        return cv2.bitwise_and(x[0], x[0], mask=x[1])
-
-    def to_python(self, input_names, p, output_name):
-        return "{output_name} = cv2.bitwise_and({input_names[0]}, {input_names[0]}, mask={input_names[1]})"
-
-    def to_cpp(self, input_names, p, output_name):
-        return "cv::bitwise_and({input_names[0]}, {input_names[0]}, {output_name}, {input_names[1]});"
-
-
-@registry.nodes.add("bitwise_xor")
-class BitwiseXor(ExportableNode):
-    def __init__(self):
-        super().__init__("bitwise_xor", "BXOR", 2, 0, sources="OpenCV")
-
-    def call(self, x, args=None):
-        return cv2.bitwise_xor(x[0], x[1])
-
-    def to_python(self, input_names, p, output_name):
-        return "{output_name} = cv2.bitwise_xor({input_names[0]}, {input_names[1]})"
-
-    def to_cpp(self, input_names, p, output_name):
-        return "cv::bitwise_xor({input_names[0]}, {input_names[1]}, {output_name});"
-
-
-@registry.nodes.add("sqrt")
-class SquareRoot(NodeImageProcessing):
-    def __init__(self):
-        super().__init__("sqrt", "SQRT", 1, 0, sources="OpenCV")
-
-    def call(self, x, args=None):
-        return (cv2.sqrt((x[0] / 255.0).astype(np.float32)) * 255).astype(np.uint8)
-
-
-@registry.nodes.add("pow2")
-class Square(NodeImageProcessing):
-    def __init__(self):
-        super().__init__("pow2", "POW", 1, 0, sources="OpenCV")
-
-    def call(self, x, args=None):
-        return (cv2.pow((x[0] / 255.0).astype(np.float32), 2) * 255).astype(np.uint8)
-
-
-@registry.nodes.add("exp")
-class Exp(NodeImageProcessing):
-    def __init__(self):
-        super().__init__("exp", "EXP", 1, 0, sources="OpenCV")
-
-    def call(self, x, args=None):
-        return (cv2.exp((x[0] / 255.0).astype(np.float32), 2) * 255).astype(np.uint8)
-
-
-@registry.nodes.add("log")
-class Log(NodeImageProcessing):
-    def __init__(self):
-        super().__init__("log", "LOG", 1, 0, sources="Numpy")
-
-    def call(self, x, args=None):
-        return np.log1p(x[0]).astype(np.uint8)
-
-
-@registry.nodes.add("median_blur")
-class MedianBlur(NodeImageProcessing):
-    def __init__(self):
-        super().__init__("median_blur", "BLRM", 1, 1, sources="OpenCV")
-
-    def call(self, x, args=None):
-        ksize = correct_ksize(args[0])
-        return cv2.medianBlur(x[0], ksize)
-
-
-@registry.nodes.add("gaussian_blur")
-class GaussianBlur(NodeImageProcessing):
-    def __init__(self):
-        super().__init__("gaussian_blur", "BLRG", 1, 1, sources="OpenCV")
-
-    def call(self, x, args=None):
-        ksize = correct_ksize(args[0])
-        return cv2.GaussianBlur(x[0], (ksize, ksize), 0)
-
-
-@registry.nodes.add("laplacian")
-class Laplacian(NodeImageProcessing):
-    def __init__(self):
-        super().__init__("laplacian", "LPLC", 1, 0, sources="OpenCV")
-
-    def call(self, x, args=None):
-        return cv2.Laplacian(x[0], cv2.CV_64F).astype(np.uint8)
-
-
-@registry.nodes.add("sobel")
-class Sobel(NodeImageProcessing):
-    def __init__(self):
-        super().__init__("sobel", "SOBL", 1, 2, sources="OpenCV")
-
-    def call(self, x, args=None):
-        ksize = correct_ksize(args[0])
-        if args[1] < 128:
-            return cv2.Sobel(x[0], cv2.CV_64F, 1, 0, ksize=ksize).astype(np.uint8)
-        return cv2.Sobel(x[0], cv2.CV_64F, 0, 1, ksize=ksize).astype(np.uint8)
-
-
-@registry.nodes.add("robert_cross")
-class RobertCross(NodeImageProcessing):
-    def __init__(self):
-        super().__init__("robert_cross", "RBRT", 1, 1, sources="OpenCV")
-
-    def call(self, x, args=None):
-        img = (x[0] / 255.0).astype(np.float32)
-        h = cv2.filter2D(img, -1, ROBERT_CROSS_H_KERNEL)
-        v = cv2.filter2D(img, -1, ROBERT_CROSS_V_KERNEL)
-        return (cv2.sqrt(cv2.pow(h, 2) + cv2.pow(v, 2)) * 255).astype(np.uint8)
-
-
-@registry.nodes.add("canny")
-class Canny(NodeImageProcessing):
-    def __init__(self):
-        super().__init__("canny", "CANY", 1, 2, sources="OpenCV")
-
-    def call(self, x, args=None):
-        return cv2.Canny(x[0], args[0], args[1])
-
-
-@registry.nodes.add("sharpen")
-class Sharpen(NodeImageProcessing):
-    def __init__(self):
-        super().__init__("sharpen", "SHRP", 1, 0, sources="OpenCV")
-
-    def call(self, x, args=None):
-        return cv2.filter2D(x[0], -1, SHARPEN_KERNEL)
-
-
-@registry.nodes.add("gabor")
-class GaborFilter(NodeImageProcessing):
-    def __init__(self, ksize=11):
-        super().__init__("gabor", "GABR", 1, 2, sources="OpenCV")
-        self.ksize = ksize
-
-    def call(self, x, args=None):
-        gabor_k = gabor_kernel(self.ksize, args[0], args[1])
-        return cv2.filter2D(x[0], -1, gabor_k)
-
-
-@registry.nodes.add("abs_diff")
-class AbsoluteDifference(NodeImageProcessing):
-    """from https://github.com/cytosmart-bv/tomni"""
-
-    def __init__(self):
-        super().__init__("abs_diff", "ABSD", 1, 2, sources="OpenCV")
-
-    def call(self, x, args=None):
-        ksize = correct_ksize(args[0])
-        image = x[0].copy()
-        return image - cv2.GaussianBlur(image, (ksize, ksize), 0) + args[1]
-
-
-@registry.nodes.add("abs_diff2")
-class AbsoluteDifference2(NodeImageProcessing):
-    def __init__(self):
-        super().__init__("abs_diff2", "ABS2", 2, 0, sources="OpenCV")
-
-    def call(self, x, args=None):
-        return 255 - cv2.absdiff(x[0], x[1])
-
-
-@registry.nodes.add("fluo_tophat")
-class FluoTopHat(NodeImageProcessing):
-    """from https://github.com/cytosmart-bv/tomni"""
-
-    def __init__(self):
-        super().__init__("fluo_tophat", "FLUO", 1, 2, sources="Handmade")
-
-    def _rescale_intensity(self, img, min_val, max_val):
-        output_img = np.clip(img, min_val, max_val)
-        if max_val - min_val == 0:
-            return (output_img * 255).astype(np.uint8)
-        output_img = (output_img - min_val) / (max_val - min_val) * 255
-        return output_img.astype(np.uint8)
-
-    def call(self, x, args=None):
-        kernel = kernel_from_parameters(args)
-        img = cv2.morphologyEx(x[0], cv2.MORPH_TOPHAT, kernel, iterations=10)
-        kur = np.mean(kurtosis(img, fisher=True))
-        skew1 = np.mean(skew(img))
-        if kur > 1 and skew1 > 1:
-            p2, p98 = np.percentile(img, (15, 99.5), interpolation="linear")
-        else:
-            p2, p98 = np.percentile(img, (15, 100), interpolation="linear")
-
-        return self._rescale_intensity(img, p2, p98)
-
-
-@registry.nodes.add("rel_diff")
-class RelativeDifference(NodeImageProcessing):
-    """from https://github.com/cytosmart-bv/tomni"""
-
-    def __init__(self):
-        super().__init__("rel_diff", "RELD", 1, 1, sources="Handmade")
-
-    def call(self, x, args=None):
-        img = x[0]
-        max_img = np.max(img)
-        min_img = np.min(img)
-
-        ksize = correct_ksize(args[0])
-        gb = cv2.GaussianBlur(img, (ksize, ksize), 0)
-        gb = np.float32(gb)
-
-        img = np.divide(img, gb + 1e-15, dtype=np.float32)
-        img = cv2.normalize(img, img, max_img, min_img, cv2.NORM_MINMAX)
-        return img.astype(np.uint8)
-
-
-@registry.nodes.add("erode")
-class Erode(ExportableNode):
-    def __init__(self):
-        super().__init__("erode", "EROD", 1, 2, sources="OpenCV")
-
-    def call(self, inputs, p):
-        kernel = kernel_from_parameters(p)
-        return cv2.erode(inputs[0], kernel)
-
-    def to_python(self, input_names, p, output_name):
-        return "{output_name} = cv2.erode({input_names[0]}, kernel_from_parameters({args[0]}))"
-
-    def to_cpp(self, input_names, p, output_name):
-        return "cv::erode({input_names[0]}, {output_name}, kernel_from_parameters({args[0]}));"
-
-
-@registry.nodes.add("dilate")
-class Dilate(ExportableNode):
-    def __init__(self):
-        super().__init__("dilate", "DILT", 1, 2, sources="OpenCV")
-
-    def call(self, inputs, p):
-        kernel = kernel_from_parameters(p)
-        return cv2.dilate(inputs[0], kernel)
-
-    def to_python(self, input_names, p, output_name):
-        return "{output_name} = cv2.dilate({input_names[0]}, kernel_from_parameters({args[0]}))"
-
-    def to_cpp(self, input_names, p, output_name):
-        return "cv::dilate({input_names[0]}, {output_name}, kernel_from_parameters({args[0]}));"
-
-
-@registry.nodes.add("open")
-class Open(ExportableNode):
-    def __init__(self):
-        super().__init__("open", "OPEN", 1, 2, sources="OpenCV")
-
-    def call(self, inputs, p):
-        kernel = kernel_from_parameters(p)
-        return cv2.morphologyEx(inputs[0], cv2.MORPH_OPEN, kernel)
-
-    def to_python(self, input_names, p, output_name):
-        return "{output_name} = cv2.morphologyEx({input_names[0]}, cv2.MORPH_OPEN, kernel_from_parameters({args[0]}))"
-
-    def to_cpp(self, input_names, p, output_name):
-        return "cv::morphologyEx({input_names[0]}, {output_name}, MORPH_OPEN, kernel_from_parameters({args[0]}));"
-
-
-@registry.nodes.add("close")
-class Close(ExportableNode):
-    def __init__(self):
-        super().__init__("close", "CLSE", 1, 2, sources="OpenCV")
-
-    def call(self, inputs, p):
-        kernel = kernel_from_parameters(p)
-        return cv2.morphologyEx(inputs[0], cv2.MORPH_CLOSE, kernel)
-
-    def to_python(self, input_names, p, output_name):
-        return "{output_name} = cv2.morphologyEx({input_names[0]}, cv2.MORPH_CLOSE, kernel_from_parameters({args[0]}))"
-
-    def to_cpp(self, input_names, p, output_name):
-        return "cv::morphologyEx({input_names[0]}, {output_name}, MORPH_CLOSE, kernel_from_parameters({args[0]}));"
-
-
-@registry.nodes.add("morph_gradient")
-class MorphGradient(ExportableNode):
-    def __init__(self):
-        super().__init__("morph_gradient", "MGRD", 1, 2, sources="OpenCV")
-
-    def call(self, inputs, p):
-        kernel = kernel_from_parameters(p)
-        return cv2.morphologyEx(inputs[0], cv2.MORPH_GRADIENT, kernel)
-
-    def to_python(self, input_names, p, output_name):
-        return "{output_name} = cv2.morphologyEx({input_names[0]}, cv2.MORPH_GRADIENT, kernel_from_parameters({args[0]}))"
-
-    def to_cpp(self, input_names, p, output_name):
-        return "cv::morphologyEx({input_names[0]}, {output_name}, MORPH_GRADIENT, kernel_from_parameters({args[0]}));"
-
-
-@registry.nodes.add("morph_tophat")
-class MorphTopHat(ExportableNode):
-    def __init__(self):
-        super().__init__("morph_tophat", "MTHT", 1, 2, sources="OpenCV")
-
-    def call(self, inputs, p):
-        kernel = kernel_from_parameters(p)
-        return cv2.morphologyEx(inputs[0], cv2.MORPH_TOPHAT, kernel)
-
-    def to_python(self, input_names, p, output_name):
-        return "{output_name} = cv2.morphologyEx({input_names[0]}, cv2.MORPH_TOPHAT, kernel_from_parameters({args[0]}))"
-
-    def to_cpp(self, input_names, p, output_name):
-        return "cv::morphologyEx({input_names[0]}, {output_name}, MORPH_TOPHAT, kernel_from_parameters({args[0]}));"
-
-
-@registry.nodes.add("morph_blackhat")
-class MorphBlackHat(ExportableNode):
-    def __init__(self):
-        super().__init__("morph_blackhat", "MBHT", 1, 2, sources="OpenCV")
-
-    def call(self, inputs, p):
-        kernel = kernel_from_parameters(p)
-        return cv2.morphologyEx(inputs[0], cv2.MORPH_BLACKHAT, kernel)
-
-    def to_python(self, input_names, p, output_name):
-        return "{output_name} = cv2.morphologyEx({input_names[0]}, cv2.MORPH_BLACKHAT, kernel_from_parameters({args[0]}))"
-
-    def to_cpp(self, input_names, p, output_name):
-        return "cv::morphologyEx({input_names[0]}, {output_name}, MORPH_BLACKHAT, kernel_from_parameters({args[0]}));"
-
-
-@registry.nodes.add("fill_holes")
-class FillHoles(ExportableNode):
-    def __init__(self):
-        super().__init__("fill_holes", "FILL", 1, 0, sources="Handmade")
-
-    def call(self, inputs, p):
-        return morph_fill(inputs[0])
-
-    def to_python(self, input_names, p, output_name):
-        return "{output_name} = imfill({input_names[0]})"
-
-    def to_cpp(self, input_names, p, output_name):
-        return "imfill({input_names[0]}, {output_name});"
-
-
-@registry.nodes.add("remove_small_objects")
-class RemoveSmallObjects(NodeImageProcessing):
-    def __init__(self):
-        super().__init__("remove_small_objects", "RMSO", 1, 1, sources="Skimage")
-
-    def call(self, x, args=None):
-        return remove_small_objects(x[0] > 0, args[0]).astype(np.uint8)
-
-
-@registry.nodes.add("remove_small_holes")
-class RemoveSmallHoles(NodeImageProcessing):
-    def __init__(self):
-        super().__init__("remove_small_holes", "RMSH", 1, 1, sources="Skimage")
-
-    def call(self, x, args=None):
-        return remove_small_holes(x[0] > 0, args[0]).astype(np.uint8)
-
-
-@registry.nodes.add("threshold")
-class Threshold(NodeImageProcessing):
-    def __init__(self):
-        super().__init__("threshold", "TRH", 1, 2, sources="OpenCV")
-
-    def call(self, x, args=None):
-        if args[0] < 128:
-            return threshold_binary(x[0], args[1])
-        return threshold_tozero(x[0], args[1])
-
-
-@registry.nodes.add("threshold_at_1")
-class ThresholdAt1(NodeImageProcessing):
-    def __init__(self):
-        super().__init__("threshold_at_1", "TRH1", 1, 1, sources="OpenCV")
-
-    def call(self, x, args=None):
-        if args[0] < 128:
-            return threshold_binary(x[0], 1)
-        return threshold_tozero(x[0], 1)
-
-
-# @registry.nodes.add("TRHA")
-class ThresholdAdaptive(NodeImageProcessing):
-    def __init__(self):
-        super().__init__("adaptive_threshold", "TRHA", 1, 2, sources="OpenCV")
-
-    def call(self, x, args=None):
-        ksize = correct_ksize(args[0])
-        C = args[1] - 128  # to allow negative values
-        return cv2.adaptiveThreshold(
-            x[0],
-            255,
-            cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-            cv2.THRESH_BINARY,
-            ksize,
-            C,
-        )
-
-
-@registry.nodes.add("distance_transform")
-class DistanceTransform(NodeImageProcessing):
-    def __init__(self):
-        super().__init__("distance_transform", "DTRF", 1, 1, sources="OpenCV")
-
-    def call(self, x, args=None):
-        return cv2.normalize(
-            cv2.distanceTransform(x[0].copy(), cv2.DIST_L2, 3),
-            None,
-            0,
-            255,
-            cv2.NORM_MINMAX,
-            cv2.CV_8U,
-        )
-
-
-@registry.nodes.add("distance_transform_and_thresh")
-class DistanceTransformAndThresh(NodeImageProcessing):
-    def __init__(self):
-        super().__init__(
-            "distance_transform_and_thresh", "DTTR", 1, 2, sources="OpenCV"
-        )
-
-    def call(self, x, args=None):
-        d = cv2.normalize(
-            cv2.distanceTransform(x[0].copy(), cv2.DIST_L2, 3),
-            None,
-            0,
-            255,
-            cv2.NORM_MINMAX,
-            cv2.CV_8U,
-        )
-        return threshold_binary(d, args[0])
-
-
-@registry.nodes.add("inrange_bin")
-class BinaryInRange(NodeImageProcessing):
-    def __init__(self):
-        super().__init__("inrange_bin", "BRNG", 1, 2, sources="OpenCV")
-
-    def call(self, x, args=None):
-        lower = int(min(args[0], args[1]))
-        upper = int(max(args[0], args[1]))
-        return cv2.inRange(x[0], lower, upper)
-
-
-@registry.nodes.add("inrange")
-class InRange(NodeImageProcessing):
-    def __init__(self):
-        super().__init__("inrange", "RNG", 1, 2, sources="OpenCV")
-
-    def call(self, x, args=None):
-        lower = int(min(args[0], args[1]))
-        upper = int(max(args[0], args[1]))
-        return cv2.bitwise_and(
-            x[0],
-            x[0],
-            mask=cv2.inRange(x[0], lower, upper),
-        )
-
-
-IMAGE_NODES_ABBV_LIST = registry.nodes.list().keys()
-
-@dataclass
-class GenomeShape:
-    inputs: int = 3
-    nodes: int = 10
-    outputs: int = 1
-    connections: int = 2
-    parameters: int = 2
-    in_idx: int = field(init=False, repr=False)
-    func_idx: int = field(init=False, repr=False)
-    con_idx: int = field(init=False, repr=False)
-    nodes_idx = None
-    out_idx = None
-    para_idx = None
-    w: int = field(init=False)
-    h: int = field(init=False)
-    prototype = None
-
-    def __post_init__(self):
-        self.in_idx = 0
-        self.func_idx = 0
-        self.con_idx = 1
-        self.nodes_idx = self.inputs
-        self.out_idx = self.nodes_idx + self.nodes
-        self.para_idx = self.con_idx + self.connections
-        self.w = 1 + self.connections + self.parameters
-        self.h = self.inputs + self.nodes + self.outputs
-        self.prototype = KartezioGenome(shape=(self.h, self.w))
-
-    @staticmethod
-    def from_json(json_data):
-        return GenomeShape(
-            json_data["n_in"],
-            json_data["columns"],
-            json_data["n_out"],
-            json_data["n_conn"],
-            json_data["n_para"],
-        )
-
-
-def to_metadata(json_data):
-    return GenomeShape(
-        json_data["n_in"],
-        json_data["columns"],
-        json_data["n_out"],
-        json_data["n_conn"],
-        json_data["n_para"],
-    )
-
-
-def to_genome(json_data):
-    sequence = np.asarray(ast.literal_eval(json_data["sequence"]))
-    return KartezioGenome(sequence=sequence)
-
-
-def from_individual(individual):
-    return {
-        "sequence": simplejson.dumps(individual.sequence.tolist()),
-        "fitness": individual.fitness,
-    }
-
-
-def from_population(population: List):
-    json_data = []
-    for individual_idx, individual in population:
-        json_data.append(from_individual(individual))
-    return json_data
-
-
-def from_dataset(dataset):
-    return {
-        "name": dataset.name,
-        "label_name": dataset.label_name,
-        "indices": dataset.indices,
-    }
-
-def singleton(cls):
-    """
-    https://towardsdatascience.com/10-fabulous-python-decorators-ab674a732871
-    """
-    instances = {}
-
-    def wrapper(*args, **kwargs):
-        if cls not in instances:
-            instances[cls] = cls(*args, **kwargs)
-        return instances[cls]
-
-    return wrapper
-
-
-class Prototype(ABC):
-    """
-    Using Prototype Pattern to duplicate:
-    https://refactoring.guru/design-patterns/prototype
-    """
-
-    @abstractmethod
-    def clone(self):
-        pass
-
-
-class Factory:
-    """
-    Using Factory Pattern:
-    https://refactoring.guru/design-patterns/factory-method
-    """
-
-    def __init__(self, prototype):
-        self._prototype = None
-        self.set_prototype(prototype)
-
-    def set_prototype(self, prototype):
-        self._prototype = prototype
-
-    def create(self):
-        return self._prototype.clone()
-
-
-class Observer(ABC):
-    """
-    The Observer interface declares the update method, used by subjects.
-    """
-
-    @abstractmethod
-    def update(self, event):
-        """
-        Receive update from subject.
-        """
-        pass
-
-
-class Observable(ABC):
-    """
-    For the sake of simplicity, the Observable state, essential to all
-    subscribers, is stored in this variable.
-    """
-
-    def __init__(self):
-        self._observers: List[Observer] = []
-
-    def attach(self, observer: Observer) -> None:
-        self._observers.append(observer)
-
-    def detach(self, observer: Observer) -> None:
-        self._observers.remove(observer)
-
-    def clear(self) -> None:
-        self._observers = []
-
-    def notify(self, event) -> None:
-        for observer in self._observers:
-            observer.update(event)
-
-
-def register_endpoints():
     print(
-        f"[Kartezio - INFO] -  {len(registry.endpoints.list())} endpoints registered."
-    )
+        f"[Kartezio - INFO] -  {len(registry.nodes.list())} nodes registered.")
 
 
 class KartezioComponent(Serializable, ABC):
@@ -1592,8 +111,6 @@ class KartezioNode(KartezioComponent, ABC):
         pass
 
 
-    
-
 class KartezioEndpoint(KartezioNode, ABC):
     """
     Terminal KartezioNode, executed after graph parsing.
@@ -1618,92 +135,6 @@ class KartezioPreprocessing(KartezioNode, ABC):
 
     def __init__(self, name: str, symbol: str):
         super().__init__(name, symbol, 1, 0)
-
-class TransformToHSV(KartezioPreprocessing):
-    def __init__(self, source_color="bgr"):
-        super().__init__("Transform to HSV", "HSV")
-        self.source_color = source_color
-
-    def call(self, x, args=None):
-        new_x = []
-        for i in range(len(x)):
-            original_image = cv2.merge(x[i])
-            if self.source_color == "bgr":
-                transformed = bgr2hsv(original_image)
-            elif self.source_color == "rgb":
-                transformed = bgr2hsv(rgb2bgr(original_image))
-            new_x.append(image_split(transformed))
-        return new_x
-
-    def _to_json_kwargs(self) -> dict:
-        pass
-
-
-class TransformToHED(KartezioPreprocessing):
-    def __init__(self, source_color="bgr"):
-        super().__init__("Transform to HED", "HED")
-        self.source_color = source_color
-
-    def call(self, x, args=None):
-        new_x = []
-        for i in range(len(x)):
-            original_image = cv2.merge(x[i])
-            if self.source_color == "bgr":
-                transformed = bgr2hed(original_image)
-            elif self.source_color == "rgb":
-                transformed = rgb2hed(original_image)
-            new_x.append(image_split(transformed))
-        return new_x
-
-    def _to_json_kwargs(self) -> dict:
-        pass
-
-
-class SelectChannels(KartezioPreprocessing):
-    def __init__(self, channels):
-        super().__init__("Channel Selection", "CHAN")
-        self.channels = channels
-
-    def call(self, x, args=None):
-        new_x = []
-        for i in range(len(x)):
-            one_item = [x[i][channel] for channel in self.channels]
-            new_x.append(one_item)
-        return new_x
-
-    def _to_json_kwargs(self) -> dict:
-        pass
-
-
-class Format3D(KartezioPreprocessing):
-    def __init__(self, channels=None, z_range=None):
-        super().__init__("Format to 3D", "F3D")
-        self.channels = channels
-        self.z_range = z_range
-
-    def call(self, x, args=None):
-        new_x = []
-        for i in range(len(x)):
-            one_item = []
-            if self.channels:
-                if self.z_range:
-                    for z in self.z_range:
-                        one_item.append([x[i][channel][z] for channel in self.channels])
-                else:
-                    for z in range(len(x[i][0])):
-                        one_item.append([x[i][channel][z] for channel in self.channels])
-            else:
-                if self.z_range:
-                    for z in self.z_range:
-                        one_item.append([x[i][:][z]])
-                else:
-                    for z in range(len(x[i])):
-                        one_item.append([x[i][:][z]])
-            new_x.append(one_item)
-        return new_x
-
-    def _to_json_kwargs(self) -> dict:
-        pass
 
 
 class KartezioBundle(KartezioComponent, ABC):
@@ -1790,12 +221,17 @@ class EmptyBundle(KartezioBundle):
     def fill(self):
         pass
 
-@singleton
-class BundleOpenCV(KartezioBundle):
-    def fill(self):
-        for node_abbv in IMAGE_NODES_ABBV_LIST:
-            self.add_node(node_abbv)
-BUNDLE_OPENCV = BundleOpenCV()
+
+class Prototype(ABC):
+    """
+    Using Prototype Pattern to duplicate:
+    https://refactoring.guru/design-patterns/prototype
+    """
+
+    @abstractmethod
+    def clone(self):
+        pass
+
 
 class KartezioGenome(KartezioComponent, Prototype):
     """
@@ -1844,6 +280,23 @@ class KartezioGenome(KartezioComponent, Prototype):
     def from_json(json_data):
         sequence = np.asarray(ast.literal_eval(json_data["sequence"]))
         return KartezioGenome(sequence=sequence)
+
+
+class Factory:
+    """
+    Using Factory Pattern:
+    https://refactoring.guru/design-patterns/factory-method
+    """
+
+    def __init__(self, prototype):
+        self._prototype = None
+        self.set_prototype(prototype)
+
+    def set_prototype(self, prototype):
+        self._prototype = prototype
+
+    def create(self):
+        return self._prototype.clone()
 
 
 class GenomeFactory(Factory):
@@ -1903,6 +356,44 @@ class GenomeReader(GenomeAdapter):
 class GenomeReaderWriter(GenomeReader, GenomeWriter):
     pass
 
+
+@dataclass
+class GenomeShape:
+    inputs: int = 3
+    nodes: int = 10
+    outputs: int = 1
+    connections: int = 2
+    parameters: int = 2
+    in_idx: int = field(init=False, repr=False)
+    func_idx: int = field(init=False, repr=False)
+    con_idx: int = field(init=False, repr=False)
+    nodes_idx = None
+    out_idx = None
+    para_idx = None
+    w: int = field(init=False)
+    h: int = field(init=False)
+    prototype = None
+
+    def __post_init__(self):
+        self.in_idx = 0
+        self.func_idx = 0
+        self.con_idx = 1
+        self.nodes_idx = self.inputs
+        self.out_idx = self.nodes_idx + self.nodes
+        self.para_idx = self.con_idx + self.connections
+        self.w = 1 + self.connections + self.parameters
+        self.h = self.inputs + self.nodes + self.outputs
+        self.prototype = KartezioGenome(shape=(self.h, self.w))
+
+    @staticmethod
+    def from_json(json_data):
+        return GenomeShape(
+            json_data["n_in"],
+            json_data["columns"],
+            json_data["n_out"],
+            json_data["n_conn"],
+            json_data["n_para"],
+        )
 
 
 class KartezioParser(GenomeReader):
@@ -2246,16 +737,1632 @@ class KartezioStacker(KartezioNode, ABC):
                                              arity=json_data["arity"],
                                              **json_data["kwargs"])
 
+
+class ExportableNode(KartezioNode, ABC):
+
+    def _to_json_kwargs(self) -> dict:
+        return {}
+
+    @abstractmethod
+    def to_python(self, input_nodes: List, p: List, node_name: str):
+        """
+
+        Parameters
+        ----------
+        input_nodes :
+        p :
+        node_name :
+        """
+        pass
+
+    @abstractmethod
+    def to_cpp(self, input_nodes: List, p: List, node_name: str):
+        """
+
+        :param input_nodes:
+        :type input_nodes:
+        :param p:
+        :type p:
+        :param node_name:
+        :type node_name:
+        """
+        pass
+
+
+class Observer(ABC):
+    """
+    The Observer interface declares the update method, used by subjects.
+    """
+
+    @abstractmethod
+    def update(self, event):
+        """
+        Receive update from subject.
+        """
+        pass
+
+
+class KartezioCallback(KartezioComponent, Observer, ABC):
+
+    def __init__(self, frequency=1):
+        self.frequency = frequency
+        self.parser = None
+
+    def set_parser(self, parser):
+        self.parser = parser
+
+    def update(self, event):
+        if event["n"] % self.frequency == 0 or event["force"]:
+            self._callback(event["n"], event["name"], event["content"])
+
+    def dumps(self) -> dict:
+        return {}
+
+    @abstractmethod
+    def _callback(self, n, e_name, e_content):
+        pass
+
+
+class KartezioNode(KartezioComponent, ABC):
+    """
+    Single graph node for the Cartesian Graph.
+    One node can be a simple function (e.g. Threshold, Subtract...), but also a more complex function such as an KartezioEndpoint.
+    """
+
+    def __init__(self,
+                 name: str,
+                 symbol: str,
+                 arity: int,
+                 args: int,
+                 sources=None):
+        """
+        Args:
+            name (str): Name of the node
+            symbol (str): Abbreviation of the node, it must be written in capital letters with 3 or 4 characters (e.g. "ADD", "NOT", "OPEN"..)
+            arity (int): Number of inputs the node needs (e.g. 2 for addition (x1+x2), 1 for sqrt (sqrt(x1)))
+            args (int): Number of parameters the node needs (e.g. 0 for addition (x1+x2), 1 for threshold (threshold(x1, p1)))
+        >>> threshold_node = Threshold("threshold", "TRSH", 1, 1)
+        >>> watershed_endpoint = Watershed("watershed", "WSHD", 2, 0)
+        """
+        self.name = name
+        self.symbol = symbol
+        self.arity = arity
+        self.args = args
+        self.sources = sources
+
+    @abstractmethod
+    def call(self, x: List, args: List = None):
+        pass
+
+    def dumps(self) -> dict:
+        return {
+            "name": self.name,
+            "abbv": self.symbol,
+            "arity": self.arity,
+            "args": self.args,
+            "kwargs": self._to_json_kwargs(),
+        }
+
+    @abstractmethod
+    def _to_json_kwargs(self) -> dict:
+        pass
+
+
+class NodeImageProcessing(KartezioNode, ABC):
+
+    def _to_json_kwargs(self) -> dict:
+        return {}
+
+
+@registry.nodes.add("max")
+class Max(NodeImageProcessing):
+
+    def __init__(self):
+        super().__init__("max", "MAX", 2, 0, sources="OpenCV")
+
+    def call(self, x, args=None):
+        return image_ew_max(x[0], x[1])
+
+
+@registry.nodes.add("min")
+class Min(NodeImageProcessing):
+
+    def __init__(self):
+        super().__init__("min", "MIN", 2, 0, sources="OpenCV")
+
+    def call(self, x, args=None):
+        return image_ew_min(x[0], x[1])
+
+
+@registry.nodes.add("mean")
+class Mean(NodeImageProcessing):
+
+    def __init__(self):
+        super().__init__("mean", "MEAN", 2, 0, sources="OpenCV")
+
+    def call(self, x, args=None):
+        return image_ew_mean(x[0], x[1])
+
+
+@registry.nodes.add("add")
+class Add(ExportableNode):
+
+    def __init__(self):
+        super().__init__("add", "ADD", 2, 0, sources="OpenCV")
+
+    def call(self, x, args=None):
+        return cv2.add(x[0], x[1])
+
+    def to_python(self, input_names, p, output_name):
+        return "{output_name} = cv2.add({input_names[0]}, {input_names[1]})"
+
+    def to_cpp(self, input_names, p, output_name):
+        return "cv::add({input_names[0]}, {input_names[1]}, {output_name});"
+
+
+@registry.nodes.add("subtract")
+class Subtract(ExportableNode):
+
+    def __init__(self):
+        super().__init__("subtract", "SUB", 2, 0, sources="OpenCV")
+
+    def call(self, x, args=None):
+        return cv2.subtract(x[0], x[1])
+
+    def to_python(self, input_names, p, output_name):
+        return "{output_name} = cv2.subtract({input_names[0]}, {input_names[1]})"
+
+    def to_cpp(self, input_names, p, output_name):
+        return "cv::subtract({input_names[0]}, {input_names[1]}, {output_name});"
+
+
+@registry.nodes.add("bitwise_not")
+class BitwiseNot(ExportableNode):
+
+    def __init__(self):
+        super().__init__("bitwise_not", "NOT", 1, 0, sources="OpenCV")
+
+    def call(self, x, args=None):
+        return cv2.bitwise_not(x[0])
+
+    def to_python(self, input_names, p, output_name):
+        return "{output_name} = cv2.bitwise_not({input_names[0]})"
+
+    def to_cpp(self, input_names, p, output_name):
+        return "cv::bitwise_not({input_names[0]}, {output_name});"
+
+
+@registry.nodes.add("bitwise_or")
+class BitwiseOr(ExportableNode):
+
+    def __init__(self):
+        super().__init__("bitwise_or", "BOR", 2, 0, sources="OpenCV")
+
+    def call(self, x, args=None):
+        return cv2.bitwise_or(x[0], x[1])
+
+    def to_python(self, input_names, p, output_name):
+        return "{output_name} = cv2.bitwise_or({input_names[0]}, {input_names[1]})"
+
+    def to_cpp(self, input_names, p, output_name):
+        return "cv::bitwise_or({input_names[0]}, {input_names[1]}, {output_name});"
+
+
+@registry.nodes.add("bitwise_and")
+class BitwiseAnd(ExportableNode):
+
+    def __init__(self):
+        super().__init__("bitwise_and", "BAND", 2, 0, sources="OpenCV")
+
+    def call(self, x, args=None):
+        return cv2.bitwise_and(x[0], x[1])
+
+    def to_python(self, input_names, p, output_name):
+        return "{output_name} = cv2.bitwise_and({input_names[0]}, {input_names[1]})"
+
+    def to_cpp(self, input_names, p, output_name):
+        return "cv::bitwise_and({input_names[0]}, {input_names[1]}, {output_name});"
+
+
+@registry.nodes.add("bitwise_and_mask")
+class BitwiseAndMask(ExportableNode):
+
+    def __init__(self):
+        super().__init__("bitwise_and_mask", "ANDM", 2, 0, sources="OpenCV")
+
+    def call(self, x, args=None):
+        return cv2.bitwise_and(x[0], x[0], mask=x[1])
+
+    def to_python(self, input_names, p, output_name):
+        return "{output_name} = cv2.bitwise_and({input_names[0]}, {input_names[0]}, mask={input_names[1]})"
+
+    def to_cpp(self, input_names, p, output_name):
+        return "cv::bitwise_and({input_names[0]}, {input_names[0]}, {output_name}, {input_names[1]});"
+
+
+@registry.nodes.add("bitwise_xor")
+class BitwiseXor(ExportableNode):
+
+    def __init__(self):
+        super().__init__("bitwise_xor", "BXOR", 2, 0, sources="OpenCV")
+
+    def call(self, x, args=None):
+        return cv2.bitwise_xor(x[0], x[1])
+
+    def to_python(self, input_names, p, output_name):
+        return "{output_name} = cv2.bitwise_xor({input_names[0]}, {input_names[1]})"
+
+    def to_cpp(self, input_names, p, output_name):
+        return "cv::bitwise_xor({input_names[0]}, {input_names[1]}, {output_name});"
+
+
+@registry.nodes.add("sqrt")
+class SquareRoot(NodeImageProcessing):
+
+    def __init__(self):
+        super().__init__("sqrt", "SQRT", 1, 0, sources="OpenCV")
+
+    def call(self, x, args=None):
+        return (cv2.sqrt(
+            (x[0] / 255.0).astype(np.float32)) * 255).astype(np.uint8)
+
+
+@registry.nodes.add("pow2")
+class Square(NodeImageProcessing):
+
+    def __init__(self):
+        super().__init__("pow2", "POW", 1, 0, sources="OpenCV")
+
+    def call(self, x, args=None):
+        return (cv2.pow(
+            (x[0] / 255.0).astype(np.float32), 2) * 255).astype(np.uint8)
+
+
+@registry.nodes.add("exp")
+class Exp(NodeImageProcessing):
+
+    def __init__(self):
+        super().__init__("exp", "EXP", 1, 0, sources="OpenCV")
+
+    def call(self, x, args=None):
+        return (cv2.exp(
+            (x[0] / 255.0).astype(np.float32), 2) * 255).astype(np.uint8)
+
+
+@registry.nodes.add("log")
+class Log(NodeImageProcessing):
+
+    def __init__(self):
+        super().__init__("log", "LOG", 1, 0, sources="Numpy")
+
+    def call(self, x, args=None):
+        return np.log1p(x[0]).astype(np.uint8)
+
+
+@registry.nodes.add("median_blur")
+class MedianBlur(NodeImageProcessing):
+
+    def __init__(self):
+        super().__init__("median_blur", "BLRM", 1, 1, sources="OpenCV")
+
+    def call(self, x, args=None):
+        ksize = correct_ksize(args[0])
+        return cv2.medianBlur(x[0], ksize)
+
+
+@registry.nodes.add("gaussian_blur")
+class GaussianBlur(NodeImageProcessing):
+
+    def __init__(self):
+        super().__init__("gaussian_blur", "BLRG", 1, 1, sources="OpenCV")
+
+    def call(self, x, args=None):
+        ksize = correct_ksize(args[0])
+        return cv2.GaussianBlur(x[0], (ksize, ksize), 0)
+
+
+@registry.nodes.add("laplacian")
+class Laplacian(NodeImageProcessing):
+
+    def __init__(self):
+        super().__init__("laplacian", "LPLC", 1, 0, sources="OpenCV")
+
+    def call(self, x, args=None):
+        return cv2.Laplacian(x[0], cv2.CV_64F).astype(np.uint8)
+
+
+@registry.nodes.add("sobel")
+class Sobel(NodeImageProcessing):
+
+    def __init__(self):
+        super().__init__("sobel", "SOBL", 1, 2, sources="OpenCV")
+
+    def call(self, x, args=None):
+        ksize = correct_ksize(args[0])
+        if args[1] < 128:
+            return cv2.Sobel(x[0], cv2.CV_64F, 1, 0,
+                             ksize=ksize).astype(np.uint8)
+        return cv2.Sobel(x[0], cv2.CV_64F, 0, 1, ksize=ksize).astype(np.uint8)
+
+
+@registry.nodes.add("robert_cross")
+class RobertCross(NodeImageProcessing):
+
+    def __init__(self):
+        super().__init__("robert_cross", "RBRT", 1, 1, sources="OpenCV")
+
+    def call(self, x, args=None):
+        img = (x[0] / 255.0).astype(np.float32)
+        h = cv2.filter2D(img, -1, ROBERT_CROSS_H_KERNEL)
+        v = cv2.filter2D(img, -1, ROBERT_CROSS_V_KERNEL)
+        return (cv2.sqrt(cv2.pow(h, 2) + cv2.pow(v, 2)) * 255).astype(np.uint8)
+
+
+@registry.nodes.add("canny")
+class Canny(NodeImageProcessing):
+
+    def __init__(self):
+        super().__init__("canny", "CANY", 1, 2, sources="OpenCV")
+
+    def call(self, x, args=None):
+        return cv2.Canny(x[0], args[0], args[1])
+
+
+@registry.nodes.add("sharpen")
+class Sharpen(NodeImageProcessing):
+
+    def __init__(self):
+        super().__init__("sharpen", "SHRP", 1, 0, sources="OpenCV")
+
+    def call(self, x, args=None):
+        return cv2.filter2D(x[0], -1, SHARPEN_KERNEL)
+
+
+@registry.nodes.add("gabor")
+class GaborFilter(NodeImageProcessing):
+
+    def __init__(self, ksize=11):
+        super().__init__("gabor", "GABR", 1, 2, sources="OpenCV")
+        self.ksize = ksize
+
+    def call(self, x, args=None):
+        gabor_k = gabor_kernel(self.ksize, args[0], args[1])
+        return cv2.filter2D(x[0], -1, gabor_k)
+
+
+@registry.nodes.add("abs_diff")
+class AbsoluteDifference(NodeImageProcessing):
+    """from https://github.com/cytosmart-bv/tomni"""
+
+    def __init__(self):
+        super().__init__("abs_diff", "ABSD", 1, 2, sources="OpenCV")
+
+    def call(self, x, args=None):
+        ksize = correct_ksize(args[0])
+        image = x[0].copy()
+        return image - cv2.GaussianBlur(image, (ksize, ksize), 0) + args[1]
+
+
+@registry.nodes.add("abs_diff2")
+class AbsoluteDifference2(NodeImageProcessing):
+
+    def __init__(self):
+        super().__init__("abs_diff2", "ABS2", 2, 0, sources="OpenCV")
+
+    def call(self, x, args=None):
+        return 255 - cv2.absdiff(x[0], x[1])
+
+
+@registry.nodes.add("fluo_tophat")
+class FluoTopHat(NodeImageProcessing):
+    """from https://github.com/cytosmart-bv/tomni"""
+
+    def __init__(self):
+        super().__init__("fluo_tophat", "FLUO", 1, 2, sources="Handmade")
+
+    def _rescale_intensity(self, img, min_val, max_val):
+        output_img = np.clip(img, min_val, max_val)
+        if max_val - min_val == 0:
+            return (output_img * 255).astype(np.uint8)
+        output_img = (output_img - min_val) / (max_val - min_val) * 255
+        return output_img.astype(np.uint8)
+
+    def call(self, x, args=None):
+        kernel = kernel_from_parameters(args)
+        img = cv2.morphologyEx(x[0], cv2.MORPH_TOPHAT, kernel, iterations=10)
+        kur = np.mean(kurtosis(img, fisher=True))
+        skew1 = np.mean(skew(img))
+        if kur > 1 and skew1 > 1:
+            p2, p98 = np.percentile(img, (15, 99.5), interpolation="linear")
+        else:
+            p2, p98 = np.percentile(img, (15, 100), interpolation="linear")
+
+        return self._rescale_intensity(img, p2, p98)
+
+
+@registry.nodes.add("rel_diff")
+class RelativeDifference(NodeImageProcessing):
+    """from https://github.com/cytosmart-bv/tomni"""
+
+    def __init__(self):
+        super().__init__("rel_diff", "RELD", 1, 1, sources="Handmade")
+
+    def call(self, x, args=None):
+        img = x[0]
+        max_img = np.max(img)
+        min_img = np.min(img)
+
+        ksize = correct_ksize(args[0])
+        gb = cv2.GaussianBlur(img, (ksize, ksize), 0)
+        gb = np.float32(gb)
+
+        img = np.divide(img, gb + 1e-15, dtype=np.float32)
+        img = cv2.normalize(img, img, max_img, min_img, cv2.NORM_MINMAX)
+        return img.astype(np.uint8)
+
+
+@registry.nodes.add("erode")
+class Erode(ExportableNode):
+
+    def __init__(self):
+        super().__init__("erode", "EROD", 1, 2, sources="OpenCV")
+
+    def call(self, inputs, p):
+        kernel = kernel_from_parameters(p)
+        return cv2.erode(inputs[0], kernel)
+
+    def to_python(self, input_names, p, output_name):
+        return "{output_name} = cv2.erode({input_names[0]}, kernel_from_parameters({args[0]}))"
+
+    def to_cpp(self, input_names, p, output_name):
+        return "cv::erode({input_names[0]}, {output_name}, kernel_from_parameters({args[0]}));"
+
+
+@registry.nodes.add("dilate")
+class Dilate(ExportableNode):
+
+    def __init__(self):
+        super().__init__("dilate", "DILT", 1, 2, sources="OpenCV")
+
+    def call(self, inputs, p):
+        kernel = kernel_from_parameters(p)
+        return cv2.dilate(inputs[0], kernel)
+
+    def to_python(self, input_names, p, output_name):
+        return "{output_name} = cv2.dilate({input_names[0]}, kernel_from_parameters({args[0]}))"
+
+    def to_cpp(self, input_names, p, output_name):
+        return "cv::dilate({input_names[0]}, {output_name}, kernel_from_parameters({args[0]}));"
+
+
+@registry.nodes.add("open")
+class Open(ExportableNode):
+
+    def __init__(self):
+        super().__init__("open", "OPEN", 1, 2, sources="OpenCV")
+
+    def call(self, inputs, p):
+        kernel = kernel_from_parameters(p)
+        return cv2.morphologyEx(inputs[0], cv2.MORPH_OPEN, kernel)
+
+    def to_python(self, input_names, p, output_name):
+        return "{output_name} = cv2.morphologyEx({input_names[0]}, cv2.MORPH_OPEN, kernel_from_parameters({args[0]}))"
+
+    def to_cpp(self, input_names, p, output_name):
+        return "cv::morphologyEx({input_names[0]}, {output_name}, MORPH_OPEN, kernel_from_parameters({args[0]}));"
+
+
+@registry.nodes.add("close")
+class Close(ExportableNode):
+
+    def __init__(self):
+        super().__init__("close", "CLSE", 1, 2, sources="OpenCV")
+
+    def call(self, inputs, p):
+        kernel = kernel_from_parameters(p)
+        return cv2.morphologyEx(inputs[0], cv2.MORPH_CLOSE, kernel)
+
+    def to_python(self, input_names, p, output_name):
+        return "{output_name} = cv2.morphologyEx({input_names[0]}, cv2.MORPH_CLOSE, kernel_from_parameters({args[0]}))"
+
+    def to_cpp(self, input_names, p, output_name):
+        return "cv::morphologyEx({input_names[0]}, {output_name}, MORPH_CLOSE, kernel_from_parameters({args[0]}));"
+
+
+@registry.nodes.add("morph_gradient")
+class MorphGradient(ExportableNode):
+
+    def __init__(self):
+        super().__init__("morph_gradient", "MGRD", 1, 2, sources="OpenCV")
+
+    def call(self, inputs, p):
+        kernel = kernel_from_parameters(p)
+        return cv2.morphologyEx(inputs[0], cv2.MORPH_GRADIENT, kernel)
+
+    def to_python(self, input_names, p, output_name):
+        return "{output_name} = cv2.morphologyEx({input_names[0]}, cv2.MORPH_GRADIENT, kernel_from_parameters({args[0]}))"
+
+    def to_cpp(self, input_names, p, output_name):
+        return "cv::morphologyEx({input_names[0]}, {output_name}, MORPH_GRADIENT, kernel_from_parameters({args[0]}));"
+
+
+@registry.nodes.add("morph_tophat")
+class MorphTopHat(ExportableNode):
+
+    def __init__(self):
+        super().__init__("morph_tophat", "MTHT", 1, 2, sources="OpenCV")
+
+    def call(self, inputs, p):
+        kernel = kernel_from_parameters(p)
+        return cv2.morphologyEx(inputs[0], cv2.MORPH_TOPHAT, kernel)
+
+    def to_python(self, input_names, p, output_name):
+        return "{output_name} = cv2.morphologyEx({input_names[0]}, cv2.MORPH_TOPHAT, kernel_from_parameters({args[0]}))"
+
+    def to_cpp(self, input_names, p, output_name):
+        return "cv::morphologyEx({input_names[0]}, {output_name}, MORPH_TOPHAT, kernel_from_parameters({args[0]}));"
+
+
+@registry.nodes.add("morph_blackhat")
+class MorphBlackHat(ExportableNode):
+
+    def __init__(self):
+        super().__init__("morph_blackhat", "MBHT", 1, 2, sources="OpenCV")
+
+    def call(self, inputs, p):
+        kernel = kernel_from_parameters(p)
+        return cv2.morphologyEx(inputs[0], cv2.MORPH_BLACKHAT, kernel)
+
+    def to_python(self, input_names, p, output_name):
+        return "{output_name} = cv2.morphologyEx({input_names[0]}, cv2.MORPH_BLACKHAT, kernel_from_parameters({args[0]}))"
+
+    def to_cpp(self, input_names, p, output_name):
+        return "cv::morphologyEx({input_names[0]}, {output_name}, MORPH_BLACKHAT, kernel_from_parameters({args[0]}));"
+
+
+@registry.nodes.add("fill_holes")
+class FillHoles(ExportableNode):
+
+    def __init__(self):
+        super().__init__("fill_holes", "FILL", 1, 0, sources="Handmade")
+
+    def call(self, inputs, p):
+        return morph_fill(inputs[0])
+
+    def to_python(self, input_names, p, output_name):
+        return "{output_name} = imfill({input_names[0]})"
+
+    def to_cpp(self, input_names, p, output_name):
+        return "imfill({input_names[0]}, {output_name});"
+
+
+@registry.nodes.add("remove_small_objects")
+class RemoveSmallObjects(NodeImageProcessing):
+
+    def __init__(self):
+        super().__init__("remove_small_objects",
+                         "RMSO",
+                         1,
+                         1,
+                         sources="Skimage")
+
+    def call(self, x, args=None):
+        return remove_small_objects(x[0] > 0, args[0]).astype(np.uint8)
+
+
+@registry.nodes.add("remove_small_holes")
+class RemoveSmallHoles(NodeImageProcessing):
+
+    def __init__(self):
+        super().__init__("remove_small_holes", "RMSH", 1, 1, sources="Skimage")
+
+    def call(self, x, args=None):
+        return remove_small_holes(x[0] > 0, args[0]).astype(np.uint8)
+
+
+@registry.nodes.add("threshold")
+class Threshold(NodeImageProcessing):
+
+    def __init__(self):
+        super().__init__("threshold", "TRH", 1, 2, sources="OpenCV")
+
+    def call(self, x, args=None):
+        if args[0] < 128:
+            return threshold_binary(x[0], args[1])
+        return threshold_tozero(x[0], args[1])
+
+
+@registry.nodes.add("threshold_at_1")
+class ThresholdAt1(NodeImageProcessing):
+
+    def __init__(self):
+        super().__init__("threshold_at_1", "TRH1", 1, 1, sources="OpenCV")
+
+    def call(self, x, args=None):
+        if args[0] < 128:
+            return threshold_binary(x[0], 1)
+        return threshold_tozero(x[0], 1)
+
+
+# @registry.nodes.add("TRHA")
+class ThresholdAdaptive(NodeImageProcessing):
+
+    def __init__(self):
+        super().__init__("adaptive_threshold", "TRHA", 1, 2, sources="OpenCV")
+
+    def call(self, x, args=None):
+        ksize = correct_ksize(args[0])
+        C = args[1] - 128  # to allow negative values
+        return cv2.adaptiveThreshold(
+            x[0],
+            255,
+            cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+            cv2.THRESH_BINARY,
+            ksize,
+            C,
+        )
+
+
+@registry.nodes.add("distance_transform")
+class DistanceTransform(NodeImageProcessing):
+
+    def __init__(self):
+        super().__init__("distance_transform", "DTRF", 1, 1, sources="OpenCV")
+
+    def call(self, x, args=None):
+        return cv2.normalize(
+            cv2.distanceTransform(x[0].copy(), cv2.DIST_L2, 3),
+            None,
+            0,
+            255,
+            cv2.NORM_MINMAX,
+            cv2.CV_8U,
+        )
+
+
+@registry.nodes.add("distance_transform_and_thresh")
+class DistanceTransformAndThresh(NodeImageProcessing):
+
+    def __init__(self):
+        super().__init__("distance_transform_and_thresh",
+                         "DTTR",
+                         1,
+                         2,
+                         sources="OpenCV")
+
+    def call(self, x, args=None):
+        d = cv2.normalize(
+            cv2.distanceTransform(x[0].copy(), cv2.DIST_L2, 3),
+            None,
+            0,
+            255,
+            cv2.NORM_MINMAX,
+            cv2.CV_8U,
+        )
+        return threshold_binary(d, args[0])
+
+
+@registry.nodes.add("inrange_bin")
+class BinaryInRange(NodeImageProcessing):
+
+    def __init__(self):
+        super().__init__("inrange_bin", "BRNG", 1, 2, sources="OpenCV")
+
+    def call(self, x, args=None):
+        lower = int(min(args[0], args[1]))
+        upper = int(max(args[0], args[1]))
+        return cv2.inRange(x[0], lower, upper)
+
+
+@registry.nodes.add("inrange")
+class InRange(NodeImageProcessing):
+
+    def __init__(self):
+        super().__init__("inrange", "RNG", 1, 2, sources="OpenCV")
+
+    def call(self, x, args=None):
+        lower = int(min(args[0], args[1]))
+        upper = int(max(args[0], args[1]))
+        return cv2.bitwise_and(
+            x[0],
+            x[0],
+            mask=cv2.inRange(x[0], lower, upper),
+        )
+
+
+IMAGE_NODES_ABBV_LIST = registry.nodes.list().keys()
+
+
+@dataclass
+class GenomeShape:
+    inputs: int = 3
+    nodes: int = 10
+    outputs: int = 1
+    connections: int = 2
+    parameters: int = 2
+    in_idx: int = field(init=False, repr=False)
+    func_idx: int = field(init=False, repr=False)
+    con_idx: int = field(init=False, repr=False)
+    nodes_idx = None
+    out_idx = None
+    para_idx = None
+    w: int = field(init=False)
+    h: int = field(init=False)
+    prototype = None
+
+    def __post_init__(self):
+        self.in_idx = 0
+        self.func_idx = 0
+        self.con_idx = 1
+        self.nodes_idx = self.inputs
+        self.out_idx = self.nodes_idx + self.nodes
+        self.para_idx = self.con_idx + self.connections
+        self.w = 1 + self.connections + self.parameters
+        self.h = self.inputs + self.nodes + self.outputs
+        self.prototype = KartezioGenome(shape=(self.h, self.w))
+
+    @staticmethod
+    def from_json(json_data):
+        return GenomeShape(
+            json_data["n_in"],
+            json_data["columns"],
+            json_data["n_out"],
+            json_data["n_conn"],
+            json_data["n_para"],
+        )
+
+
+def to_metadata(json_data):
+    return GenomeShape(
+        json_data["n_in"],
+        json_data["columns"],
+        json_data["n_out"],
+        json_data["n_conn"],
+        json_data["n_para"],
+    )
+
+
+def to_genome(json_data):
+    sequence = np.asarray(ast.literal_eval(json_data["sequence"]))
+    return KartezioGenome(sequence=sequence)
+
+
+def from_individual(individual):
+    return {
+        "sequence": simplejson.dumps(individual.sequence.tolist()),
+        "fitness": individual.fitness,
+    }
+
+
+def from_population(population: List):
+    json_data = []
+    for individual_idx, individual in population:
+        json_data.append(from_individual(individual))
+    return json_data
+
+
+def from_dataset(dataset):
+    return {
+        "name": dataset.name,
+        "label_name": dataset.label_name,
+        "indices": dataset.indices,
+    }
+
+
+def singleton(cls):
+    """
+    https://towardsdatascience.com/10-fabulous-python-decorators-ab674a732871
+    """
+    instances = {}
+
+    def wrapper(*args, **kwargs):
+        if cls not in instances:
+            instances[cls] = cls(*args, **kwargs)
+        return instances[cls]
+
+    return wrapper
+
+
+class Prototype(ABC):
+    """
+    Using Prototype Pattern to duplicate:
+    https://refactoring.guru/design-patterns/prototype
+    """
+
+    @abstractmethod
+    def clone(self):
+        pass
+
+
+class Factory:
+    """
+    Using Factory Pattern:
+    https://refactoring.guru/design-patterns/factory-method
+    """
+
+    def __init__(self, prototype):
+        self._prototype = None
+        self.set_prototype(prototype)
+
+    def set_prototype(self, prototype):
+        self._prototype = prototype
+
+    def create(self):
+        return self._prototype.clone()
+
+
+class Observer(ABC):
+    """
+    The Observer interface declares the update method, used by subjects.
+    """
+
+    @abstractmethod
+    def update(self, event):
+        """
+        Receive update from subject.
+        """
+        pass
+
+
+class Observable(ABC):
+    """
+    For the sake of simplicity, the Observable state, essential to all
+    subscribers, is stored in this variable.
+    """
+
+    def __init__(self):
+        self._observers: List[Observer] = []
+
+    def attach(self, observer: Observer) -> None:
+        self._observers.append(observer)
+
+    def detach(self, observer: Observer) -> None:
+        self._observers.remove(observer)
+
+    def clear(self) -> None:
+        self._observers = []
+
+    def notify(self, event) -> None:
+        for observer in self._observers:
+            observer.update(event)
+
+
+def register_endpoints():
+    print(
+        f"[Kartezio - INFO] -  {len(registry.endpoints.list())} endpoints registered."
+    )
+
+
+class KartezioComponent(Serializable, ABC):
+    pass
+
+
+class KartezioNode(KartezioComponent, ABC):
+    """
+    Single graph node for the Cartesian Graph.
+    One node can be a simple function (e.g. Threshold, Subtract...), but also a more complex function such as an KartezioEndpoint.
+    """
+
+    def __init__(self,
+                 name: str,
+                 symbol: str,
+                 arity: int,
+                 args: int,
+                 sources=None):
+        """
+        Args:
+            name (str): Name of the node
+            symbol (str): Abbreviation of the node, it must be written in capital letters with 3 or 4 characters (e.g. "ADD", "NOT", "OPEN"..)
+            arity (int): Number of inputs the node needs (e.g. 2 for addition (x1+x2), 1 for sqrt (sqrt(x1)))
+            args (int): Number of parameters the node needs (e.g. 0 for addition (x1+x2), 1 for threshold (threshold(x1, p1)))
+        >>> threshold_node = Threshold("threshold", "TRSH", 1, 1)
+        >>> watershed_endpoint = Watershed("watershed", "WSHD", 2, 0)
+        """
+        self.name = name
+        self.symbol = symbol
+        self.arity = arity
+        self.args = args
+        self.sources = sources
+
+    @abstractmethod
+    def call(self, x: List, args: List = None):
+        pass
+
+    def dumps(self) -> dict:
+        return {
+            "name": self.name,
+            "abbv": self.symbol,
+            "arity": self.arity,
+            "args": self.args,
+            "kwargs": self._to_json_kwargs(),
+        }
+
+    @abstractmethod
+    def _to_json_kwargs(self) -> dict:
+        pass
+
+
+class KartezioEndpoint(KartezioNode, ABC):
+    """
+    Terminal KartezioNode, executed after graph parsing.
+    Not submitted to evolution.
+    """
+
+    def __init__(self, name: str, symbol: str, arity: int, outputs_keys: list):
+        super().__init__(name, symbol, arity, 0)
+        self.outputs_keys = outputs_keys
+
+    @staticmethod
+    def from_json(json_data):
+        return registry.endpoints.instantiate(json_data["abbv"],
+                                              **json_data["kwargs"])
+
+
+class KartezioPreprocessing(KartezioNode, ABC):
+    """
+    First KartezioNode, executed before evolution loop.
+    Not submitted to evolution.
+    """
+
+    def __init__(self, name: str, symbol: str):
+        super().__init__(name, symbol, 1, 0)
+
+
+class TransformToHSV(KartezioPreprocessing):
+
+    def __init__(self, source_color="bgr"):
+        super().__init__("Transform to HSV", "HSV")
+        self.source_color = source_color
+
+    def call(self, x, args=None):
+        new_x = []
+        for i in range(len(x)):
+            original_image = cv2.merge(x[i])
+            if self.source_color == "bgr":
+                transformed = bgr2hsv(original_image)
+            elif self.source_color == "rgb":
+                transformed = bgr2hsv(rgb2bgr(original_image))
+            new_x.append(image_split(transformed))
+        return new_x
+
+    def _to_json_kwargs(self) -> dict:
+        pass
+
+
+class TransformToHED(KartezioPreprocessing):
+
+    def __init__(self, source_color="bgr"):
+        super().__init__("Transform to HED", "HED")
+        self.source_color = source_color
+
+    def call(self, x, args=None):
+        new_x = []
+        for i in range(len(x)):
+            original_image = cv2.merge(x[i])
+            if self.source_color == "bgr":
+                transformed = bgr2hed(original_image)
+            elif self.source_color == "rgb":
+                transformed = rgb2hed(original_image)
+            new_x.append(image_split(transformed))
+        return new_x
+
+    def _to_json_kwargs(self) -> dict:
+        pass
+
+
+class SelectChannels(KartezioPreprocessing):
+
+    def __init__(self, channels):
+        super().__init__("Channel Selection", "CHAN")
+        self.channels = channels
+
+    def call(self, x, args=None):
+        new_x = []
+        for i in range(len(x)):
+            one_item = [x[i][channel] for channel in self.channels]
+            new_x.append(one_item)
+        return new_x
+
+    def _to_json_kwargs(self) -> dict:
+        pass
+
+
+class Format3D(KartezioPreprocessing):
+
+    def __init__(self, channels=None, z_range=None):
+        super().__init__("Format to 3D", "F3D")
+        self.channels = channels
+        self.z_range = z_range
+
+    def call(self, x, args=None):
+        new_x = []
+        for i in range(len(x)):
+            one_item = []
+            if self.channels:
+                if self.z_range:
+                    for z in self.z_range:
+                        one_item.append(
+                            [x[i][channel][z] for channel in self.channels])
+                else:
+                    for z in range(len(x[i][0])):
+                        one_item.append(
+                            [x[i][channel][z] for channel in self.channels])
+            else:
+                if self.z_range:
+                    for z in self.z_range:
+                        one_item.append([x[i][:][z]])
+                else:
+                    for z in range(len(x[i])):
+                        one_item.append([x[i][:][z]])
+            new_x.append(one_item)
+        return new_x
+
+    def _to_json_kwargs(self) -> dict:
+        pass
+
+
+class KartezioBundle(KartezioComponent, ABC):
+
+    def __init__(self):
+        self.__nodes = {}
+        self.fill()
+
+    @staticmethod
+    def from_json(json_data):
+        bundle = EmptyBundle()
+        for node_name in json_data:
+            bundle.add_node(node_name)
+        return bundle
+
+    @abstractmethod
+    def fill(self):
+        pass
+
+    def add_node(self, node_name):
+        self.__nodes[len(self.__nodes)] = registry.nodes.instantiate(node_name)
+
+    def add_bundle(self, bundle):
+        for f in bundle.nodes:
+            self.add_node(f.name)
+
+    def name_of(self, i):
+        return self.__nodes[i].name
+
+    def symbol_of(self, i):
+        return self.__nodes[i].symbol
+
+    def arity_of(self, i):
+        return self.__nodes[i].arity
+
+    def parameters_of(self, i):
+        return self.__nodes[i].p
+
+    def execute(self, name, x, args):
+        return self.__nodes[name].call(x, args)
+
+    def show(self):
+        for i, node in self.__nodes.items():
+            print(f"[{i}] - {node.abbv}")
+
+    @property
+    def random_index(self):
+        return random.choice(self.keys)
+
+    @property
+    def last_index(self):
+        return len(self.__nodes) - 1
+
+    @property
+    def nodes(self):
+        return list(self.__nodes.values())
+
+    @property
+    def keys(self):
+        return list(self.__nodes.keys())
+
+    @property
+    def max_arity(self):
+        return max([self.arity_of(i) for i in self.keys])
+
+    @property
+    def max_parameters(self):
+        return max([self.parameters_of(i) for i in self.keys])
+
+    @property
+    def size(self):
+        return len(self.__nodes)
+
+    @property
+    def ordered_list(self):
+        return [self.__nodes[i].name for i in range(self.size)]
+
+    def dumps(self) -> dict:
+        return {}
+
+
+class EmptyBundle(KartezioBundle):
+
+    def fill(self):
+        pass
+
+
+@singleton
+class BundleOpenCV(KartezioBundle):
+
+    def fill(self):
+        for node_abbv in IMAGE_NODES_ABBV_LIST:
+            self.add_node(node_abbv)
+
+
+BUNDLE_OPENCV = BundleOpenCV()
+
+
+class KartezioGenome(KartezioComponent, Prototype):
+    """
+    Only store "DNA" in a numpy array
+    No metadata stored in DNA to avoid duplicates
+    Avoiding RAM overload: https://refactoring.guru/design-patterns/flyweight
+    Default genome would be: 3 inputs, 10 function nodes (2 connections and 2 parameters), 1 output,
+    so with shape (14, 5)
+
+    Args:
+        Prototype ([type]): [description]
+
+    Returns:
+        [type]: [description]
+    """
+
+    def dumps(self) -> dict:
+        pass
+
+    def __init__(self, shape: tuple = (14, 5), sequence: np.ndarray = None):
+        if sequence is not None:
+            self.sequence = sequence
+        else:
+            self.sequence = np.zeros(shape=shape, dtype=np.uint8)
+
+    def __copy__(self):
+        new = self.__class__(*self.sequence.shape)
+        new.__dict__.update(self.__dict__)
+        return new
+
+    def __deepcopy__(self, memo={}):
+        new = self.__class__(*self.sequence.shape)
+        new.sequence = self.sequence.copy()
+        return new
+
+    def __getitem__(self, item):
+        return self.sequence.__getitem__(item)
+
+    def __setitem__(self, key, value):
+        return self.sequence.__setitem__(key, value)
+
+    def clone(self):
+        return copy.deepcopy(self)
+
+    @staticmethod
+    def from_json(json_data):
+        sequence = np.asarray(ast.literal_eval(json_data["sequence"]))
+        return KartezioGenome(sequence=sequence)
+
+
+class GenomeFactory(Factory):
+
+    def __init__(self, prototype: KartezioGenome):
+        super().__init__(prototype)
+
+
+class GenomeAdapter(KartezioComponent, ABC):
+    """
+    Adpater Design Pattern: https://refactoring.guru/design-patterns/adapter
+    """
+
+    def __init__(self, shape):
+        self.shape = shape
+
+
+class GenomeWriter(GenomeAdapter):
+
+    def write_function(self, genome, node, function_id):
+        genome[self.shape.nodes_idx + node, self.shape.func_idx] = function_id
+
+    def write_connections(self, genome, node, connections):
+        genome[self.shape.nodes_idx + node,
+               self.shape.con_idx:self.shape.para_idx] = connections
+
+    def write_parameters(self, genome, node, parameters):
+        genome[self.shape.nodes_idx + node, self.shape.para_idx:] = parameters
+
+    def write_output_connection(self, genome, output_index, connection):
+        genome[self.shape.out_idx + output_index,
+               self.shape.con_idx] = connection
+
+
+class GenomeReader(GenomeAdapter):
+
+    def read_function(self, genome, node):
+        return genome[self.shape.nodes_idx + node, self.shape.func_idx]
+
+    def read_connections(self, genome, node):
+        return genome[self.shape.nodes_idx + node,
+                      self.shape.con_idx:self.shape.para_idx]
+
+    def read_active_connections(self, genome, node, active_connections):
+        return genome[
+            self.shape.nodes_idx + node,
+            self.shape.con_idx:self.shape.con_idx + active_connections,
+        ]
+
+    def read_parameters(self, genome, node):
+        return genome[self.shape.nodes_idx + node, self.shape.para_idx:]
+
+    def read_outputs(self, genome):
+        return genome[self.shape.out_idx:, :]
+
+
+class GenomeReaderWriter(GenomeReader, GenomeWriter):
+    pass
+
+
+class KartezioParser(GenomeReader):
+
+    def __init__(self, shape, function_bundle, endpoint):
+        super().__init__(shape)
+        self.function_bundle = function_bundle
+        self.endpoint = endpoint
+
+    def to_series_parser(self, stacker):
+        return ParserChain(self.shape, self.function_bundle, stacker,
+                           self.endpoint)
+
+    def dumps(self) -> dict:
+        return {
+            "metadata": {
+                "rows": 1,  # single row CGP
+                "columns": self.shape.nodes,
+                "n_in": self.shape.inputs,
+                "n_out": self.shape.outputs,
+                "n_para": self.shape.parameters,
+                "n_conn": self.shape.connections,
+            },
+            "functions": self.function_bundle.ordered_list,
+            "endpoint": self.endpoint.dumps(),
+            "mode": "default",
+        }
+
+    @staticmethod
+    def from_json(json_data):
+        shape = GenomeShape.from_json(json_data["metadata"])
+        bundle = KartezioBundle.from_json(json_data["functions"])
+        endpoint = KartezioEndpoint.from_json(json_data["endpoint"])
+        if json_data["mode"] == "series":
+            stacker = KartezioStacker.from_json(json_data["stacker"])
+            return ParserChain(shape, bundle, stacker, endpoint)
+        return KartezioParser(shape, bundle, endpoint)
+
+    def _parse_one_graph(self, genome, graph_source):
+        next_indices = graph_source.copy()
+        output_tree = graph_source.copy()
+        while next_indices:
+            next_index = next_indices.pop()
+            if next_index < self.shape.inputs:
+                continue
+            function_index = self.read_function(genome,
+                                                next_index - self.shape.inputs)
+            active_connections = self.function_bundle.arity_of(function_index)
+            next_connections = set(
+                self.read_active_connections(genome,
+                                             next_index - self.shape.inputs,
+                                             active_connections))
+            next_indices = next_indices.union(next_connections)
+            output_tree = output_tree.union(next_connections)
+        return sorted(list(output_tree))
+
+    def parse_to_graphs(self, genome):
+        outputs = self.read_outputs(genome)
+        graphs_list = [
+            self._parse_one_graph(genome, {output[self.shape.con_idx]})
+            for output in outputs
+        ]
+        return graphs_list
+
+    def _x_to_output_map(self, genome: KartezioGenome, graphs_list: List,
+                         x: List):
+        output_map = {i: x[i].copy() for i in range(self.shape.inputs)}
+        for graph in graphs_list:
+            for node in graph:
+                # inputs are already in the map
+                if node < self.shape.inputs:
+                    continue
+                node_index = node - self.shape.inputs
+                # fill the map with active nodes
+                function_index = self.read_function(genome, node_index)
+                arity = self.function_bundle.arity_of(function_index)
+                connections = self.read_active_connections(
+                    genome, node_index, arity)
+                inputs = [output_map[c] for c in connections]
+                p = self.read_parameters(genome, node_index)
+                value = self.function_bundle.execute(function_index, inputs, p)
+
+                output_map[node] = value
+        return output_map
+
+    def _parse_one(self, genome: KartezioGenome, graphs_list: List, x: List):
+        # fill output_map with inputs
+        output_map = self._x_to_output_map(genome, graphs_list, x)
+        return [
+            output_map[output_gene[self.shape.con_idx]]
+            for output_gene in self.read_outputs(genome)
+        ]
+
+    def active_size(self, genome):
+        node_list = []
+        graphs_list = self.parse_to_graphs(genome)
+        for graph in graphs_list:
+            for node in graph:
+                if node < self.shape.inputs:
+                    continue
+                if node < self.shape.out_idx:
+                    node_list.append(node)
+                else:
+                    continue
+        return len(node_list)
+
+    def node_histogram(self, genome):
+        nodes = {}
+        graphs_list = self.parse_to_graphs(genome)
+        for graph in graphs_list:
+            for node in graph:
+                # inputs are already in the map
+                if node < self.shape.inputs:
+                    continue
+                node_index = node - self.shape.inputs
+                # fill the map with active nodes
+                function_index = self.read_function(genome, node_index)
+                function_name = self.function_bundle.symbol_of(function_index)
+                if function_name not in nodes.keys():
+                    nodes[function_name] = 0
+                nodes[function_name] += 1
+        return nodes
+
+    def get_last_node(self, genome):
+        graphs_list = self.parse_to_graphs(genome)
+        output_functions = []
+        for graph in graphs_list:
+            for node in graph[-1:]:
+                # inputs are already in the map
+                if node < self.shape.inputs:
+                    print(f"output {node} directly connected to input.")
+                    continue
+                node_index = node - self.shape.inputs
+                # fill the map with active nodes
+                function_index = self.read_function(genome, node_index)
+                function_name = self.function_bundle.symbol_of(function_index)
+                output_functions.append(function_name)
+        return output_functions
+
+    def get_first_node(self, genome):
+        graphs_list = self.parse_to_graphs(genome)
+        input_functions = []
+
+        for graph in graphs_list:
+            for node in graph:
+                if node < self.shape.inputs:
+                    print(f"output {node} directly connected to input.")
+                    continue
+                node_index = node - self.shape.inputs
+                # fill the map with active nodes
+                function_index = self.read_function(genome, node_index)
+                function_name = self.function_bundle.symbol_of(function_index)
+                arity = self.function_bundle.arity_of(function_index)
+                connections = self.read_active_connections(
+                    genome, node_index, arity)
+                for c in connections:
+                    if c < self.shape.inputs:
+                        input_functions.append(function_name)
+        return input_functions
+
+    def bigrams(self, genome):
+        graphs_list = self.parse_to_graphs(genome)
+        outputs = self.read_outputs(genome)
+        print(graphs_list)
+        bigram_list = []
+        for i, graph in enumerate(graphs_list):
+            for j, node in enumerate(graph):
+                if node < self.shape.inputs:
+                    continue
+                node_index = node - self.shape.inputs
+                function_index = self.read_function(genome, node_index)
+                fname = self.function_bundle.symbol_of(function_index)
+                arity = self.function_bundle.arity_of(function_index)
+                connections = self.read_active_connections(
+                    genome, node_index, arity)
+                for k, c in enumerate(connections):
+                    if c < self.shape.inputs:
+                        in_name = f"IN-{c}"
+                        pair = (f"{fname}", in_name)
+                        """
+                        if arity == 1:
+                            pair = (f"{fname}", in_name)
+                        else:
+                            pair = (f"{fname}-{k}", in_name)
+                        """
+
+                    else:
+                        f2_index = self.read_function(genome,
+                                                      c - self.shape.inputs)
+                        f2_name = self.function_bundle.symbol_of(f2_index)
+                        """
+                        if arity == 1:
+                            pair = (f"{fname}", f2_name)
+                        else:
+                            pair = (f"{fname}-{k}", f2_name)
+                        """
+                        pair = (f"{fname}", f2_name)
+                    bigram_list.append(pair)
+
+            f_last = self.read_function(genome,
+                                        outputs[i][1] - self.shape.inputs)
+            fname = self.function_bundle.symbol_of(f_last)
+            pair = (f"OUT-{i}", fname)
+            bigram_list.append(pair)
+        print(bigram_list)
+        return bigram_list
+
+    def function_distribution(self, genome):
+        graphs_list = self.parse_to_graphs(genome)
+        active_list = []
+        for graph in graphs_list:
+            for node in graph:
+                if node < self.shape.inputs:
+                    continue
+                if node >= self.shape.out_idx:
+                    continue
+                active_list.append(node)
+        functions = []
+        is_active = []
+        for i, _ in enumerate(genome.sequence):
+            if i < self.shape.inputs:
+                continue
+            if i >= self.shape.out_idx:
+                continue
+            node_index = i - self.shape.inputs
+            function_index = self.read_function(genome, node_index)
+            function_name = self.function_bundle.symbol_of(function_index)
+            functions.append(function_name)
+            is_active.append(i in active_list)
+        return functions, is_active
+
+    def parse_population(self, population, x):
+        y_pred = []
+        for i in range(len(population.individuals)):
+            y, t = self.parse(population.individuals[i], x)
+            population.set_time(i, t)
+            y_pred.append(y)
+        return y_pred
+
+    def parse(self, genome, x):
+        """Decode the Genome given a list of inputs
+
+        Args:
+            genome (KartezioGenome): [description]
+            x (List): [description]
+
+        Returns:
+            [type]: [description]
+        """
+        all_y_pred = []
+        all_times = []
+        graphs = self.parse_to_graphs(genome)
+
+        # for each image
+        for xi in x:
+            start_time = time.time()
+            y_pred = self._parse_one(genome, graphs, xi)
+            if self.endpoint is not None:
+                y_pred = self.endpoint.call(y_pred)
+            all_times.append(time.time() - start_time)
+            all_y_pred.append(y_pred)
+        whole_time = np.mean(np.array(all_times))
+        return all_y_pred, whole_time
+
+
+class ParserSequential(KartezioParser):
+    """TODO: default Parser, KartezioParser becomes ABC"""
+
+    pass
+
+
+class ParserChain(KartezioParser):
+
+    def __init__(self, shape, bundle, stacker, endpoint):
+        super().__init__(shape, bundle, endpoint)
+        self.stacker = stacker
+
+    def parse(self, genome, x):
+        """Decode the Genome given a list of inputs
+        Args:
+            genome (KartezioGenome): [description]
+            x (List): [description]
+        Returns:
+            [type]: [description]
+        """
+        all_y_pred = []
+        all_times = []
+        graphs = self.parse_to_graphs(genome)
+        for series in x:
+            start_time = time.time()
+            y_pred_series = []
+            # for each image
+
+            for xi in series:
+                y_pred = self._parse_one(genome, graphs, xi)
+                y_pred_series.append(y_pred)
+
+            y_pred = self.endpoint.call(self.stacker.call(y_pred_series))
+
+            all_times.append(time.time() - start_time)
+            all_y_pred.append(y_pred)
+
+        whole_time = np.mean(np.array(all_times))
+        return all_y_pred, whole_time
+
+    def dumps(self) -> dict:
+        json_data = super().dumps()
+        json_data["mode"] = "series"
+        json_data["stacker"] = self.stacker.dumps()
+        return json_data
+
+
+class KartezioToCode(KartezioParser):
+
+    def to_python_class(self, node_name, genome):
+        pass
+
+
+class KartezioStacker(KartezioNode, ABC):
+
+    def __init__(self, name: str, symbol: str, arity: int):
+        super().__init__(name, symbol, arity, 0)
+
+    def call(self, x: List, args: List = None):
+        y = []
+        for i in range(self.arity):
+            Y = [xi[i] for xi in x]
+            y.append(self.post_stack(self.stack(Y), i))
+        return y
+
+    @abstractmethod
+    def stack(self, Y: List):
+        pass
+
+    def post_stack(self, x, output_index):
+        return x
+
+    @staticmethod
+    def from_json(json_data):
+        return registry.stackers.instantiate(json_data["abbv"],
+                                             arity=json_data["arity"],
+                                             **json_data["kwargs"])
+
+
 def register_stackers():
-    print(f"[Kartezio - INFO] -  {len(registry.stackers.list())} stackers registered.")
+    print(
+        f"[Kartezio - INFO] -  {len(registry.stackers.list())} stackers registered."
+    )
 
 
 @registry.stackers.add("MEAN")
 class StackerMean(KartezioStacker):
+
     def _to_json_kwargs(self) -> dict:
         return {}
 
-    def __init__(self, name="mean_stacker", symbol="MEAN", arity=1, threshold=4):
+    def __init__(self,
+                 name="mean_stacker",
+                 symbol="MEAN",
+                 arity=1,
+                 threshold=4):
         super().__init__(name, symbol, arity)
         self.threshold = threshold
 
@@ -2269,10 +2376,15 @@ class StackerMean(KartezioStacker):
 
 @registry.stackers.add("SUM")
 class StackerSum(KartezioStacker):
+
     def _to_json_kwargs(self) -> dict:
         return {}
 
-    def __init__(self, name="Sum KartezioStacker", symbol="SUM", arity=1, threshold=4):
+    def __init__(self,
+                 name="Sum KartezioStacker",
+                 symbol="SUM",
+                 arity=1,
+                 threshold=4):
         super().__init__(name, symbol, arity)
         self.threshold = threshold
 
@@ -2291,6 +2403,7 @@ class StackerSum(KartezioStacker):
 
 @registry.stackers.add("MIN")
 class StackerMin(KartezioStacker):
+
     def _to_json_kwargs(self) -> dict:
         return {}
 
@@ -2308,6 +2421,7 @@ class StackerMin(KartezioStacker):
 
 @registry.stackers.add("MAX")
 class StackerMax(KartezioStacker):
+
     def _to_json_kwargs(self) -> dict:
         return {}
 
@@ -2327,11 +2441,17 @@ class StackerMax(KartezioStacker):
 
 @registry.stackers.add("MEANW")
 class MeanKartezioStackerForWatershed(KartezioStacker):
+
     def _to_json_kwargs(self) -> dict:
-        return {"half_kernel_size": self.half_kernel_size, "threshold": self.threshold}
+        return {
+            "half_kernel_size": self.half_kernel_size,
+            "threshold": self.threshold
+        }
 
     def __init__(self, half_kernel_size=1, threshold=4):
-        super().__init__(name="mean_stacker_watershed", symbol="MEANW", arity=2)
+        super().__init__(name="mean_stacker_watershed",
+                         symbol="MEANW",
+                         arity=2)
         self.half_kernel_size = half_kernel_size
         self.threshold = threshold
 
@@ -2344,6 +2464,7 @@ class MeanKartezioStackerForWatershed(KartezioStacker):
             # supposed markers
             yi = morph_erode(yi, half_kernel_size=self.half_kernel_size)
         return threshold_tozero(yi, self.threshold)
+
 
 class ExportableNode(KartezioNode, ABC):
 
@@ -3869,6 +3990,124 @@ class JsonSaver:
         json_write(filepath, json_data)
 
 
+class IndividualHistory:
+
+    def __init__(self):
+        self.fitness = {"fitness": 0.0, "time": 0.0}
+        self.sequence = None
+
+    def set_sequence(self, sequence):
+        self.sequence = sequence
+
+    def set_values(self, sequence, fitness, time):
+        self.sequence = sequence
+        self.fitness["fitness"] = fitness
+        self.fitness["time"] = time
+
+
+class PopulationHistory:
+
+    def __init__(self, n_individuals):
+        self.individuals = {}
+        for i in range(n_individuals):
+            self.individuals[i] = IndividualHistory()
+
+    def fill(self, individuals, fitness, times):
+        for i in range(len(individuals)):
+            self.individuals[i].set_values(individuals[i].sequence,
+                                           float(fitness[i]), float(times[i]))
+
+    def get_best_fitness(self):
+        return (
+            self.individuals[0].fitness["fitness"],
+            self.individuals[0].fitness["time"],
+        )
+
+    def get_individuals(self):
+        return self.individuals.items()
+
+
+class KartezioPopulation(KartezioComponent, ABC):
+
+    def __init__(self, size):
+        self.size = size
+        self.individuals = [None] * self.size
+        self._fitness = {
+            "fitness": np.zeros(self.size),
+            "time": np.zeros(self.size)
+        }
+
+    def dumps(self) -> dict:
+        return {}
+
+    @abstractmethod
+    def get_best_individual(self):
+        pass
+
+    def __getitem__(self, item):
+        return self.individuals.__getitem__(item)
+
+    def __setitem__(self, key, value):
+        self.individuals.__setitem__(key, value)
+
+    def set_time(self, individual, value):
+        self._fitness["time"][individual] = value
+
+    def set_fitness(self, fitness):
+        self._fitness["fitness"] = fitness
+
+    def has_best_fitness(self):
+        return min(self.fitness) == 0.0
+
+    @property
+    def fitness(self):
+        return self._fitness["fitness"]
+
+    @property
+    def time(self):
+        return self._fitness["time"]
+
+    @property
+    def score(self):
+        score_list = list(zip(self.fitness, self.time))
+        return np.array(score_list,
+                        dtype=[("fitness", float), ("time", float)])
+
+
+class KartezioES(ABC):
+
+    @abstractmethod
+    def selection(self):
+        pass
+
+    @abstractmethod
+    def reproduction(self):
+        pass
+
+
+class PopulationWithElite(KartezioPopulation):
+
+    def __init__(self, _lambda):
+        super().__init__(1 + _lambda)
+
+    def set_elite(self, individual):
+        self[0] = individual
+
+    def get_elite(self):
+        return self[0]
+
+    def get_best_individual(self):
+        # get the first element to minimize
+        best_fitness_idx = np.argsort(self.score)[0]
+        best_individual = self[best_fitness_idx]
+        return best_individual, self.fitness[best_fitness_idx]
+
+    def history(self):
+        population_history = PopulationHistory(self.size)
+        population_history.fill(self.individuals, self.fitness, self.time)
+        return population_history
+
+
 class OnePlusLambda(KartezioES):
 
     def __init__(self, _lambda, factory, init_method, mutation_method,
@@ -3959,6 +4198,90 @@ class ModelContext:
                                     self.endpoint)
         self.parser = parser
         self.series_mode = series_mode
+
+
+class GoldmanWrapper(KartezioMutation):
+
+    def __init__(self, mutation, decoder):
+        super().__init__(None, None)
+        self.mutation = mutation
+        self.parser = decoder
+
+    def mutate(self, genome):
+        changed = False
+        active_nodes = self.parser.parse_to_graphs(genome)
+        while not changed:
+            genome = self.mutation.mutate(genome)
+            new_active_nodes = self.parser.parse_to_graphs(genome)
+            changed = active_nodes != new_active_nodes
+        return genome
+
+
+@registry.mutations.add("classic")
+class MutationClassic(KartezioMutation):
+
+    def __init__(self, shape, n_functions, mutation_rate,
+                 output_mutation_rate):
+        super().__init__(shape, n_functions)
+        self.mutation_rate = mutation_rate
+        self.output_mutation_rate = output_mutation_rate
+        self.n_mutations = int(
+            np.floor(self.shape.nodes * self.shape.w * self.mutation_rate))
+        self.all_indices = np.indices((self.shape.nodes, self.shape.w))
+        self.all_indices = np.vstack(
+            (self.all_indices[0].ravel(), self.all_indices[1].ravel())).T
+        self.sampling_range = range(len(self.all_indices))
+
+    def mutate(self, genome):
+        sampling_indices = np.random.choice(self.sampling_range,
+                                            self.n_mutations,
+                                            replace=False)
+        sampling_indices = self.all_indices[sampling_indices]
+
+        for idx, mutation_parameter_index in sampling_indices:
+            if mutation_parameter_index == 0:
+                self.mutate_function(genome, idx)
+            elif mutation_parameter_index <= self.shape.connections:
+                connection_idx = mutation_parameter_index - 1
+                self.mutate_connections(genome, idx, only_one=connection_idx)
+            else:
+                parameter_idx = mutation_parameter_index - self.shape.connections - 1
+                self.mutate_parameters(genome, idx, only_one=parameter_idx)
+        for output in range(self.shape.outputs):
+            if random.random() < self.output_mutation_rate:
+                self.mutate_output(genome, output)
+        return genome
+
+
+@registry.mutations.add("all_random")
+class MutationAllRandom(KartezioMutation):
+    """
+    Can be used to initialize genome (genome) randomly
+    """
+
+    def __init__(self, metadata: GenomeShape, n_functions: int):
+        super().__init__(metadata, n_functions)
+
+    def mutate(self, genome: KartezioGenome):
+        # mutate genes
+        for i in range(self.shape.nodes):
+            self.mutate_function(genome, i)
+            self.mutate_connections(genome, i)
+            self.mutate_parameters(genome, i)
+        # mutate outputs
+        for i in range(self.shape.outputs):
+            self.mutate_output(genome, i)
+        return genome
+
+
+@registry.mutations.add("copy")
+class CopyGenome:
+
+    def __init__(self, genome: KartezioGenome):
+        self.genome = genome
+
+    def mutate(self, _genome: KartezioGenome):
+        return self.genome.clone()
 
 
 class ModelBuilder:
