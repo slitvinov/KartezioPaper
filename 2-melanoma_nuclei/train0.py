@@ -51,7 +51,6 @@ import cv2
 import numpy as np
 
 import kartezio.utils.json_utils as json
-from kartezio.model.registry import registry
 from kartezio.model.types import Score, ScoreList
 from kartezio.model.registry import registry
 
