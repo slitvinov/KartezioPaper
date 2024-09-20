@@ -2440,15 +2440,6 @@ class ModelML(ABC):
     def fit(self, x: List, y: List):
         pass
 
-    @abstractmethod
-    def evaluate(self, x: List, y: List):
-        pass
-
-    @abstractmethod
-    def predict(self, x: List):
-        pass
-
-
 class ModelGA(ABC):
 
     def __init__(self, strategy, generations):
