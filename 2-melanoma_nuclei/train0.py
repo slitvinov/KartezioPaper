@@ -98,17 +98,6 @@ class KartezioEndpoint(KartezioNode, ABC):
         return registry.endpoints.instantiate(json_data["abbv"],
                                               **json_data["kwargs"])
 
-
-class KartezioPreprocessing(KartezioNode, ABC):
-    """
-    First KartezioNode, executed before evolution loop.
-    Not submitted to evolution.
-    """
-
-    def __init__(self, name: str, symbol: str):
-        super().__init__(name, symbol, 1, 0)
-
-
 class KartezioBundle(KartezioComponent, ABC):
 
     def __init__(self):
@@ -2826,7 +2815,6 @@ def train_model(
     model,
     dataset,
     output_directory,
-    preprocessing=None,
     callbacks="default",
     callback_frequency=1,
     pack=True,
@@ -2844,8 +2832,6 @@ def train_model(
             callback.set_parser(model.parser)
             model.attach(callback)
     train_x, train_y = dataset.train_xy
-    if preprocessing:
-        train_x = preprocessing.call(train_x)
     res = model.fit(train_x, train_y)
     if pack:
         pack_one_directory(workdir)
@@ -2859,4 +2845,4 @@ model = create_instance_segmentation_model(
     outputs=2,
     endpoint=EndpointWatershed(),
 )
-elite, _ = train_model(model, read_dataset("dataset"), ".", preprocessing=None)
+elite, _ = train_model(model, read_dataset("dataset"), ".")
