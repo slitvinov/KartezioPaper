@@ -1207,12 +1207,6 @@ class Observable(ABC):
             observer.update(event)
 
 
-def register_endpoints():
-    print(
-        f"[Kartezio - INFO] -  {len(registry.endpoints.list())} endpoints registered."
-    )
-
-
 @singleton
 class BundleOpenCV(KartezioBundle):
 
