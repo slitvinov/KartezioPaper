@@ -5,29 +5,6 @@ from kartezio.endpoint import (
     EndpointWatershed,
     LocalMaxWatershed,
 )
-import argparse
-from typing import List
-from abc import ABC, abstractmethod
-from numena.io.drive import Directory
-
-from kartezio.callback import CallbackSave, CallbackVerbose
-from kartezio.callback import Event
-from kartezio.dataset import read_dataset
-from kartezio.endpoint import EndpointThreshold
-from kartezio.enums import CSV_DATASET
-from kartezio.export import GenomeToPython
-from kartezio.image.bundle import BUNDLE_OPENCV
-from kartezio.model.helpers import Observable
-from kartezio.model.helpers import singleton
-from kartezio.preprocessing import TransformToHED, TransformToHSV
-from kartezio.stacker import MeanKartezioStackerForWatershed
-from kartezio.stacker import StackerMean
-from kartezio.utils.io import JsonSaver
-from kartezio.utils.io import pack_one_directory
-
-from dataclasses import InitVar, dataclass, field
-
-from kartezio.model.base import ModelCGP
 from kartezio.model.components import (
     GenomeFactory,
     GenomeShape,
@@ -37,11 +14,70 @@ from kartezio.model.components import (
     KartezioStacker,
     ParserChain,
 )
+import argparse
+from typing import List
+from abc import ABC, abstractmethod
+from numena.io.drive import Directory
+from dataclasses import InitVar, dataclass, field
+
+from kartezio.callback import CallbackSave, CallbackVerbose
+from kartezio.callback import Event
+from kartezio.dataset import read_dataset
+from kartezio.endpoint import EndpointThreshold
+from kartezio.enums import CSV_DATASET
+from kartezio.image.bundle import BUNDLE_OPENCV
+from kartezio.model.evolution import KartezioES
 from kartezio.model.evolution import KartezioFitness, KartezioMutation
+from kartezio.model.helpers import Observable
+from kartezio.model.helpers import singleton
 from kartezio.model.registry import registry
 from kartezio.mutation import GoldmanWrapper, MutationAllRandom
+from kartezio.population import PopulationWithElite
+from kartezio.preprocessing import TransformToHED, TransformToHSV
+from kartezio.stacker import MeanKartezioStackerForWatershed
 from kartezio.stacker import StackerMean
-from kartezio.strategy import OnePlusLambda
+from kartezio.utils.io import JsonSaver
+from kartezio.utils.io import pack_one_directory
+
+
+class OnePlusLambda(KartezioES):
+
+    def __init__(self, _lambda, factory, init_method, mutation_method,
+                 fitness):
+        self._mu = 1
+        self._lambda = _lambda
+        self.factory = factory
+        self.init_method = init_method
+        self.mutation_method = mutation_method
+        self.fitness = fitness
+        self.population = PopulationWithElite(_lambda)
+
+    @property
+    def elite(self):
+        return self.population.get_elite()
+
+    def initialization(self):
+        for i in range(self.population.size):
+            individual = self.init_method.mutate(self.factory.create())
+            self.population[i] = individual
+
+    def selection(self):
+        new_elite, fitness = self.population.get_best_individual()
+        self.population.set_elite(new_elite)
+
+    def reproduction(self):
+        elite = self.population.get_elite()
+        for i in range(self._mu, self.population.size):
+            self.population[i] = elite.clone()
+
+    def mutation(self):
+        for i in range(self._mu, self.population.size):
+            self.population[i] = self.mutation_method.mutate(
+                self.population[i])
+
+    def evaluation(self, y_true, y_pred):
+        fitness = self.fitness.call(y_true, y_pred)
+        self.population.set_fitness(fitness)
 
 
 @dataclass
@@ -62,10 +98,10 @@ class ModelContext:
     arity: InitVar[int] = 2
     parameters: InitVar[int] = 2
 
-    def __post_init__(
-        self, inputs: int, nodes: int, outputs: int, arity: int, parameters: int
-    ):
-        self.genome_shape = GenomeShape(inputs, nodes, outputs, arity, parameters)
+    def __post_init__(self, inputs: int, nodes: int, outputs: int, arity: int,
+                      parameters: int):
+        self.genome_shape = GenomeShape(inputs, nodes, outputs, arity,
+                                        parameters)
         self.genome_factory = GenomeFactory(self.genome_shape.prototype)
 
     def set_bundle(self, bundle: KartezioBundle):
@@ -87,32 +123,34 @@ class ModelContext:
         if series_mode:
             if type(series_stacker) == str:
                 series_stacker = registry.stackers.instantiate(series_stacker)
-            parser = ParserChain(
-                self.genome_shape, self.bundle, series_stacker, self.endpoint
-            )
+            parser = ParserChain(self.genome_shape, self.bundle,
+                                 series_stacker, self.endpoint)
         else:
-            parser = KartezioParser(self.genome_shape, self.bundle, self.endpoint)
+            parser = KartezioParser(self.genome_shape, self.bundle,
+                                    self.endpoint)
         self.parser = parser
         self.series_mode = series_mode
 
 
 class ModelBuilder:
+
     def __init__(self):
         self.__context = None
 
     def create(
-        self,
-        endpoint,
-        bundle,
-        inputs=3,
-        nodes=10,
-        outputs=1,
-        arity=2,
-        parameters=2,
-        series_mode=False,
-        series_stacker=StackerMean(),
+            self,
+            endpoint,
+            bundle,
+            inputs=3,
+            nodes=10,
+            outputs=1,
+            arity=2,
+            parameters=2,
+            series_mode=False,
+            series_stacker=StackerMean(),
     ):
-        self.__context = ModelContext(inputs, nodes, outputs, arity, parameters)
+        self.__context = ModelContext(inputs, nodes, outputs, arity,
+                                      parameters)
         self.__context.set_endpoint(endpoint)
         self.__context.set_bundle(bundle)
         self.__context.compile_parser(series_mode, series_stacker)
@@ -125,15 +163,17 @@ class ModelBuilder:
                 instance_method = MutationAllRandom(shape, n_nodes)
         self.__context.set_instance_method(instance_method)
 
-    def set_mutation_method(
-        self, mutation, node_mutation_rate, output_mutation_rate, use_goldman=True
-    ):
+    def set_mutation_method(self,
+                            mutation,
+                            node_mutation_rate,
+                            output_mutation_rate,
+                            use_goldman=True):
         if type(mutation) == str:
             shape = self.__context.genome_shape
             n_nodes = self.__context.bundle.size
-            mutation = registry.mutations.instantiate(
-                mutation, shape, n_nodes, node_mutation_rate, output_mutation_rate
-            )
+            mutation = registry.mutations.instantiate(mutation, shape, n_nodes,
+                                                      node_mutation_rate,
+                                                      output_mutation_rate)
         if use_goldman:
             parser = self.__context.parser
             mutation = GoldmanWrapper(mutation, parser)
@@ -144,7 +184,11 @@ class ModelBuilder:
             fitness = registry.fitness.instantiate(fitness)
         self.__context.set_fitness(fitness)
 
-    def compile(self, generations, _lambda, callbacks=None, dataset_inputs=None):
+    def compile(self,
+                generations,
+                _lambda,
+                callbacks=None,
+                dataset_inputs=None):
         factory = self.__context.genome_factory
         instance_method = self.__context.instance_method
         mutation_method = self.__context.mutation_method
@@ -158,7 +202,8 @@ class ModelBuilder:
 
         if self.__context.series_mode:
             if not isinstance(parser.stacker, KartezioStacker):
-                raise ValueError(f"Stacker {parser.stacker} has not been properly set.")
+                raise ValueError(
+                    f"Stacker {parser.stacker} has not been properly set.")
 
             if parser.stacker.arity != parser.shape.outputs:
                 raise ValueError(
@@ -169,16 +214,16 @@ class ModelBuilder:
             raise ValueError(f"Fitness {fitness} has not been properly set.")
 
         if not isinstance(mutation_method, KartezioMutation):
-            raise ValueError(f"Mutation {mutation_method} has not been properly set.")
+            raise ValueError(
+                f"Mutation {mutation_method} has not been properly set.")
 
         if dataset_inputs and (dataset_inputs != parser.shape.inputs):
             raise ValueError(
                 f"Model has {parser.shape.inputs} input nodes. ({dataset_inputs} given by the dataset)"
             )
 
-        strategy = OnePlusLambda(
-            _lambda, factory, instance_method, mutation_method, fitness
-        )
+        strategy = OnePlusLambda(_lambda, factory, instance_method,
+                                 mutation_method, fitness)
         model = ModelCGP(generations, strategy, parser)
         if callbacks:
             for callback in callbacks:
@@ -186,9 +231,11 @@ class ModelBuilder:
                 model.attach(callback)
         return model
 
+
 ENDPOINT_DEFAULT_INSTANCE_SEGMENTATION = EndpointWatershed()
 BUNDLE_DEFAULT_INSTANCE_SEGMENTATION = BUNDLE_OPENCV
 STACKER_DEFAULT_INSTANCE_SEGMENTATION = MeanKartezioStackerForWatershed()
+
 
 def create_instance_segmentation_model(
     generations,
@@ -231,16 +278,20 @@ def create_instance_segmentation_model(
         use_goldman=use_goldman,
     )
     builder.set_fitness(fitness)
-    model = builder.compile(
-        generations, _lambda, callbacks=callbacks, dataset_inputs=dataset_inputs
-    )
+    model = builder.compile(generations,
+                            _lambda,
+                            callbacks=callbacks,
+                            dataset_inputs=dataset_inputs)
     return model
+
 
 ENDPOINT_DEFAULT_SEGMENTATION = EndpointThreshold(threshold=4)
 BUNDLE_DEFAULT_SEGMENTATION = BUNDLE_OPENCV
 STACKER_DEFAULT_SEGMENTATION = StackerMean()
 
+
 class ModelML(ABC):
+
     @abstractmethod
     def fit(self, x: List, y: List):
         pass
@@ -255,6 +306,7 @@ class ModelML(ABC):
 
 
 class ModelGA(ABC):
+
     def __init__(self, strategy, generations):
         self.strategy = strategy
         self.current_generation = 0
@@ -288,6 +340,7 @@ class ModelGA(ABC):
 
 
 class ModelCGP(ModelML, Observable):
+
     def __init__(self, generations, strategy, parser):
         super().__init__()
         self.generations = generations
@@ -306,7 +359,8 @@ class ModelCGP(ModelML, Observable):
         genetic_algorithm.evaluation(y, y_pred)
         self._notify(0, Event.START_LOOP, force=True)
         while not genetic_algorithm.is_satisfying():
-            self._notify(genetic_algorithm.current_generation, Event.START_STEP)
+            self._notify(genetic_algorithm.current_generation,
+                         Event.START_STEP)
             genetic_algorithm.selection()
             genetic_algorithm.reproduction()
             genetic_algorithm.mutation()
@@ -314,7 +368,9 @@ class ModelCGP(ModelML, Observable):
             genetic_algorithm.evaluation(y, y_pred)
             genetic_algorithm.next()
             self._notify(genetic_algorithm.current_generation, Event.END_STEP)
-        self._notify(genetic_algorithm.current_generation, Event.END_LOOP, force=True)
+        self._notify(genetic_algorithm.current_generation,
+                     Event.END_LOOP,
+                     force=True)
         history = self.strategy.population.history()
         elite = self.strategy.elite
         return elite, history
@@ -337,16 +393,13 @@ class ModelCGP(ModelML, Observable):
 
     def save_elite(self, filepath, dataset):
         JsonSaver(dataset, self.parser).save_individual(
-            filepath, self.strategy.population.history().individuals[0]
-        )
-
-    def print_python_class(self, class_name):
-        python_writer = GenomeToPython(self.parser)
-        python_writer.to_python_class(class_name, self.strategy.elite)
+            filepath,
+            self.strategy.population.history().individuals[0])
 
 
 @singleton
 class TrainingArgs:
+
     def __init__(self):
         self.parser = argparse.ArgumentParser()
         self.set_arguments()
@@ -355,10 +408,10 @@ class TrainingArgs:
         return self.parser.parse_args()
 
     def set_arguments(self):
-        self.parser.add_argument("output_directory", help="path to output directory")
-        self.parser.add_argument(
-            "dataset_directory", help="path to the dataset directory"
-        )
+        self.parser.add_argument("output_directory",
+                                 help="path to output directory")
+        self.parser.add_argument("dataset_directory",
+                                 help="path to the dataset directory")
         self.parser.add_argument(
             "--indices",
             help="list of indices to select among dataset for the training",
@@ -372,11 +425,13 @@ class TrainingArgs:
             default=CSV_DATASET,
         )
         self.parser.add_argument(
-            "--genome", help="initial genome to instantiate population", default=None
-        )
-        self.parser.add_argument(
-            "--generations", help="Number of generations", default=100, type=int
-        )
+            "--genome",
+            help="initial genome to instantiate population",
+            default=None)
+        self.parser.add_argument("--generations",
+                                 help="Number of generations",
+                                 default=100,
+                                 type=int)
 
 
 kartezio_parser = TrainingArgs()
@@ -387,7 +442,12 @@ def get_args():
 
 
 class KartezioTraining:
-    def __init__(self, model: ModelCGP, reformat_x=None, frequency=1, preview=False):
+
+    def __init__(self,
+                 model: ModelCGP,
+                 reformat_x=None,
+                 frequency=1,
+                 preview=False):
         self.args = get_args()
         self.model = model
         self.dataset = read_dataset(
@@ -400,7 +460,9 @@ class KartezioTraining:
             frequency = 1
         self.callbacks = [
             CallbackVerbose(frequency=frequency),
-            CallbackSave(self.args.output_directory, self.dataset, frequency=frequency),
+            CallbackSave(self.args.output_directory,
+                         self.dataset,
+                         frequency=frequency),
         ]
         self.reformat_x = reformat_x
 
@@ -428,7 +490,9 @@ def train_model(
 ):
     if callbacks == "default":
         verbose = CallbackVerbose(frequency=callback_frequency)
-        save = CallbackSave(output_directory, dataset, frequency=callback_frequency)
+        save = CallbackSave(output_directory,
+                            dataset,
+                            frequency=callback_frequency)
         callbacks = [verbose, save]
         workdir = str(save.workdir._path)
         print(f"Files will be saved under {workdir}.")
@@ -447,14 +511,12 @@ def train_model(
 
     return res
 
+
 model = create_instance_segmentation_model(
-    generations=20,
+    generations=10,
     _lambda=5,
     inputs=3,
     outputs=2,
     endpoint=EndpointWatershed(),
 )
-elite, _ = train_model(model,
-                       read_dataset("dataset"),
-                       ".",
-                       preprocessing=None)
+elite, _ = train_model(model, read_dataset("dataset"), ".", preprocessing=None)
