@@ -1,6 +1,3 @@
-import cv2
-import numpy as np
-import pandas as pd
 from kartezio.dataset import read_dataset
 from kartezio.easy import print_stats
 from kartezio.fitness import FitnessAP
@@ -8,6 +5,11 @@ from kartezio.inference import ModelPool
 from kartezio.preprocessing import TransformToHED, TransformToHSV
 from numena.image.basics import image_normalize
 from numena.image.contour import contours_draw, contours_find
+import cv2
+import numpy as np
+import os
+import pandas as pd
+import sys
 
 COLORS_SCALES = ["RGB", "HSV", "HED"]
 MODES = ["MCW", "LMW", "ELLIPSE", "HCT", "LABELS"]
@@ -21,9 +23,12 @@ for mode in MODES:
             preprocessing = TransformToHSV()
         elif color_scale == "HED":
             preprocessing = TransformToHED()
-        pool = ModelPool(f"./models/{mode}/{color_scale}",
-                         FitnessAP(),
-                         regex="*/elite.json")
+        path = f"./models/{mode}/{color_scale}"
+        try:
+            pool = ModelPool(path, FitnessAP(), regex="*/elite.json")
+        except ValueError:
+            sys.stderr.write(f"eval.py: warning: skip '{path}'\n")
+            continue
         annotations_test = 0
         annotations_training = 0
         roi_pixel_areas = []
@@ -89,5 +94,6 @@ for mode in MODES:
                     f"{mode} {color_scale} training set")
         print_stats(scores_test, "AP50", f"{mode} {color_scale} test set")
 
+    os.makedirs("results", exist_ok=True)
     pd.DataFrame(scores_all).to_csv(f"./results/{mode}_results.csv",
                                     index=False)

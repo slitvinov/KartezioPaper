@@ -13,6 +13,6 @@ PYTHONPATH=.. python train_model.py
 ```
 cp -r SourceData/2-melanoma_nuclei/dataset 2-melanoma_nuclei/
 cd 2-melanoma_nuclei
-PYTHONPATH=.. python train_model.py . dataset 0 MCW
+PYTHONPATH=.. python train.py . dataset 0 MCW
 ```
 
