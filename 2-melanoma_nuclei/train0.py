@@ -42,8 +42,10 @@ from scipy.stats import kurtosis, skew
 from skimage.morphology import remove_small_holes, remove_small_objects
 from kartezio.model.registry import registry
 
+
 class KartezioComponent(Serializable):
     pass
+
 
 class KartezioNode(KartezioComponent):
 
@@ -59,7 +61,7 @@ class KartezioNode(KartezioComponent):
         self.args = args
         self.sources = sources
 
-    def dumps(self) -> dict:
+    def dumps(self):
         return {
             "name": self.name,
             "abbv": self.symbol,
@@ -68,10 +70,13 @@ class KartezioNode(KartezioComponent):
             "kwargs": self._to_json_kwargs(),
         }
 
+
 class KartezioEndpoint(KartezioNode):
+
     def __init__(self, name: str, symbol: str, arity: int, outputs_keys: list):
         super().__init__(name, symbol, arity, 0)
         self.outputs_keys = outputs_keys
+
 
 class KartezioBundle(KartezioComponent):
 
@@ -99,29 +104,25 @@ class KartezioBundle(KartezioComponent):
     def ordered_list(self):
         return [self.__nodes[i].name for i in range(self.size)]
 
-    def dumps(self) -> dict:
-        return {}
-
 
 class EmptyBundle(KartezioBundle):
-
-    def fill(self):
-        pass
+    pass
 
 
-class Prototype():
-    def clone(self):
-        pass
+class Prototype:
+    pass
+
 
 class KartezioGenome(KartezioComponent, Prototype):
-    def dumps(self) -> dict:
-        pass
 
     def __init__(self, shape: tuple = (14, 5), sequence: np.ndarray = None):
         if sequence is not None:
             self.sequence = sequence
         else:
             self.sequence = np.zeros(shape=shape, dtype=np.uint8)
+
+    def dumps(self):
+        pass
 
     def __deepcopy__(self, memo={}):
         new = self.__class__(*self.sequence.shape)
@@ -137,7 +138,9 @@ class KartezioGenome(KartezioComponent, Prototype):
     def clone(self):
         return copy.deepcopy(self)
 
+
 class Factory:
+
     def __init__(self, prototype):
         self._prototype = None
         self.set_prototype(prototype)
@@ -156,6 +159,7 @@ class GenomeFactory(Factory):
 
 
 class GenomeAdapter(KartezioComponent):
+
     def __init__(self, shape):
         self.shape = shape
 
@@ -231,6 +235,7 @@ class GenomeShape:
         self.h = self.inputs + self.nodes + self.outputs
         self.prototype = KartezioGenome(shape=(self.h, self.w))
 
+
 class KartezioParser(GenomeReader):
 
     def __init__(self, shape, function_bundle, endpoint):
@@ -238,7 +243,7 @@ class KartezioParser(GenomeReader):
         self.function_bundle = function_bundle
         self.endpoint = endpoint
 
-    def dumps(self) -> dict:
+    def dumps(self):
         return {
             "metadata": {
                 "rows": 1,  # single row CGP
@@ -252,7 +257,6 @@ class KartezioParser(GenomeReader):
             "endpoint": self.endpoint.dumps(),
             "mode": "default",
         }
-
 
     def _parse_one_graph(self, genome, graph_source):
         next_indices = graph_source.copy()
@@ -342,6 +346,7 @@ class KartezioParser(GenomeReader):
 class ParserSequential(KartezioParser):
     pass
 
+
 class KartezioToCode(KartezioParser):
 
     def to_python_class(self, node_name, genome):
@@ -353,29 +358,14 @@ class KartezioStacker(KartezioNode):
     def __init__(self, name: str, symbol: str, arity: int):
         super().__init__(name, symbol, arity, 0)
 
-    def call(self, x: List, args: List = None):
-        y = []
-        for i in range(self.arity):
-            Y = [xi[i] for xi in x]
-            y.append(self.post_stack(self.stack(Y), i))
-        return y
-
     def stack(self, Y: List):
         pass
 
     def post_stack(self, x, output_index):
         return x
 
-    @staticmethod
-    def from_json(json_data):
-        return registry.stackers.instantiate(json_data["abbv"],
-                                             arity=json_data["arity"],
-                                             **json_data["kwargs"])
-
 
 class ExportableNode(KartezioNode):
-    def _to_json_kwargs(self):
-        return {}
 
     def to_python(self, input_nodes: List, p: List, node_name: str):
         pass
@@ -385,6 +375,7 @@ class ExportableNode(KartezioNode):
 
 
 class Observer:
+
     def update(self, event):
         """
         Receive update from subject.
@@ -405,14 +396,12 @@ class KartezioCallback(KartezioComponent, Observer):
         if event["n"] % self.frequency == 0 or event["force"]:
             self._callback(event["n"], event["name"], event["content"])
 
-    def dumps(self) -> dict:
-        return {}
-
     def _callback(self, n, e_name, e_content):
         pass
 
 
 class NodeImageProcessing(KartezioNode):
+
     def _to_json_kwargs(self):
         return {}
 
@@ -1061,9 +1050,6 @@ def from_dataset(dataset):
 
 
 def singleton(cls):
-    """
-    https://towardsdatascience.com/10-fabulous-python-decorators-ab674a732871
-    """
     instances = {}
 
     def wrapper(*args, **kwargs):
@@ -1075,6 +1061,7 @@ def singleton(cls):
 
 
 class Observable:
+
     def __init__(self):
         self._observers: List[Observer] = []
 
@@ -1089,12 +1076,17 @@ class Observable:
 @singleton
 class BundleOpenCV(KartezioBundle):
 
+    def dumps(self):
+        pass
+
     def fill(self):
         for node_abbv in IMAGE_NODES_ABBV_LIST:
             self.add_node(node_abbv)
 
 
 BUNDLE_OPENCV = BundleOpenCV()
+
+
 @registry.stackers.add("MEAN")
 class StackerMean(KartezioStacker):
 
@@ -1619,6 +1611,9 @@ class Event(Enum):
 
 class CallbackVerbose(KartezioCallback):
 
+    def dumps(self):
+        pass
+
     def _callback(self, n, e_name, e_content):
         fitness, time = e_content.get_best_fitness()
         if e_name == Event.END_STEP:
@@ -1630,6 +1625,9 @@ class CallbackVerbose(KartezioCallback):
 
 
 class CallbackSave(KartezioCallback):
+
+    def dumps(self):
+        pass
 
     def __init__(self, workdir, dataset, frequency=1):
         super().__init__(frequency)
@@ -2067,8 +2065,7 @@ class ModelContext:
         self.fitness = fitness
 
     def compile_parser(self, series_mode, series_stacker):
-        parser = KartezioParser(self.genome_shape, self.bundle,
-                                self.endpoint)
+        parser = KartezioParser(self.genome_shape, self.bundle, self.endpoint)
         self.parser = parser
         self.series_mode = series_mode
 
@@ -2307,6 +2304,7 @@ class ModelML:
     def fit(self, x: List, y: List):
         pass
 
+
 class ModelGA:
 
     def __init__(self, strategy, generations):
@@ -2385,6 +2383,7 @@ class ModelCGP(ModelML, Observable):
             "force": force,
         }
         self.notify(event)
+
 
 def train_model(
     model,
