@@ -59,9 +59,6 @@ class KartezioNode(KartezioComponent):
         self.args = args
         self.sources = sources
 
-    def call(self, x: List, args: List = None):
-        pass
-
     def dumps(self) -> dict:
         return {
             "name": self.name,
@@ -71,19 +68,10 @@ class KartezioNode(KartezioComponent):
             "kwargs": self._to_json_kwargs(),
         }
 
-    def _to_json_kwargs(self) -> dict:
-        pass
-
-
 class KartezioEndpoint(KartezioNode):
     def __init__(self, name: str, symbol: str, arity: int, outputs_keys: list):
         super().__init__(name, symbol, arity, 0)
         self.outputs_keys = outputs_keys
-
-    @staticmethod
-    def from_json(json_data):
-        return registry.endpoints.instantiate(json_data["abbv"],
-                                              **json_data["kwargs"])
 
 class KartezioBundle(KartezioComponent):
 
