@@ -6,8 +6,9 @@ python -m pip install pandas
 
 To plot graphs
 ```
-sudo apt install libgraphviz-dev -y
+sudo apt install -y libgraphviz-dev graphviz
 python -m pip install --no-deps pygraphviz
+PYTHONPATH=.. python ../kartezio/cli/graph.py ./MCW/HED/790569-bf098178-d4db-4836-9ae8-7d62ad7964d8/elite.json --filename graph.png
 ```
 
 Data
