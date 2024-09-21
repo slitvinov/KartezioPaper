@@ -39,7 +39,6 @@ from numena.io.imagej import read_ellipses_from_csv, read_polygons_from_roi
 from numena.time import eventid
 from scipy.stats import kurtosis, skew
 from skimage.morphology import remove_small_holes, remove_small_objects
-from kartezio.model.registry import registry
 
 class KartezioNode:
 
@@ -380,6 +379,16 @@ class NodeImageProcessing(KartezioNode):
     def _to_json_kwargs(self):
         return {}
 
+def singleton(cls):
+    instances = {}
+
+    def wrapper(*args, **kwargs):
+        if cls not in instances:
+            instances[cls] = cls(*args, **kwargs)
+        return instances[cls]
+
+    return wrapper
+from kartezio.model.registry import registry
 
 @registry.nodes.add("max")
 class Max(NodeImageProcessing):
@@ -1022,17 +1031,6 @@ def from_dataset(dataset):
         "label_name": dataset.label_name,
         "indices": dataset.indices,
     }
-
-
-def singleton(cls):
-    instances = {}
-
-    def wrapper(*args, **kwargs):
-        if cls not in instances:
-            instances[cls] = cls(*args, **kwargs)
-        return instances[cls]
-
-    return wrapper
 
 
 class Observable:
