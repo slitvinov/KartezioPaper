@@ -1,3 +1,5 @@
+from abc import ABC, abstractmethod
+from typing import List
 from builtins import print
 from dataclasses import dataclass, field
 from dataclasses import InitVar, dataclass, field
@@ -40,6 +42,110 @@ from numena.time import eventid
 from scipy.stats import kurtosis, skew
 from skimage.morphology import remove_small_holes, remove_small_objects
 from typing import List, NewType
+
+def singleton(cls):
+    instances = {}
+
+    def wrapper(*args, **kwargs):
+        if cls not in instances:
+            instances[cls] = cls(*args, **kwargs)
+        return instances[cls]
+
+    return wrapper
+
+
+class Prototype(ABC):
+    @abstractmethod
+    def clone(self):
+        pass
+
+
+class Factory:
+    def __init__(self, prototype):
+        self._prototype = None
+        self.set_prototype(prototype)
+
+    def set_prototype(self, prototype):
+        self._prototype = prototype
+
+    def create(self):
+        return self._prototype.clone()
+
+
+class Observer(ABC):
+    @abstractmethod
+    def update(self, event):
+        """
+        Receive update from subject.
+        """
+        pass
+
+
+class Observable(ABC):
+    def __init__(self):
+        self._observers: List[Observer] = []
+
+    def attach(self, observer: Observer) -> None:
+        self._observers.append(observer)
+
+    def detach(self, observer: Observer) -> None:
+        self._observers.remove(observer)
+
+    def clear(self) -> None:
+        self._observers = []
+
+    def notify(self, event) -> None:
+        for observer in self._observers:
+            observer.update(event)
+
+@singleton
+class Registry:
+    class SubRegistry:
+        def __init__(self):
+            self.__components = {}
+
+        def remove(self):
+            pass
+
+        def add(self, item_name, replace=False):
+            def inner(item_cls):
+                if item_name in self.__components.keys():
+                    if replace:
+                        self.__components[item_name] = item_cls
+                    else:
+                        print(
+                            f"Warning, '{item_name}' already registered, replace it using 'replace=True', or use another name."
+                        )
+                else:
+                    self.__components[item_name] = item_cls
+
+                def wrapper(*args, **kwargs):
+                    return item_cls(*args, **kwargs)
+
+                return wrapper
+
+            return inner
+
+        def get(self, item_name):
+            if item_name not in self.__components.keys():
+                raise ValueError(f"Component '{item_name}' not found in the registry!")
+            return self.__components[item_name]
+
+        def instantiate(self, item_name, *args, **kwargs):
+            return self.get(item_name)(*args, **kwargs)
+
+        def list(self):
+            return self.__components
+
+    def __init__(self):
+        self.nodes = self.SubRegistry()
+        self.stackers = self.SubRegistry()
+        self.endpoints = self.SubRegistry()
+        self.fitness = self.SubRegistry()
+        self.metrics = self.SubRegistry()
+        self.mutations = self.SubRegistry()
+        self.readers = self.SubRegistry()
+registry = Registry()
 
 from kartezio.apps.instance_segmentation import create_instance_segmentation_model
 from kartezio.dataset import read_dataset
