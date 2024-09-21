@@ -39,6 +39,10 @@ from numena.io.imagej import read_ellipses_from_csv, read_polygons_from_roi
 from numena.time import eventid
 from scipy.stats import kurtosis, skew
 from skimage.morphology import remove_small_holes, remove_small_objects
+from typing import List, NewType
+
+Score = NewType("Score", float)
+ScoreList = List[Score]
 
 class KartezioNode:
 
@@ -389,6 +393,71 @@ def singleton(cls):
 
     return wrapper
 from kartezio.model.registry import registry
+
+class KartezioMetric(KartezioNode):
+    def __init__(
+        self,
+        name: str,
+        symbol: str,
+        arity: int,
+    ):
+        super().__init__(name, symbol, arity, 0)
+
+    def _to_json_kwargs(self) -> dict:
+        pass
+
+
+MetricList = List[KartezioMetric]
+
+class KartezioFitness(KartezioNode):
+    def __init__(
+        self,
+        name: str,
+        symbol: str,
+        arity: int,
+        default_metric: KartezioMetric = None,
+    ):
+        super().__init__(name, symbol, arity, 0)
+        self.metrics: MetricList = []
+        if default_metric:
+            self.add_metric(default_metric)
+
+    def add_metric(self, metric: KartezioMetric):
+        self.metrics.append(metric)
+
+    def call(self, y_true, y_pred) -> ScoreList:
+        scores: ScoreList = []
+        for yi_pred in y_pred:
+            scores.append(self.compute_one(y_true, yi_pred))
+        return scores
+
+    def compute_one(self, y_true, y_pred) -> Score:
+        score = 0.0
+        y_size = len(y_true)
+        for i in range(y_size):
+            _y_true = y_true[i].copy()
+            _y_pred = y_pred[i]
+            score += self.__fitness_sum(_y_true, _y_pred)
+        return Score(score / y_size)
+
+    def __fitness_sum(self, y_true, y_pred) -> Score:
+        score = Score(0.0)
+        for metric in self.metrics:
+            score += metric.call(y_true, y_pred)
+        return score
+
+    def _to_json_kwargs(self) -> dict:
+        pass
+
+@registry.fitness.add("AP")
+class FitnessAP(KartezioFitness):
+    def __init__(self, thresholds=0.5):
+        super().__init__(
+            name=f"Average Precision ({thresholds})",
+            symbol="AP",
+            arity=1,
+            default_metric=registry.metrics.instantiate("CAP", thresholds=thresholds),
+        )
 
 @registry.nodes.add("max")
 class Max(NodeImageProcessing):
@@ -1639,7 +1708,6 @@ class KartezioMetric(KartezioNode):
 
     def _to_json_kwargs(self) -> dict:
         pass
-
 
 
 class KartezioMutation(GenomeReaderWriter):
