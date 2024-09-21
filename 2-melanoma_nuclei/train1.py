@@ -152,7 +152,6 @@ from kartezio.image.bundle import BUNDLE_OPENCV
 from kartezio.model.builder import ModelBuilder
 from kartezio.callback import CallbackSave, CallbackVerbose
 from kartezio.enums import CSV_DATASET
-from kartezio.model.components import KartezioGenome, KartezioParser
 
 def pack_one_directory(directory_path):
     directory = Directory(directory_path)
