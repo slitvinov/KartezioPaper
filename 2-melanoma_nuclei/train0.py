@@ -328,16 +328,6 @@ class KartezioParser(GenomeReader):
         return all_y_pred, whole_time
 
 
-class ParserSequential(KartezioParser):
-    pass
-
-
-class KartezioToCode(KartezioParser):
-
-    def to_python_class(self, node_name, genome):
-        pass
-
-
 class KartezioStacker(KartezioNode):
 
     def __init__(self, name: str, symbol: str, arity: int):
