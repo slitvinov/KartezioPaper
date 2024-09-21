@@ -40,18 +40,11 @@ from numena.time import eventid
 from scipy.stats import kurtosis, skew
 from skimage.morphology import remove_small_holes, remove_small_objects
 from typing import List, NewType
+
 from kartezio.apps.instance_segmentation import create_instance_segmentation_model
 from kartezio.dataset import read_dataset
-from kartezio.endpoint import (
-    EndpointEllipse,
-    EndpointHoughCircle,
-    EndpointLabels,
-    EndpointWatershed,
-    LocalMaxWatershed,
-)
-from kartezio.preprocessing import TransformToHED, TransformToHSV
+from kartezio.endpoint import EndpointWatershed
 from kartezio.training import train_model
-from numena.io.drive import Directory
 
 model = create_instance_segmentation_model(
     generations=10,
