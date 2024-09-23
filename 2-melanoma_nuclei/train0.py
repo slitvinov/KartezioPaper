@@ -13,7 +13,6 @@ from numena.image.basics import image_ew_mean
 from numena.image.basics import image_ew_min
 from numena.image.basics import image_new
 from numena.image.basics import image_split
-from numena.image.basics import remove_small_objects
 from numena.image.color import bgr2hed
 from numena.image.color import bgr2hsv
 from numena.image.color import gray2rgb
