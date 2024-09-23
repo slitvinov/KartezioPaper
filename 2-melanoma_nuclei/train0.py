@@ -1498,9 +1498,8 @@ class ModelGA:
 
 class ModelCGP(Observable):
 
-    def __init__(self, parser):
+    def __init__(self):
         super().__init__()
-        self.parser = parser
         self.callbacks = []
 
     def fit(
@@ -1510,7 +1509,7 @@ class ModelCGP(Observable):
     ):
         genetic_algorithm = ModelGA()
         genetic_algorithm.initialization()
-        y_pred = self.parser.parse_population(g.strategy.population, x)
+        y_pred = g.parser.parse_population(g.strategy.population, x)
         genetic_algorithm.evaluation(y, y_pred)
         self._notify(0, Event.START_LOOP, force=True)
         while not genetic_algorithm.is_satisfying():
@@ -1519,7 +1518,7 @@ class ModelCGP(Observable):
             genetic_algorithm.selection()
             genetic_algorithm.reproduction()
             genetic_algorithm.mutation()
-            y_pred = self.parser.parse_population(g.strategy.population, x)
+            y_pred = g.parser.parse_population(g.strategy.population, x)
             genetic_algorithm.evaluation(y, y_pred)
             genetic_algorithm.next()
             self._notify(genetic_algorithm.current_generation, Event.END_STEP)
@@ -1893,7 +1892,7 @@ mutation = MutationClassic(len(g.nodes), node_mutation_rate,
 g.mutation_method = GoldmanWrapper(mutation, g.parser)
 g.fitness = FitnessAP()
 g.strategy = OnePlusLambda()
-model = ModelCGP(g.parser)
+model = ModelCGP()
 g.dataset_reader = DatasetReader(g.path, counting=False)
 g.dataset = g.dataset_reader.read_dataset(dataset_filename=CSV_DATASET,
                                           meta_filename=JSON_META,
@@ -1904,7 +1903,7 @@ g.callbacks = [
 ]
 g.workdir = str(g.callbacks[1].workdir._path)
 for callback in g.callbacks:
-    callback.set_parser(model.parser)
+    callback.set_parser(g.parser)
     model.attach(callback)
 model.fit(*g.dataset.train_xy)
 pack_one_directory(g.workdir)
