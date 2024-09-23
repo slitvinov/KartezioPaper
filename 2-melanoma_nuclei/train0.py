@@ -46,13 +46,65 @@ from scipy.stats import kurtosis, skew
 from skimage.morphology import remove_small_holes, remove_small_objects
 from typing import List, NewType
 
-from kartezio.enums import CSV_DATASET
-from kartezio.enums import DIR_PREVIEW
-from kartezio.enums import JSON_ELITE
-from kartezio.enums import JSON_META
-from kartezio.model.registry import registry
-from kartezio.model.types import Score
-from kartezio.model.types import Score, ScoreList
+class Registry:
+    class SubRegistry:
+        def __init__(self):
+            self.__components = {}
+
+        def remove(self):
+            pass
+
+        def add(self, item_name, replace=False):
+            def inner(item_cls):
+                if item_name in self.__components.keys():
+                    if replace:
+                        self.__components[item_name] = item_cls
+                    else:
+                        print(
+                            f"Warning, '{item_name}' already registered, replace it using 'replace=True', or use another name."
+                        )
+                else:
+                    self.__components[item_name] = item_cls
+
+                def wrapper(*args, **kwargs):
+                    return item_cls(*args, **kwargs)
+
+                return wrapper
+
+            return inner
+
+        def get(self, item_name):
+            if item_name not in self.__components.keys():
+                raise ValueError(f"Component '{item_name}' not found in the registry!")
+            return self.__components[item_name]
+
+        def instantiate(self, item_name, *args, **kwargs):
+            return self.get(item_name)(*args, **kwargs)
+
+        def list(self):
+            return self.__components
+
+    def __init__(self):
+        self.nodes = self.SubRegistry()
+        self.stackers = self.SubRegistry()
+        self.endpoints = self.SubRegistry()
+        self.fitness = self.SubRegistry()
+        self.metrics = self.SubRegistry()
+        self.mutations = self.SubRegistry()
+        self.readers = self.SubRegistry()
+
+
+registry = Registry()
+
+Score = NewType("Score", float)
+ScoreList = List[Score]
+
+JSON_ELITE = "elite.json"
+JSON_HISTORY = "history.json"
+JSON_META = "META.json"
+CSV_DATASET = "dataset.csv"
+DIR_PREVIEW = "__preview__"
+
 
 class Prototype(ABC):
     """
