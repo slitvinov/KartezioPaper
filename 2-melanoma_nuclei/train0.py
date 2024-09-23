@@ -49,7 +49,6 @@ from kartezio.dataset import read_dataset
 from kartezio.training import train_model
 from kartezio.endpoint import EndpointWatershed
 from kartezio.image.bundle import BUNDLE_OPENCV
-from kartezio.model.builder import ModelBuilder
 from kartezio.stacker import MeanKartezioStackerForWatershed
 from kartezio.model.base import ModelCGP
 from kartezio.model.components import (
