@@ -1992,7 +1992,6 @@ g.nodes = 30
 g.outputs = 2
 g.arity = 2
 g.parameters = 2
-instance_method = "random"
 mutation = "classic"
 node_mutation_rate = 0.15
 output_mutation_rate = 0.2
@@ -2005,8 +2004,7 @@ g.genome_factory = GenomeFactory(g.genome_shape.prototype)
 g.parser = KartezioParser(g.genome_shape)
 shape = g.genome_shape
 n_nodes = g.bundle.size
-instance_method = MutationAllRandom(shape, n_nodes)
-g.instance_method = instance_method
+g.instance_method = MutationAllRandom(shape, n_nodes)
 shape = g.genome_shape
 mutation = registry.mutations.instantiate(mutation, shape, n_nodes,
                                               node_mutation_rate,
@@ -2016,11 +2014,10 @@ g.mutation_method = GoldmanWrapper(mutation, parser)
 fitness = registry.fitness.instantiate(fitness)
 g.fitness = fitness
 factory = g.genome_factory
-instance_method = g.instance_method
 mutation_method = g.mutation_method
 fitness = g.fitness
 parser = g.parser
-strategy = OnePlusLambda(factory, instance_method,
+strategy = OnePlusLambda(factory, g.instance_method,
                          mutation_method, fitness)
 model = ModelCGP(strategy, parser)
 g.dataset_reader = DatasetReader(g.path, counting=False)
