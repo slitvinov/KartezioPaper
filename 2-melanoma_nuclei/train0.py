@@ -1787,9 +1787,6 @@ class BundleOpenCV(KartezioBundle):
             self.add_node(node_abbv)
 
 
-BUNDLE_OPENCV = BundleOpenCV()
-
-
 @registry.endpoints.add("WSHD")
 class EndpointWatershed(KartezioEndpoint):
 
@@ -2523,7 +2520,7 @@ g.path = "dataset"
 _lambda = 5
 generations = 10
 endpoint = EndpointWatershed()
-bundle = BUNDLE_OPENCV
+bundle = BundleOpenCV()
 inputs = 3
 nodes = 30
 outputs = 2
