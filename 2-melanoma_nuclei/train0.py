@@ -45,15 +45,77 @@ from numena.time import eventid
 from scipy.stats import kurtosis, skew
 from skimage.morphology import remove_small_holes, remove_small_objects
 from typing import List, NewType
-from kartezio.model.types import Score, ScoreList
-from kartezio.model.types import Score
+
 from kartezio.enums import CSV_DATASET
 from kartezio.enums import DIR_PREVIEW
 from kartezio.enums import JSON_ELITE
 from kartezio.enums import JSON_META
-from kartezio.model.helpers import Observable
 from kartezio.model.registry import registry
-from kartezio.model.helpers import Factory, Observer, Prototype
+from kartezio.model.types import Score
+from kartezio.model.types import Score, ScoreList
+
+class Prototype(ABC):
+    """
+    Using Prototype Pattern to duplicate:
+    https://refactoring.guru/design-patterns/prototype
+    """
+
+    @abstractmethod
+    def clone(self):
+        pass
+
+
+class Factory:
+    """
+    Using Factory Pattern:
+    https://refactoring.guru/design-patterns/factory-method
+    """
+
+    def __init__(self, prototype):
+        self._prototype = None
+        self.set_prototype(prototype)
+
+    def set_prototype(self, prototype):
+        self._prototype = prototype
+
+    def create(self):
+        return self._prototype.clone()
+
+
+class Observer(ABC):
+    """
+    The Observer interface declares the update method, used by subjects.
+    """
+
+    @abstractmethod
+    def update(self, event):
+        """
+        Receive update from subject.
+        """
+        pass
+
+
+class Observable(ABC):
+    """
+    For the sake of simplicity, the Observable state, essential to all
+    subscribers, is stored in this variable.
+    """
+
+    def __init__(self):
+        self._observers: List[Observer] = []
+
+    def attach(self, observer: Observer) -> None:
+        self._observers.append(observer)
+
+    def detach(self, observer: Observer) -> None:
+        self._observers.remove(observer)
+
+    def clear(self) -> None:
+        self._observers = []
+
+    def notify(self, event) -> None:
+        for observer in self._observers:
+            observer.update(event)
 
 def pack_one_directory(directory_path):
     directory = Directory(directory_path)
