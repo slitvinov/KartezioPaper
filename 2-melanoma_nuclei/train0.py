@@ -1834,9 +1834,8 @@ class PopulationWithElite(KartezioPopulation):
 
 class OnePlusLambda:
 
-    def __init__(self, init_method):
+    def __init__(self):
         self._mu = 1
-        self.init_method = init_method
         self.population = PopulationWithElite()
 
     @property
@@ -1846,7 +1845,7 @@ class OnePlusLambda:
     def initialization(self):
         for i in range(g._lambda + 1):
             zero = np.zeros((g.h, g.w), dtype=np.uint8)
-            individual = self.init_method.mutate(zero)
+            individual = g.instance_method.mutate(zero)
             self.population[i] = individual
 
     def selection(self):
@@ -1895,7 +1894,7 @@ mutation = MutationClassic(len(g.nodes), node_mutation_rate,
                            output_mutation_rate)
 g.mutation_method = GoldmanWrapper(mutation, g.parser)
 g.fitness = FitnessAP()
-g.strategy = OnePlusLambda(g.instance_method)
+g.strategy = OnePlusLambda()
 model = ModelCGP(g.strategy, g.parser)
 g.dataset_reader = DatasetReader(g.path, counting=False)
 g.dataset = g.dataset_reader.read_dataset(dataset_filename=CSV_DATASET,
