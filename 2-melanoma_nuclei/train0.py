@@ -1454,9 +1454,6 @@ class ModelGA:
     def __init__(self):
         self.current_generation = 0
 
-    def fit(self, x, y):
-        pass
-
     def initialization(self):
         g.strategy.initialization()
 
