@@ -1,25 +1,4 @@
-from abc import ABC, abstractmethod
-from builtins import print
-from dataclasses import dataclass, field
-from dataclasses import InitVar, dataclass, field
-from math import isclose
-from numba import jit
-from numena.enums import IMAGE_UINT8_COLOR_1C
-from numena.image.basics import image_new
-from numena.image.basics import image_new, image_split
-from numena.image.color import bgr2hed, bgr2hsv, gray2rgb, rgb2bgr
-from numena.image.contour import contours_find
-from numena.image.morphology import WatershedSkimage
-from numena.image.threshold import threshold_tozero
-from numena.io.drive import Directory
-from numena.io.json import json_read, json_write
-from numena.io.json import Serializable
-from scipy.optimize import linear_sum_assignment
-from typing import List
-from typing import List, NewType
-from typing import List, Tuple
 import argparse
-import ast
 import copy
 import cv2
 import numpy as np
@@ -28,23 +7,60 @@ import pandas as pd
 import random
 import simplejson
 import time
-from numena.image.drawing import (
-    draw_overlay,
-    fill_ellipses_as_labels,
-    fill_polygons_as_labels,
-)
+from abc import ABC
+from abc import abstractmethod
+from builtins import print
+from dataclasses import dataclass
+from dataclasses import field
+from dataclasses import InitVar
 from enum import Enum
+from math import isclose
+from numba import jit
+from numena.enums import IMAGE_UINT8_COLOR_1C
+from numena.image.basics import image_ew_max
 from numena.image.basics import image_ew_max, image_ew_mean, image_ew_min
+from numena.image.basics import image_ew_mean
+from numena.image.basics import image_ew_min
+from numena.image.basics import image_new
 from numena.image.basics import image_split
+from numena.image.color import bgr2hed
 from numena.image.color import bgr2hed, bgr2hsv, rgb2bgr, rgb2hed
+from numena.image.color import bgr2hsv
+from numena.image.color import gray2rgb
+from numena.image.color import rgb2bgr
+from numena.image.color import rgb2hed
+from numena.image.contour import contours_find
+from numena.image.drawing import draw_overlay
+from numena.image.drawing import fill_ellipses_as_labels
+from numena.image.drawing import fill_polygons_as_labels
 from numena.image.morphology import morph_fill
+from numena.image.morphology import WatershedSkimage
+from numena.image.threshold import threshold_binary
 from numena.image.threshold import threshold_binary, threshold_tozero
+from numena.image.threshold import threshold_tozero
+from numena.io.drive import Directory
+from numena.io.image import imread_color
 from numena.io.image import imread_color, imread_grayscale, imread_tiff
+from numena.io.image import imread_grayscale
+from numena.io.image import imread_tiff
+from numena.io.imagej import read_ellipses_from_csv
 from numena.io.imagej import read_ellipses_from_csv, read_polygons_from_roi
+from numena.io.imagej import read_polygons_from_roi
+from numena.io.json import json_read
+from numena.io.json import json_write
+from numena.io.json import Serializable
 from numena.time import eventid
-from scipy.stats import kurtosis, skew
+from scipy.optimize import linear_sum_assignment
+from scipy.stats import kurtosis
+from scipy.stats import skew
+from scipy.stats import skew
+from skimage.morphology import remove_small_holes
 from skimage.morphology import remove_small_holes, remove_small_objects
+from skimage.morphology import remove_small_objects
+from typing import List
 from typing import List, NewType
+from typing import NewType
+from typing import Tuple
 
 class Registry:
     class SubRegistry:
