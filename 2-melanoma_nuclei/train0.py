@@ -2073,7 +2073,6 @@ class G:
 
 g = G()
 g.path = "dataset"
-
 _lambda = 5
 generations = 10
 endpoint = EndpointWatershed()
@@ -2092,7 +2091,6 @@ use_goldman = True
 fitness = "AP"
 callbacks = None
 dataset_inputs = None
-g.context = None
 g.context = ModelContext(inputs, nodes, outputs, arity,
                               parameters)
 g.context.set_endpoint(endpoint)
