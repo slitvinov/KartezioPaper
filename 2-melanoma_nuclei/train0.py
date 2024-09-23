@@ -1306,9 +1306,7 @@ class InRange(NodeImageProcessing):
 class BundleOpenCV:
 
     def __init__(self):
-        self.nodes = {}
-        for name in registry.nodes.list().keys():
-            self.nodes[len(self.nodes)] = registry.nodes.instantiate(name)
+        self.nodes = [registry.nodes.instantiate(name) for name in registry.nodes.list().keys()]
 
     def arity_of(self, i):
         return self.nodes[i].arity
@@ -1322,7 +1320,7 @@ class BundleOpenCV:
 
     @property
     def ordered_list(self):
-        return [self.nodes[i].name for i in range(self.size)]
+        return [node.name for node in self.nodes]
 
 
 class EndpointWatershed(KartezioEndpoint):
