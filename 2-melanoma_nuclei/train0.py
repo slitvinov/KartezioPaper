@@ -2513,11 +2513,6 @@ class ModelBuilder:
         return model
 
 
-ENDPOINT_DEFAULT_INSTANCE_SEGMENTATION = EndpointWatershed()
-BUNDLE_DEFAULT_INSTANCE_SEGMENTATION = BUNDLE_OPENCV
-STACKER_DEFAULT_INSTANCE_SEGMENTATION = MeanKartezioStackerForWatershed()
-
-
 class G:
     pass
 
@@ -2528,13 +2523,13 @@ g.path = "dataset"
 _lambda = 5
 generations = 10
 endpoint = EndpointWatershed()
-bundle = BUNDLE_DEFAULT_INSTANCE_SEGMENTATION
+bundle = BUNDLE_OPENCV
 inputs = 3
 nodes = 30
 outputs = 2
 arity = 2
 parameters = 2
-series_stacker = STACKER_DEFAULT_INSTANCE_SEGMENTATION
+series_stacker = MeanKartezioStackerForWatershed()
 instance_method = "random"
 mutation_method = "classic"
 node_mutation_rate = 0.15
