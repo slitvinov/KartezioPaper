@@ -320,30 +320,6 @@ class KartezioEndpoint(KartezioNode):
         self.outputs_keys = outputs_keys
 
 
-class KartezioBundle:
-
-    def __init__(self):
-        self.__nodes = {}
-        self.fill()
-
-    def add_node(self, node_name):
-        self.__nodes[len(self.__nodes)] = registry.nodes.instantiate(node_name)
-
-    def arity_of(self, i):
-        return self.__nodes[i].arity
-
-    def execute(self, name, x, args):
-        return self.__nodes[name].call(x, args)
-
-    @property
-    def size(self):
-        return len(self.__nodes)
-
-    @property
-    def ordered_list(self):
-        return [self.__nodes[i].name for i in range(self.size)]
-
-
 class GenomeFactory:
 
     def set_prototype(self, prototype):
@@ -1330,7 +1306,28 @@ class InRange(NodeImageProcessing):
 IMAGE_NODES_ABBV_LIST = registry.nodes.list().keys()
 
 
-class BundleOpenCV(KartezioBundle):
+class BundleOpenCV:
+
+    def __init__(self):
+        self.__nodes = {}
+        self.fill()
+
+    def add_node(self, node_name):
+        self.__nodes[len(self.__nodes)] = registry.nodes.instantiate(node_name)
+
+    def arity_of(self, i):
+        return self.__nodes[i].arity
+
+    def execute(self, name, x, args):
+        return self.__nodes[name].call(x, args)
+
+    @property
+    def size(self):
+        return len(self.__nodes)
+
+    @property
+    def ordered_list(self):
+        return [self.__nodes[i].name for i in range(self.size)]
 
     def fill(self):
         for node_abbv in IMAGE_NODES_ABBV_LIST:
