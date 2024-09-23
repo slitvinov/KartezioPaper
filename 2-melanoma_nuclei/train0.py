@@ -710,12 +710,11 @@ class KartezioMutation(GenomeReaderWriter):
 
 class KartezioPopulation:
 
-    def __init__(self, size):
-        self.size = size
-        self.individuals = [None] * self.size
+    def __init__(self):
+        self.individuals = [None] * (g._lambda + 1)
         self._fitness = {
-            "fitness": np.zeros(self.size),
-            "time": np.zeros(self.size)
+            "fitness": np.zeros(g._lambda + 1),
+            "time": np.zeros(g._lambda + 1)
         }
 
     def get_best_individual(self):
@@ -1964,8 +1963,8 @@ class PopulationHistory:
 
 class PopulationWithElite(KartezioPopulation):
 
-    def __init__(self, _lambda):
-        super().__init__(1 + _lambda)
+    def __init__(self):
+        super().__init__()
 
     def set_elite(self, individual):
         self[0] = individual
@@ -1980,29 +1979,28 @@ class PopulationWithElite(KartezioPopulation):
         return best_individual, self.fitness[best_fitness_idx]
 
     def history(self):
-        population_history = PopulationHistory(self.size)
+        population_history = PopulationHistory(g._lambda + 1)
         population_history.fill(self.individuals, self.fitness, self.time)
         return population_history
 
 
 class OnePlusLambda:
 
-    def __init__(self, _lambda, factory, init_method, mutation_method,
+    def __init__(self, factory, init_method, mutation_method,
                  fitness):
         self._mu = 1
-        self._lambda = _lambda
         self.factory = factory
         self.init_method = init_method
         self.mutation_method = mutation_method
         self.fitness = fitness
-        self.population = PopulationWithElite(_lambda)
+        self.population = PopulationWithElite()
 
     @property
     def elite(self):
         return self.population.get_elite()
 
     def initialization(self):
-        for i in range(self.population.size):
+        for i in range(g._lambda + 1):
             individual = self.init_method.mutate(self.factory.create())
             self.population[i] = individual
 
@@ -2012,11 +2010,11 @@ class OnePlusLambda:
 
     def reproduction(self):
         elite = self.population.get_elite()
-        for i in range(self._mu, self.population.size):
+        for i in range(self._mu, g._lambda + 1):
             self.population[i] = elite.clone()
 
     def mutation(self):
-        for i in range(self._mu, self.population.size):
+        for i in range(self._mu, g._lambda + 1):
             self.population[i] = self.mutation_method.mutate(
                 self.population[i])
 
@@ -2073,7 +2071,7 @@ class G:
 
 g = G()
 g.path = "dataset"
-_lambda = 5
+g._lambda = 5
 generations = 10
 endpoint = EndpointWatershed()
 bundle = BundleOpenCV()
@@ -2116,7 +2114,7 @@ instance_method = g.context.instance_method
 mutation_method = g.context.mutation_method
 fitness = g.context.fitness
 parser = g.context.parser
-strategy = OnePlusLambda(_lambda, factory, instance_method,
+strategy = OnePlusLambda(factory, instance_method,
                          mutation_method, fitness)
 model = ModelCGP(generations, strategy, parser)
 g.dataset_reader = DatasetReader(g.path, counting=False)
