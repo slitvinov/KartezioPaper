@@ -2709,17 +2709,14 @@ def train_model(
     callback_frequency,
     pack
 ):
-    if callbacks == "default":
-        verbose = CallbackVerbose(frequency=callback_frequency)
-        save = CallbackSave(output_directory, dataset, frequency=callback_frequency)
-        callbacks = [verbose, save]
-        workdir = str(save.workdir._path)
-        print(f"Files will be saved under {workdir}.")
-    if callbacks:
-        for callback in callbacks:
-            callback.set_parser(model.parser)
-            model.attach(callback)
-
+    verbose = CallbackVerbose(frequency=callback_frequency)
+    save = CallbackSave(output_directory, dataset, frequency=callback_frequency)
+    callbacks = [verbose, save]
+    workdir = str(save.workdir._path)
+    print(f"Files will be saved under {workdir}.")
+    for callback in callbacks:
+        callback.set_parser(model.parser)
+        model.attach(callback)
     train_x, train_y = dataset.train_xy
     res = model.fit(train_x, train_y)
     if pack:
