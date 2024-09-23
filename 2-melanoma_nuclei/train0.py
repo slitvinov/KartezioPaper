@@ -149,25 +149,15 @@ class Factory:
     def create(self):
         return self._prototype.clone()
 
-
-class Observer:
-
-    def update(self, event):
-        """
-        Receive update from subject.
-        """
-        pass
-
-
 class Observable:
 
     def __init__(self):
         self._observers = []
 
-    def attach(self, observer: Observer) -> None:
+    def attach(self, observer):
         self._observers.append(observer)
 
-    def notify(self, event) -> None:
+    def notify(self, event):
         for observer in self._observers:
             observer.update(event)
 
@@ -761,7 +751,7 @@ class ExportableNode(KartezioNode):
         pass
 
 
-class KartezioCallback(Observer):
+class KartezioCallback:
 
     def __init__(self, frequency=1):
         self.frequency = frequency
