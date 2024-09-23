@@ -99,7 +99,6 @@ class Registry:
     def __init__(self):
         self.nodes = self.SubRegistry()
         self.stackers = self.SubRegistry()
-        self.endpoints = self.SubRegistry()
         self.fitness = self.SubRegistry()
         self.metrics = self.SubRegistry()
         self.mutations = self.SubRegistry()
@@ -1438,7 +1437,6 @@ class BundleOpenCV(KartezioBundle):
             self.add_node(node_abbv)
 
 
-@registry.endpoints.add("WSHD")
 class EndpointWatershed(KartezioEndpoint):
 
     def __init__(self, use_dt=False, markers_distance=21, markers_area=None):
