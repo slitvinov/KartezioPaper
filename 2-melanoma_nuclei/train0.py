@@ -2071,7 +2071,7 @@ class ModelContext:
 class ModelBuilder:
 
     def __init__(self):
-        self.__context = None
+        g.__context = None
 
     def create(
             self,
@@ -2084,19 +2084,19 @@ class ModelBuilder:
             parameters=2,
             series_stacker=StackerMean(),
     ):
-        self.__context = ModelContext(inputs, nodes, outputs, arity,
+        g.__context = ModelContext(inputs, nodes, outputs, arity,
                                       parameters)
-        self.__context.set_endpoint(endpoint)
-        self.__context.set_bundle(bundle)
-        self.__context.compile_parser(series_stacker)
+        g.__context.set_endpoint(endpoint)
+        g.__context.set_bundle(bundle)
+        g.__context.compile_parser(series_stacker)
 
     def set_instance_method(self, instance_method):
         if type(instance_method) == str:
             if instance_method == "random":
-                shape = self.__context.genome_shape
-                n_nodes = self.__context.bundle.size
+                shape = g.__context.genome_shape
+                n_nodes = g.__context.bundle.size
                 instance_method = MutationAllRandom(shape, n_nodes)
-        self.__context.set_instance_method(instance_method)
+        g.__context.set_instance_method(instance_method)
 
     def set_mutation_method(self,
                             mutation,
@@ -2104,31 +2104,31 @@ class ModelBuilder:
                             output_mutation_rate,
                             use_goldman=True):
         if type(mutation) == str:
-            shape = self.__context.genome_shape
-            n_nodes = self.__context.bundle.size
+            shape = g.__context.genome_shape
+            n_nodes = g.__context.bundle.size
             mutation = registry.mutations.instantiate(mutation, shape, n_nodes,
                                                       node_mutation_rate,
                                                       output_mutation_rate)
         if use_goldman:
-            parser = self.__context.parser
+            parser = g.__context.parser
             mutation = GoldmanWrapper(mutation, parser)
-        self.__context.set_mutation_method(mutation)
+        g.__context.set_mutation_method(mutation)
 
     def set_fitness(self, fitness):
         if type(fitness) == str:
             fitness = registry.fitness.instantiate(fitness)
-        self.__context.set_fitness(fitness)
+        g.__context.set_fitness(fitness)
 
     def compile(self,
                 generations,
                 _lambda,
                 callbacks=None,
                 dataset_inputs=None):
-        factory = self.__context.genome_factory
-        instance_method = self.__context.instance_method
-        mutation_method = self.__context.mutation_method
-        fitness = self.__context.fitness
-        parser = self.__context.parser
+        factory = g.__context.genome_factory
+        instance_method = g.__context.instance_method
+        mutation_method = g.__context.mutation_method
+        fitness = g.__context.fitness
+        parser = g.__context.parser
         strategy = OnePlusLambda(_lambda, factory, instance_method,
                                  mutation_method, fitness)
         model = ModelCGP(generations, strategy, parser)
@@ -2162,6 +2162,7 @@ callbacks = None
 dataset_inputs = None
 
 builder = ModelBuilder()
+g.__context = None
 builder.create(
     endpoint,
     bundle,
