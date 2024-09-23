@@ -1466,32 +1466,31 @@ class MutationAllRandom(KartezioMutation):
 
 class ModelGA:
 
-    def __init__(self, strategy):
-        self.strategy = strategy
+    def __init__(self):
         self.current_generation = 0
 
     def fit(self, x, y):
         pass
 
     def initialization(self):
-        self.strategy.initialization()
+        g.strategy.initialization()
 
     def is_satisfying(self):
         end_of_generations = self.current_generation >= g.generations
-        best_fitness_reached = self.strategy.population.fitness[0] == 0.0
+        best_fitness_reached = g.strategy.population.fitness[0] == 0.0
         return end_of_generations or best_fitness_reached
 
     def selection(self):
-        self.strategy.selection()
+        g.strategy.selection()
 
     def reproduction(self):
-        self.strategy.reproduction()
+        g.strategy.reproduction()
 
     def mutation(self):
-        self.strategy.mutation()
+        g.strategy.mutation()
 
     def evaluation(self, y_true, y_pred):
-        self.strategy.evaluation(y_true, y_pred)
+        g.strategy.evaluation(y_true, y_pred)
 
     def next(self):
         self.current_generation += 1
@@ -1499,9 +1498,8 @@ class ModelGA:
 
 class ModelCGP(Observable):
 
-    def __init__(self, strategy, parser):
+    def __init__(self, parser):
         super().__init__()
-        self.strategy = strategy
         self.parser = parser
         self.callbacks = []
 
@@ -1510,9 +1508,9 @@ class ModelCGP(Observable):
         x,
         y,
     ):
-        genetic_algorithm = ModelGA(self.strategy)
+        genetic_algorithm = ModelGA()
         genetic_algorithm.initialization()
-        y_pred = self.parser.parse_population(self.strategy.population, x)
+        y_pred = self.parser.parse_population(g.strategy.population, x)
         genetic_algorithm.evaluation(y, y_pred)
         self._notify(0, Event.START_LOOP, force=True)
         while not genetic_algorithm.is_satisfying():
@@ -1521,22 +1519,22 @@ class ModelCGP(Observable):
             genetic_algorithm.selection()
             genetic_algorithm.reproduction()
             genetic_algorithm.mutation()
-            y_pred = self.parser.parse_population(self.strategy.population, x)
+            y_pred = self.parser.parse_population(g.strategy.population, x)
             genetic_algorithm.evaluation(y, y_pred)
             genetic_algorithm.next()
             self._notify(genetic_algorithm.current_generation, Event.END_STEP)
         self._notify(genetic_algorithm.current_generation,
                      Event.END_LOOP,
                      force=True)
-        history = self.strategy.population.history()
-        elite = self.strategy.elite
+        history = g.strategy.population.history()
+        elite = g.strategy.elite
         return elite, history
 
     def _notify(self, n, name, force=False):
         event = {
             "n": n,
             "name": name,
-            "content": self.strategy.population.history(),
+            "content": g.strategy.population.history(),
             "force": force,
         }
         self.notify(event)
@@ -1895,7 +1893,7 @@ mutation = MutationClassic(len(g.nodes), node_mutation_rate,
 g.mutation_method = GoldmanWrapper(mutation, g.parser)
 g.fitness = FitnessAP()
 g.strategy = OnePlusLambda()
-model = ModelCGP(g.strategy, g.parser)
+model = ModelCGP(g.parser)
 g.dataset_reader = DatasetReader(g.path, counting=False)
 g.dataset = g.dataset_reader.read_dataset(dataset_filename=CSV_DATASET,
                                           meta_filename=JSON_META,
