@@ -412,20 +412,11 @@ class KartezioBundle:
 
 
 class KartezioGenome:
-
-    def dumps(self) -> dict:
-        pass
-
     def __init__(self, shape: tuple = (14, 5), sequence: np.ndarray = None):
         if sequence is not None:
             self.sequence = sequence
         else:
             self.sequence = np.zeros(shape=shape, dtype=np.uint8)
-
-    def __copy__(self):
-        new = self.__class__(*self.sequence.shape)
-        new.__dict__.update(self.__dict__)
-        return new
 
     def __deepcopy__(self, memo={}):
         new = self.__class__(*self.sequence.shape)
@@ -441,15 +432,9 @@ class KartezioGenome:
     def clone(self):
         return copy.deepcopy(self)
 
-    @staticmethod
-    def from_json(json_data):
-        sequence = np.asarray(ast.literal_eval(json_data["sequence"]))
-        return KartezioGenome(sequence=sequence)
-
-
 class GenomeFactory(Factory):
 
-    def __init__(self, prototype: KartezioGenome):
+    def __init__(self, prototype):
         super().__init__(prototype)
 
 
@@ -529,16 +514,6 @@ class GenomeShape:
         self.w = 1 + self.connections + self.parameters
         self.h = self.inputs + self.nodes + self.outputs
         self.prototype = KartezioGenome(shape=(self.h, self.w))
-
-    @staticmethod
-    def from_json(json_data):
-        return GenomeShape(
-            json_data["n_in"],
-            json_data["columns"],
-            json_data["n_out"],
-            json_data["n_conn"],
-            json_data["n_para"],
-        )
 
 
 class KartezioParser(GenomeReader):
