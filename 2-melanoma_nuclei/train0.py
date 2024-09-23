@@ -2522,18 +2522,16 @@ model = create_instance_segmentation_model(
     endpoint=EndpointWatershed(),
 )
 
-dataset_path = "dataset"
-filename=CSV_DATASET
-meta_filename=JSON_META
-dataset_reader = DatasetReader(dataset_path, counting=False)
-dataset = dataset_reader.read_dataset(dataset_filename=filename, meta_filename=meta_filename, indices=None)
-verbose = CallbackVerbose(frequency=1)
-save = CallbackSave(".", dataset, frequency=1)
-callbacks = [verbose, save]
-workdir = str(save.workdir._path)
-for callback in callbacks:
+class G:
+    pass
+g = G()
+g.path = "dataset"
+g.dataset_reader = DatasetReader(g.path, counting=False)
+g.dataset = g.dataset_reader.read_dataset(dataset_filename=CSV_DATASET, meta_filename=JSON_META, indices=None)
+g.callbacks = [CallbackVerbose(frequency=1), CallbackSave(".", g.dataset, frequency=1)]
+g.workdir = str(g.callbacks[1].workdir._path)
+for callback in g.callbacks:
     callback.set_parser(model.parser)
     model.attach(callback)
-train_x, train_y = dataset.train_xy
-res = model.fit(train_x, train_y)
-pack_one_directory(workdir)
+model.fit(*g.dataset.train_xy)
+pack_one_directory(g.workdir)
