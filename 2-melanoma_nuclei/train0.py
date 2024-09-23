@@ -42,7 +42,6 @@ from typing import NewType
 from typing import Tuple
 from typing import List
 from pathlib import Path
-
 import argparse
 import copy
 import cv2
@@ -52,6 +51,7 @@ import pandas as pd
 import random
 import simplejson
 import time
+
 
 @dataclass
 class Directory:
@@ -88,6 +88,7 @@ class Directory:
         if ordered:
             return sorted(self.glob(regex))
         return self.glob(regex)
+
 
 class Registry:
 
@@ -139,7 +140,6 @@ class Registry:
 
 
 registry = Registry()
-
 JSON_ELITE = "elite.json"
 JSON_HISTORY = "history.json"
 JSON_META = "META.json"
@@ -735,7 +735,6 @@ class KartezioParser(GenomeReader):
                 inputs = [output_map[c] for c in connections]
                 p = self.read_parameters(genome, node_index)
                 value = self.function_bundle.execute(function_index, inputs, p)
-
                 output_map[node] = value
         return output_map
 
@@ -759,7 +758,6 @@ class KartezioParser(GenomeReader):
         all_y_pred = []
         all_times = []
         graphs = self.parse_to_graphs(genome)
-
         # for each image
         for xi in x:
             start_time = time.time()
@@ -773,15 +771,7 @@ class KartezioParser(GenomeReader):
 
 
 class ParserSequential(KartezioParser):
-    """TODO: default Parser, KartezioParser becomes ABC"""
-
     pass
-
-
-class KartezioToCode(KartezioParser):
-
-    def to_python_class(self, node_name, genome):
-        pass
 
 
 class ExportableNode(KartezioNode):
@@ -790,26 +780,9 @@ class ExportableNode(KartezioNode):
         return {}
 
     def to_python(self, input_nodes, p, node_name: str):
-        """
-
-        Parameters
-        ----------
-        input_nodes :
-        p :
-        node_name :
-        """
         pass
 
     def to_cpp(self, input_nodes, p, node_name: str):
-        """
-
-        :param input_nodes:
-        :type input_nodes:
-        :param p:
-        :type p:
-        :param node_name:
-        :type node_name:
-        """
         pass
 
 
@@ -1006,7 +979,6 @@ class KartezioES:
 @jit(nopython=True)
 def _label_overlap(x, y):
     """fast function to get pixel overlaps between masks in x and y
-
     Parameters
     ------------
     x: ND-array, int
@@ -1017,7 +989,6 @@ def _label_overlap(x, y):
     ------------
     overlap: ND-array, int
         matrix of pixel overlaps of size [x.max()+1, y.max()+1]
-
     """
     x = x.ravel()
     y = y.ravel()
@@ -1029,10 +1000,8 @@ def _label_overlap(x, y):
 
 def _intersection_over_union(masks_true, masks_pred):
     """intersection over union of all mask pairs
-
     Parameters
     ------------
-
     masks_true: ND-array, int
         ground truth masks, where 0=NO masks; 1,2... are mask labels
     masks_pred: ND-array, int
@@ -1069,10 +1038,8 @@ class MetricCellpose(KartezioMetric):
 
     def aggregated_jaccard_index(self, masks_true, masks_pred):
         """AJI = intersection of all matched masks / union of all masks
-
         Parameters
         ------------
-
         masks_true: list of ND-arrays (int) or ND-array (int)
             where 0=NO masks; 1,2... are mask labels
         masks_pred: list of ND-arrays (int) or ND-array (int)
@@ -1081,7 +1048,6 @@ class MetricCellpose(KartezioMetric):
         ------------
         aji : aggregated jaccard index for each set of masks
         """
-
         aji = np.zeros(len(masks_true))
         for n in range(len(masks_true)):
             iout, preds = self.mask_ious(masks_true[n], masks_pred[n])
@@ -1111,7 +1077,6 @@ class MetricCellpose(KartezioMetric):
         (https://github.com/mpicbg-csbd/stardist/blob/master/stardist/matching.py)
         Parameters
         ------------
-
         masks_true: list of ND-arrays (int) or ND-array (int)
             where 0=NO masks; 1,2... are mask labels
         masks_pred: list of ND-arrays (int) or ND-array (int)
@@ -1132,7 +1097,6 @@ class MetricCellpose(KartezioMetric):
             masks_true = [masks_true]
             masks_pred = [masks_pred]
             not_list = True
-
         ap = np.zeros((len(masks_true), self.n_thresholds), np.float32)
         tp = np.zeros((len(masks_true), self.n_thresholds), np.float32)
         fp = np.zeros((len(masks_true), self.n_thresholds), np.float32)
@@ -1155,14 +1119,12 @@ class MetricCellpose(KartezioMetric):
                     ap[n] = 0.0
             else:
                 ap[n] = tp[n] / (tp[n] + fp[n] + fn[n])
-
         if not_list:
             ap, tp, fp, fn = ap[0], tp[0], fp[0], fn[0]
         return ap, tp, fp, fn
 
     def _true_positive(self, iou, th):
         """true positive at threshold th
-
         Parameters
         ------------
         iou: float, ND-array
@@ -1191,9 +1153,7 @@ OPENCV_KERNEL_RANGE = OPENCV_MAX_KERNEL_SIZE - OPENCV_MIN_KERNEL_SIZE
 OPENCV_MIN_INTENSITY = 0
 OPENCV_MAX_INTENSITY = 255
 OPENCV_INTENSITY_RANGE = OPENCV_MAX_INTENSITY - OPENCV_MIN_INTENSITY
-
 KERNEL_SCALE = OPENCV_KERNEL_RANGE / OPENCV_INTENSITY_RANGE
-
 GABOR_SIGMAS = [
     0.1, 0.25, 0.5, 0.75, 1, 1.5, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20
 ]
@@ -1249,12 +1209,10 @@ def gabor_kernel(ksize, p1, p2):
     ksize = unodd_ksize(ksize)
     p1_bin = "{0:08b}".format(p1)
     p2_bin = "{0:08b}".format(p2)
-
     sigma = GABOR_SIGMAS[int(p1_bin[:4], 2)]
     theta = GABOR_THETAS[int(p1_bin[4:], 2)]
     lambd = GABOR_LAMBDS[int(p2_bin[:4], 2)]
     gamma = GABOR_GAMMAS[int(p2_bin[4:], 2)]
-
     return cv2.getGaborKernel((ksize, ksize), sigma, theta, lambd, gamma)
 
 
@@ -1597,7 +1555,6 @@ class FluoTopHat(NodeImageProcessing):
             p2, p98 = np.percentile(img, (15, 99.5), interpolation="linear")
         else:
             p2, p98 = np.percentile(img, (15, 100), interpolation="linear")
-
         return self._rescale_intensity(img, p2, p98)
 
 
@@ -1612,11 +1569,9 @@ class RelativeDifference(NodeImageProcessing):
         img = x[0]
         max_img = np.max(img)
         min_img = np.min(img)
-
         ksize = correct_ksize(args[0])
         gb = cv2.GaussianBlur(img, (ksize, ksize), 0)
         gb = np.float32(gb)
-
         img = np.divide(img, gb + 1e-15, dtype=np.float32)
         img = cv2.normalize(img, img, max_img, min_img, cv2.NORM_MINMAX)
         return img.astype(np.uint8)
@@ -2032,7 +1987,6 @@ class MutationClassic(KartezioMutation):
                                             self.n_mutations,
                                             replace=False)
         sampling_indices = self.all_indices[sampling_indices]
-
         for idx, mutation_parameter_index in sampling_indices:
             if mutation_parameter_index == 0:
                 self.mutate_function(genome, idx)
@@ -2605,24 +2559,19 @@ class ModelBuilder:
         mutation_method = self.__context.mutation_method
         fitness = self.__context.fitness
         parser = self.__context.parser
-
         if parser.endpoint.arity != parser.shape.outputs:
             raise ValueError(
                 f"Endpoint [{parser.endpoint.name}] requires {parser.endpoint.arity} output nodes. ({parser.shape.outputs} given)"
             )
-
         if not isinstance(fitness, KartezioFitness):
             raise ValueError(f"Fitness {fitness} has not been properly set.")
-
         if not isinstance(mutation_method, KartezioMutation):
             raise ValueError(
                 f"Mutation {mutation_method} has not been properly set.")
-
         if dataset_inputs and (dataset_inputs != parser.shape.inputs):
             raise ValueError(
                 f"Model has {parser.shape.inputs} input nodes. ({dataset_inputs} given by the dataset)"
             )
-
         strategy = OnePlusLambda(_lambda, factory, instance_method,
                                  mutation_method, fitness)
         model = ModelCGP(generations, strategy, parser)
