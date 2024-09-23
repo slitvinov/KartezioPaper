@@ -345,8 +345,7 @@ class KartezioBundle:
 
 
 class KartezioGenome:
-
-    def __init__(self, shape: tuple = (14, 5), sequence: np.ndarray = None):
+    def __init__(self, shape, sequence):
         if sequence is not None:
             self.sequence = sequence
         else:
@@ -1944,7 +1943,7 @@ g.out_idx = g.inputs + g.nodes
 g.para_idx = 1 + g.arity
 g.w = 1 + g.arity + g.parameters
 g.h = g.inputs + g.nodes + g.outputs
-g.prototype = KartezioGenome(shape=(g.h, g.w))
+g.prototype = KartezioGenome((g.h, g.w), None)
 g.genome_factory = GenomeFactory(g.prototype)
 g.parser = KartezioParser()
 g.instance_method = MutationAllRandom(g.bundle.size)
