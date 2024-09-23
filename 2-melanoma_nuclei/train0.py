@@ -111,22 +111,6 @@ CSV_DATASET = "dataset.csv"
 DIR_PREVIEW = "__preview__"
 
 
-class Factory:
-    """
-    Using Factory Pattern:
-    https://refactoring.guru/design-patterns/factory-method
-    """
-
-    def __init__(self, prototype):
-        self._prototype = None
-        self.set_prototype(prototype)
-
-    def set_prototype(self, prototype):
-        self._prototype = prototype
-
-    def create(self):
-        return self._prototype.clone()
-
 class Observable:
 
     def __init__(self):
@@ -238,14 +222,16 @@ class KartezioNode:
             "kwargs": self._to_json_kwargs(),
         }
 
+
 class KartezioStacker(KartezioNode):
+
     def __init__(self, name: str, symbol: str, arity: int):
         super().__init__(name, symbol, arity, 0)
 
 
-
 @registry.stackers.add("MEAN")
 class StackerMean(KartezioStacker):
+
     def __init__(self,
                  name="mean_stacker",
                  symbol="MEAN",
@@ -326,7 +312,9 @@ class StackerMax(KartezioStacker):
             return cv2.GaussianBlur(yi, (7, 7), 1)
         return yi
 
+
 class KartezioEndpoint(KartezioNode):
+
     def __init__(self, name: str, symbol: str, arity: int, outputs_keys: list):
         super().__init__(name, symbol, arity, 0)
         self.outputs_keys = outputs_keys
@@ -337,7 +325,6 @@ class KartezioBundle:
     def __init__(self):
         self.__nodes = {}
         self.fill()
-
 
     def add_node(self, node_name):
         self.__nodes[len(self.__nodes)] = registry.nodes.instantiate(node_name)
@@ -358,6 +345,7 @@ class KartezioBundle:
 
 
 class KartezioGenome:
+
     def __init__(self, shape: tuple = (14, 5), sequence: np.ndarray = None):
         if sequence is not None:
             self.sequence = sequence
@@ -378,11 +366,18 @@ class KartezioGenome:
     def clone(self):
         return copy.deepcopy(self)
 
-class GenomeFactory(Factory):
+
+class GenomeFactory:
+
+    def set_prototype(self, prototype):
+        self._prototype = prototype
+
+    def create(self):
+        return self._prototype.clone()
 
     def __init__(self, prototype):
-        super().__init__(prototype)
-
+        self._prototype = None
+        self.set_prototype(prototype)
 
 
 class GenomeWriter:
@@ -391,15 +386,13 @@ class GenomeWriter:
         genome[g.inputs + node, 0] = function_id
 
     def write_connections(self, genome, node, connections):
-        genome[g.inputs + node,
-               1:g.para_idx] = connections
+        genome[g.inputs + node, 1:g.para_idx] = connections
 
     def write_parameters(self, genome, node, parameters):
         genome[g.inputs + node, g.para_idx:] = parameters
 
     def write_output_connection(self, genome, output_index, connection):
-        genome[g.out_idx + output_index,
-               1] = connection
+        genome[g.out_idx + output_index, 1] = connection
 
 
 class GenomeReader:
@@ -408,8 +401,7 @@ class GenomeReader:
         return genome[g.inputs + node, 0]
 
     def read_connections(self, genome, node):
-        return genome[g.inputs + node,
-                      1:g.para_idx]
+        return genome[g.inputs + node, 1:g.para_idx]
 
     def read_active_connections(self, genome, node, active_connections):
         return genome[
@@ -428,8 +420,8 @@ class GenomeReaderWriter(GenomeReader, GenomeWriter):
     pass
 
 
-
 class KartezioParser(GenomeReader):
+
     def __init__(self):
         super().__init__()
 
@@ -455,12 +447,10 @@ class KartezioParser(GenomeReader):
             next_index = next_indices.pop()
             if next_index < g.inputs:
                 continue
-            function_index = self.read_function(genome,
-                                                next_index - g.inputs)
+            function_index = self.read_function(genome, next_index - g.inputs)
             active_connections = g.bundle.arity_of(function_index)
             next_connections = set(
-                self.read_active_connections(genome,
-                                             next_index - g.inputs,
+                self.read_active_connections(genome, next_index - g.inputs,
                                              active_connections))
             next_indices = next_indices.union(next_connections)
             output_tree = output_tree.union(next_connections)
@@ -469,8 +459,7 @@ class KartezioParser(GenomeReader):
     def parse_to_graphs(self, genome):
         outputs = self.read_outputs(genome)
         graphs_list = [
-            self._parse_one_graph(genome, {output[1]})
-            for output in outputs
+            self._parse_one_graph(genome, {output[1]}) for output in outputs
         ]
         return graphs_list
 
@@ -524,6 +513,7 @@ class KartezioParser(GenomeReader):
 class ExportableNode(KartezioNode):
     pass
 
+
 class KartezioCallback:
 
     def __init__(self, frequency=1):
@@ -536,6 +526,7 @@ class KartezioCallback:
     def update(self, event):
         if event["n"] % self.frequency == 0 or event["force"]:
             self._callback(event["n"], event["name"], event["content"])
+
 
 class KartezioMetric(KartezioNode):
 
@@ -585,6 +576,7 @@ class KartezioFitness(KartezioNode):
             score += metric.call(y_true, y_pred)
         return score
 
+
 class KartezioMutation(GenomeReaderWriter):
 
     def __init__(self, n_functions):
@@ -594,8 +586,7 @@ class KartezioMutation(GenomeReaderWriter):
 
     @property
     def random_parameters(self):
-        return np.random.randint(self.parameter_max_value,
-                                 size=g.parameters)
+        return np.random.randint(self.parameter_max_value, size=g.parameters)
 
     @property
     def random_functions(self):
@@ -606,8 +597,7 @@ class KartezioMutation(GenomeReaderWriter):
         return np.random.randint(g.out_idx, size=1)
 
     def random_connections(self, idx: int):
-        return np.random.randint(g.inputs + idx,
-                                 size=g.arity)
+        return np.random.randint(g.inputs + idx, size=g.arity)
 
     def mutate_function(self, genome: KartezioGenome, idx: int):
         self.write_function(genome, idx, self.random_functions)
@@ -622,10 +612,7 @@ class KartezioMutation(GenomeReaderWriter):
         new_connections[only_one] = new_value
         self.write_connections(genome, idx, new_connections)
 
-    def mutate_parameters(self,
-                          genome,
-                          idx,
-                          only_one = None):
+    def mutate_parameters(self, genome, idx, only_one=None):
         new_parameters = self.random_parameters
         if only_one is not None:
             old_parameters = self.read_parameters(genome, idx)
@@ -901,6 +888,7 @@ class BitwiseNot(ExportableNode):
     def call(self, x, args=None):
         return cv2.bitwise_not(x[0])
 
+
 @registry.nodes.add("bitwise_or")
 class BitwiseOr(ExportableNode):
 
@@ -919,6 +907,7 @@ class BitwiseAnd(ExportableNode):
 
     def call(self, x, args=None):
         return cv2.bitwise_and(x[0], x[1])
+
 
 @registry.nodes.add("bitwise_and_mask")
 class BitwiseAndMask(ExportableNode):
@@ -1174,6 +1163,7 @@ class Open(ExportableNode):
         kernel = kernel_from_parameters(p)
         return cv2.morphologyEx(inputs[0], cv2.MORPH_OPEN, kernel)
 
+
 @registry.nodes.add("close")
 class Close(ExportableNode):
 
@@ -1183,6 +1173,7 @@ class Close(ExportableNode):
     def call(self, inputs, p):
         kernel = kernel_from_parameters(p)
         return cv2.morphologyEx(inputs[0], cv2.MORPH_CLOSE, kernel)
+
 
 @registry.nodes.add("morph_gradient")
 class MorphGradient(ExportableNode):
@@ -1363,7 +1354,9 @@ class InRange(NodeImageProcessing):
 
 IMAGE_NODES_ABBV_LIST = registry.nodes.list().keys()
 
+
 class BundleOpenCV(KartezioBundle):
+
     def fill(self):
         for node_abbv in IMAGE_NODES_ABBV_LIST:
             self.add_node(node_abbv)
@@ -1447,6 +1440,7 @@ class CallbackSave(KartezioCallback):
 
 
 class FitnessAP(KartezioFitness):
+
     def __init__(self, thresholds=0.5):
         super().__init__(
             name=f"Average Precision ({thresholds})",
@@ -1476,13 +1470,11 @@ class GoldmanWrapper(KartezioMutation):
 
 class MutationClassic(KartezioMutation):
 
-    def __init__(self, n_functions, mutation_rate,
-                 output_mutation_rate):
+    def __init__(self, n_functions, mutation_rate, output_mutation_rate):
         super().__init__(n_functions)
         self.mutation_rate = mutation_rate
         self.output_mutation_rate = output_mutation_rate
-        self.n_mutations = int(
-            np.floor(g.nodes * g.w * self.mutation_rate))
+        self.n_mutations = int(np.floor(g.nodes * g.w * self.mutation_rate))
         self.all_indices = np.indices((g.nodes, g.w))
         self.all_indices = np.vstack(
             (self.all_indices[0].ravel(), self.all_indices[1].ravel())).T
@@ -1509,6 +1501,7 @@ class MutationClassic(KartezioMutation):
 
 
 class MutationAllRandom(KartezioMutation):
+
     def __init__(self, n_functions: int):
         super().__init__(n_functions)
 
@@ -1894,8 +1887,7 @@ class PopulationWithElite(KartezioPopulation):
 
 class OnePlusLambda:
 
-    def __init__(self, factory, init_method, mutation_method,
-                 fitness):
+    def __init__(self, factory, init_method, mutation_method, fitness):
         self._mu = 1
         self.factory = factory
         self.init_method = init_method
@@ -1930,6 +1922,7 @@ class OnePlusLambda:
         fitness = self.fitness.call(y_true, y_pred)
         self.population.set_fitness(fitness)
 
+
 class G:
     pass
 
@@ -1955,13 +1948,12 @@ g.prototype = KartezioGenome(shape=(g.h, g.w))
 g.genome_factory = GenomeFactory(g.prototype)
 g.parser = KartezioParser()
 g.instance_method = MutationAllRandom(g.bundle.size)
-mutation = MutationClassic(g.bundle.size,
-                           node_mutation_rate,
+mutation = MutationClassic(g.bundle.size, node_mutation_rate,
                            output_mutation_rate)
 g.mutation_method = GoldmanWrapper(mutation, g.parser)
 g.fitness = FitnessAP()
 g.strategy = OnePlusLambda(g.genome_factory, g.instance_method,
-                         g.mutation_method, g.fitness)
+                           g.mutation_method, g.fitness)
 model = ModelCGP(g.strategy, g.parser)
 g.dataset_reader = DatasetReader(g.path, counting=False)
 g.dataset = g.dataset_reader.read_dataset(dataset_filename=CSV_DATASET,
