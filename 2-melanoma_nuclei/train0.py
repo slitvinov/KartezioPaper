@@ -1561,16 +1561,6 @@ class MutationAllRandom(KartezioMutation):
         return genome
 
 
-@registry.mutations.add("copy")
-class CopyGenome:
-
-    def __init__(self, genome: KartezioGenome):
-        self.genome = genome
-
-    def mutate(self, _genome: KartezioGenome):
-        return self.genome.clone()
-
-
 class ModelGA:
 
     def __init__(self, strategy):
