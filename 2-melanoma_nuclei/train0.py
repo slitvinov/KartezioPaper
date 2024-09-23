@@ -352,7 +352,7 @@ class KartezioGenome:
             self.sequence = np.zeros(shape=shape, dtype=np.uint8)
 
     def __deepcopy__(self, memo={}):
-        new = self.__class__(*self.sequence.shape)
+        new = self.__class__(self.sequence.shape, None)
         new.sequence = self.sequence.copy()
         return new
 
