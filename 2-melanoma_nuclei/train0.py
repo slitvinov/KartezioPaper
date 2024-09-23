@@ -1861,9 +1861,8 @@ class PopulationWithElite(KartezioPopulation):
 
 class OnePlusLambda:
 
-    def __init__(self, factory, init_method, mutation_method, fitness):
+    def __init__(self, init_method, mutation_method, fitness):
         self._mu = 1
-        self.factory = factory
         self.init_method = init_method
         self.mutation_method = mutation_method
         self.fitness = fitness
@@ -1875,7 +1874,8 @@ class OnePlusLambda:
 
     def initialization(self):
         for i in range(g._lambda + 1):
-            individual = self.init_method.mutate(self.factory.create())
+            zero = np.zeros((g.h, g.w), dtype=np.uint8)
+            individual = self.init_method.mutate(zero)
             self.population[i] = individual
 
     def selection(self):
@@ -1918,15 +1918,13 @@ g.out_idx = g.inputs + g.nodes
 g.para_idx = 1 + g.arity
 g.w = 1 + g.arity + g.parameters
 g.h = g.inputs + g.nodes + g.outputs
-prototype0 = np.zeros((g.h, g.w), dtype=np.uint8)
-g.genome_factory = GenomeFactory(prototype0)
 g.parser = KartezioParser()
 g.instance_method = MutationAllRandom(g.bundle.size)
 mutation = MutationClassic(g.bundle.size, node_mutation_rate,
                            output_mutation_rate)
 g.mutation_method = GoldmanWrapper(mutation, g.parser)
 g.fitness = FitnessAP()
-g.strategy = OnePlusLambda(g.genome_factory, g.instance_method,
+g.strategy = OnePlusLambda(g.instance_method,
                            g.mutation_method, g.fitness)
 model = ModelCGP(g.strategy, g.parser)
 g.dataset_reader = DatasetReader(g.path, counting=False)
