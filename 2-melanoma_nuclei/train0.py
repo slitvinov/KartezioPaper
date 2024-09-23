@@ -53,6 +53,7 @@ from kartezio.enums import DIR_PREVIEW
 from kartezio.enums import JSON_META
 from kartezio.export import GenomeToPython
 from kartezio.image.bundle import BUNDLE_OPENCV
+from kartezio.metric import MetricMSE
 from kartezio.model.components import GenomeFactory
 from kartezio.model.components import GenomeShape
 from kartezio.model.components import KartezioBundle
@@ -63,7 +64,7 @@ from kartezio.model.components import KartezioStacker
 from kartezio.model.components import ParserChain
 from kartezio.model.evolution import KartezioES
 from kartezio.model.evolution import KartezioFitness
-from kartezio.model.evolution import KartezioMutation
+from kartezio.model.evolution import KartezioMetric
 from kartezio.model.evolution import KartezioMutation
 from kartezio.model.evolution import KartezioPopulation
 from kartezio.model.helpers import Observable
@@ -72,9 +73,6 @@ from kartezio.stacker import MeanKartezioStackerForWatershed
 from kartezio.stacker import StackerMean
 from kartezio.utils.io import JsonSaver
 from kartezio.utils.io import pack_one_directory
-from kartezio.model.evolution import KartezioFitness
-from kartezio.model.evolution import KartezioMetric
-from kartezio.metric import MetricMSE
 
 def register_fitness():
     """Force decorators to wrap KartezioFitness"""
