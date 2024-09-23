@@ -381,19 +381,9 @@ class MeanKartezioStackerForWatershed(KartezioStacker):
 
 
 class KartezioEndpoint(KartezioNode):
-    """
-    Terminal KartezioNode, executed after graph parsing.
-    Not submitted to evolution.
-    """
-
     def __init__(self, name: str, symbol: str, arity: int, outputs_keys: list):
         super().__init__(name, symbol, arity, 0)
         self.outputs_keys = outputs_keys
-
-    @staticmethod
-    def from_json(json_data):
-        return registry.endpoints.instantiate(json_data["abbv"],
-                                              **json_data["kwargs"])
 
 
 class KartezioBundle:
