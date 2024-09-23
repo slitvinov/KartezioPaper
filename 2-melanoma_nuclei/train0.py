@@ -58,9 +58,6 @@ class Registry:
         def __init__(self):
             self.__components = {}
 
-        def remove(self):
-            pass
-
         def add(self, item_name, replace=False):
             def inner(item_cls):
                 if item_name in self.__components.keys():
@@ -110,9 +107,6 @@ CSV_DATASET = "dataset.csv"
 DIR_PREVIEW = "__preview__"
 
 
-class Prototype:
-    def clone(self):
-        pass
 
 
 class Factory:
@@ -492,21 +486,7 @@ class EmptyBundle(KartezioBundle):
         pass
 
 
-class KartezioGenome(KartezioComponent, Prototype):
-    """
-    Only store "DNA" in a numpy array
-    No metadata stored in DNA to avoid duplicates
-    Avoiding RAM overload: https://refactoring.guru/design-patterns/flyweight
-    Default genome would be: 3 inputs, 10 function nodes (2 connections and 2 parameters), 1 output,
-    so with shape (14, 5)
-
-    Args:
-        Prototype ([type]): [description]
-
-    Returns:
-        [type]: [description]
-    """
-
+class KartezioGenome(KartezioComponent):
     def dumps(self) -> dict:
         pass
 
