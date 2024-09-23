@@ -423,14 +423,14 @@ class GenomeAdapter:
 class GenomeWriter(GenomeAdapter):
 
     def write_function(self, genome, node, function_id):
-        genome[self.shape.nodes_idx + node, self.shape.func_idx] = function_id
+        genome[g.inputs + node, self.shape.func_idx] = function_id
 
     def write_connections(self, genome, node, connections):
-        genome[self.shape.nodes_idx + node,
+        genome[g.inputs + node,
                self.shape.con_idx:self.shape.para_idx] = connections
 
     def write_parameters(self, genome, node, parameters):
-        genome[self.shape.nodes_idx + node, self.shape.para_idx:] = parameters
+        genome[g.inputs + node, self.shape.para_idx:] = parameters
 
     def write_output_connection(self, genome, output_index, connection):
         genome[self.shape.out_idx + output_index,
@@ -440,20 +440,20 @@ class GenomeWriter(GenomeAdapter):
 class GenomeReader(GenomeAdapter):
 
     def read_function(self, genome, node):
-        return genome[self.shape.nodes_idx + node, self.shape.func_idx]
+        return genome[g.inputs + node, self.shape.func_idx]
 
     def read_connections(self, genome, node):
-        return genome[self.shape.nodes_idx + node,
+        return genome[g.inputs + node,
                       self.shape.con_idx:self.shape.para_idx]
 
     def read_active_connections(self, genome, node, active_connections):
         return genome[
-            self.shape.nodes_idx + node,
+            g.inputs + node,
             self.shape.con_idx:self.shape.con_idx + active_connections,
         ]
 
     def read_parameters(self, genome, node):
-        return genome[self.shape.nodes_idx + node, self.shape.para_idx:]
+        return genome[g.inputs + node, self.shape.para_idx:]
 
     def read_outputs(self, genome):
         return genome[self.shape.out_idx:, :]
@@ -465,7 +465,6 @@ class GenomeReaderWriter(GenomeReader, GenomeWriter):
 
 @dataclass
 class GenomeShape:
-    inputs: int = 3
     nodes: int = 10
     outputs: int = 1
     connections: int = 2
@@ -484,11 +483,10 @@ class GenomeShape:
         self.in_idx = 0
         self.func_idx = 0
         self.con_idx = 1
-        self.nodes_idx = self.inputs
-        self.out_idx = self.nodes_idx + self.nodes
+        self.out_idx = g.inputs + self.nodes
         self.para_idx = self.con_idx + self.connections
         self.w = 1 + self.connections + self.parameters
-        self.h = self.inputs + self.nodes + self.outputs
+        self.h = g.inputs + self.nodes + self.outputs
         self.prototype = KartezioGenome(shape=(self.h, self.w))
 
 
@@ -499,9 +497,9 @@ class KartezioParser(GenomeReader):
     def dumps(self) -> dict:
         return {
             "metadata": {
-                "rows": 1,  # single row CGP
+                "rows": 1,
                 "columns": self.shape.nodes,
-                "n_in": self.shape.inputs,
+                "n_in": g.inputs,
                 "n_out": self.shape.outputs,
                 "n_para": self.shape.parameters,
                 "n_conn": self.shape.connections,
@@ -516,14 +514,14 @@ class KartezioParser(GenomeReader):
         output_tree = graph_source.copy()
         while next_indices:
             next_index = next_indices.pop()
-            if next_index < self.shape.inputs:
+            if next_index < g.inputs:
                 continue
             function_index = self.read_function(genome,
-                                                next_index - self.shape.inputs)
+                                                next_index - g.inputs)
             active_connections = g.bundle.arity_of(function_index)
             next_connections = set(
                 self.read_active_connections(genome,
-                                             next_index - self.shape.inputs,
+                                             next_index - g.inputs,
                                              active_connections))
             next_indices = next_indices.union(next_connections)
             output_tree = output_tree.union(next_connections)
@@ -538,12 +536,12 @@ class KartezioParser(GenomeReader):
         return graphs_list
 
     def _x_to_output_map(self, genome: KartezioGenome, graphs_list, x):
-        output_map = {i: x[i].copy() for i in range(self.shape.inputs)}
+        output_map = {i: x[i].copy() for i in range(g.inputs)}
         for graph in graphs_list:
             for node in graph:
-                if node < self.shape.inputs:
+                if node < g.inputs:
                     continue
-                node_index = node - self.shape.inputs
+                node_index = node - g.inputs
                 function_index = self.read_function(genome, node_index)
                 arity = g.bundle.arity_of(function_index)
                 connections = self.read_active_connections(
@@ -669,7 +667,7 @@ class KartezioMutation(GenomeReaderWriter):
         return np.random.randint(self.shape.out_idx, size=1)
 
     def random_connections(self, idx: int):
-        return np.random.randint(self.shape.nodes_idx + idx,
+        return np.random.randint(g.inputs + idx,
                                  size=self.shape.connections)
 
     def mutate_function(self, genome: KartezioGenome, idx: int):
@@ -2021,15 +2019,14 @@ class ModelContext:
     fitness: KartezioFitness = field(init=False)
     stacker: KartezioStacker = field(init=False)
     parser: KartezioParser = field(init=False)
-    inputs: InitVar[int] = 3
     nodes: InitVar[int] = 10
     outputs: InitVar[int] = 1
     arity: InitVar[int] = 2
     parameters: InitVar[int] = 2
 
-    def __post_init__(self, inputs: int, nodes: int, outputs: int, arity: int,
-                      parameters: int):
-        self.genome_shape = GenomeShape(inputs, nodes, outputs, arity,
+    def __post_init__(self, nodes, outputs, arity,
+                      parameters):
+        self.genome_shape = GenomeShape(nodes, outputs, arity,
                                         parameters)
         self.genome_factory = GenomeFactory(self.genome_shape.prototype)
 
@@ -2056,7 +2053,7 @@ g._lambda = 5
 g.generations = 10
 g.endpoint = EndpointWatershed()
 g.bundle = BundleOpenCV()
-inputs = 3
+g.inputs = 3
 nodes = 30
 outputs = 2
 arity = 2
@@ -2070,7 +2067,7 @@ use_goldman = True
 fitness = "AP"
 callbacks = None
 dataset_inputs = None
-g.context = ModelContext(inputs, nodes, outputs, arity,
+g.context = ModelContext(nodes, outputs, arity,
                               parameters)
 g.context.compile_parser(series_stacker)
 shape = g.context.genome_shape
