@@ -357,46 +357,6 @@ class GenomeFactory:
         self.set_prototype(prototype)
 
 
-class GenomeWriter:
-
-    def write_function(self, genome, node, function_id):
-        genome[g.inputs + node, 0] = function_id
-
-    def write_connections(self, genome, node, connections):
-        genome[g.inputs + node, 1:g.para_idx] = connections
-
-    def write_parameters(self, genome, node, parameters):
-        genome[g.inputs + node, g.para_idx:] = parameters
-
-    def write_output_connection(self, genome, output_index, connection):
-        genome[g.out_idx + output_index, 1] = connection
-
-
-class GenomeReader:
-
-    def read_function(self, genome, node):
-        return genome[g.inputs + node, 0]
-
-    def read_connections(self, genome, node):
-        return genome[g.inputs + node, 1:g.para_idx]
-
-    def read_active_connections(self, genome, node, active_connections):
-        return genome[
-            g.inputs + node,
-            1:1 + active_connections,
-        ]
-
-    def read_parameters(self, genome, node):
-        return genome[g.inputs + node, g.para_idx:]
-
-    def read_outputs(self, genome):
-        return genome[g.out_idx:, :]
-
-
-class GenomeReaderWriter(GenomeReader, GenomeWriter):
-    pass
-
-
 class KartezioParser:
 
     def read_function(self, genome, node):
@@ -569,12 +529,42 @@ class KartezioFitness(KartezioNode):
         return score
 
 
-class KartezioMutation(GenomeReaderWriter):
+class KartezioMutation:
 
     def __init__(self, n_functions):
         super().__init__()
         self.n_functions = n_functions
         self.parameter_max_value = 256
+
+    def write_function(self, genome, node, function_id):
+        genome[g.inputs + node, 0] = function_id
+
+    def write_connections(self, genome, node, connections):
+        genome[g.inputs + node, 1:g.para_idx] = connections
+
+    def write_parameters(self, genome, node, parameters):
+        genome[g.inputs + node, g.para_idx:] = parameters
+
+    def write_output_connection(self, genome, output_index, connection):
+        genome[g.out_idx + output_index, 1] = connection
+
+    def read_function(self, genome, node):
+        return genome[g.inputs + node, 0]
+
+    def read_connections(self, genome, node):
+        return genome[g.inputs + node, 1:g.para_idx]
+
+    def read_active_connections(self, genome, node, active_connections):
+        return genome[
+            g.inputs + node,
+            1:1 + active_connections,
+        ]
+
+    def read_parameters(self, genome, node):
+        return genome[g.inputs + node, g.para_idx:]
+
+    def read_outputs(self, genome):
+        return genome[g.out_idx:, :]
 
     @property
     def random_parameters(self):
