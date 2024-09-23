@@ -2998,4 +2998,14 @@ model = create_instance_segmentation_model(
     outputs=2,
     endpoint=EndpointWatershed(),
 )
-elite, _ = train_model(model, read_dataset("dataset"), ".", "default", 1, True)
+dataset = read_dataset("dataset")
+verbose = CallbackVerbose(frequency=1)
+save = CallbackSave(".", dataset, frequency=1)
+callbacks = [verbose, save]
+workdir = str(save.workdir._path)
+for callback in callbacks:
+    callback.set_parser(model.parser)
+    model.attach(callback)
+train_x, train_y = dataset.train_xy
+res = model.fit(train_x, train_y)
+pack_one_directory(workdir)
