@@ -344,35 +344,13 @@ class KartezioBundle:
         return [self.__nodes[i].name for i in range(self.size)]
 
 
-class KartezioGenome:
-    def __init__(self, shape, sequence):
-        if sequence is not None:
-            self.sequence = sequence
-        else:
-            self.sequence = np.zeros(shape=shape, dtype=np.uint8)
-
-    def __deepcopy__(self, memo={}):
-        new = self.__class__(self.sequence.shape, None)
-        new.sequence = self.sequence.copy()
-        return new
-
-    def __getitem__(self, item):
-        return self.sequence.__getitem__(item)
-
-    def __setitem__(self, key, value):
-        return self.sequence.__setitem__(key, value)
-
-    def clone(self):
-        return copy.deepcopy(self)
-
-
 class GenomeFactory:
 
     def set_prototype(self, prototype):
         self._prototype = prototype
 
     def create(self):
-        return self._prototype.clone()
+        return np.copy(self._prototype)
 
     def __init__(self, prototype):
         self._prototype = None
@@ -1848,7 +1826,7 @@ class PopulationHistory:
 
     def fill(self, individuals, fitness, times):
         for i in range(len(individuals)):
-            self.individuals[i].set_values(individuals[i].sequence,
+            self.individuals[i].set_values(individuals[i],
                                            float(fitness[i]), float(times[i]))
 
     def get_best_fitness(self):
@@ -1910,7 +1888,7 @@ class OnePlusLambda:
     def reproduction(self):
         elite = self.population.get_elite()
         for i in range(self._mu, g._lambda + 1):
-            self.population[i] = elite.clone()
+            self.population[i] = elite.copy()
 
     def mutation(self):
         for i in range(self._mu, g._lambda + 1):
@@ -1943,7 +1921,7 @@ g.out_idx = g.inputs + g.nodes
 g.para_idx = 1 + g.arity
 g.w = 1 + g.arity + g.parameters
 g.h = g.inputs + g.nodes + g.outputs
-g.prototype = KartezioGenome((g.h, g.w), None)
+g.prototype = np.zeros((g.h, g.w), dtype=np.uint8)
 g.genome_factory = GenomeFactory(g.prototype)
 g.parser = KartezioParser()
 g.instance_method = MutationAllRandom(g.bundle.size)
