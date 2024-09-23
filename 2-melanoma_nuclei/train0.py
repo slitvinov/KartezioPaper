@@ -1980,14 +1980,6 @@ class OnePlusLambda:
 
 @dataclass
 class ModelContext:
-    genome_shape: GenomeShape = field(init=False)
-    genome_factory: GenomeFactory = field(init=False)
-    instance_method: KartezioMutation = field(init=False)
-    mutation_method: KartezioMutation = field(init=False)
-    fitness: KartezioFitness = field(init=False)
-    stacker: KartezioStacker = field(init=False)
-    parser: KartezioParser = field(init=False)
-
     def __post_init__(self):
         self.genome_shape = GenomeShape()
         self.genome_factory = GenomeFactory(self.genome_shape.prototype)
