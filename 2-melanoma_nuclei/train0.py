@@ -1994,7 +1994,6 @@ g.arity = 2
 g.parameters = 2
 node_mutation_rate = 0.15
 output_mutation_rate = 0.2
-fitness = "AP"
 callbacks = None
 dataset_inputs = None
 g.genome_shape = GenomeShape()
