@@ -2685,45 +2685,6 @@ class DatasetReader(Directory):
                 dataset.add_visual(x.visual)
         return dataset
 
-
-def read_dataset(
-    dataset_path,
-    filename=CSV_DATASET,
-    meta_filename=JSON_META,
-    indices=None,
-    counting=False,
-    preview=False,
-    reader=None,
-):
-    dataset_reader = DatasetReader(dataset_path, counting=counting, preview=preview)
-    return dataset_reader.read_dataset(
-        dataset_filename=filename, meta_filename=meta_filename, indices=indices
-    )
-
-
-def train_model(
-    model,
-    dataset,
-    output_directory,
-    callbacks,
-    callback_frequency,
-    pack
-):
-    verbose = CallbackVerbose(frequency=callback_frequency)
-    save = CallbackSave(output_directory, dataset, frequency=callback_frequency)
-    callbacks = [verbose, save]
-    workdir = str(save.workdir._path)
-    print(f"Files will be saved under {workdir}.")
-    for callback in callbacks:
-        callback.set_parser(model.parser)
-        model.attach(callback)
-    train_x, train_y = dataset.train_xy
-    res = model.fit(train_x, train_y)
-    if pack:
-        pack_one_directory(workdir)
-
-    return res
-
 class IndividualHistory:
     def __init__(self):
         self.fitness = {"fitness": 0.0, "time": 0.0}
@@ -2998,7 +2959,12 @@ model = create_instance_segmentation_model(
     outputs=2,
     endpoint=EndpointWatershed(),
 )
-dataset = read_dataset("dataset")
+
+dataset_path = "dataset"
+filename=CSV_DATASET
+meta_filename=JSON_META
+dataset_reader = DatasetReader(dataset_path, counting=False, preview=False)
+dataset = dataset_reader.read_dataset(dataset_filename=filename, meta_filename=meta_filename, indices=None)
 verbose = CallbackVerbose(frequency=1)
 save = CallbackSave(".", dataset, frequency=1)
 callbacks = [verbose, save]
