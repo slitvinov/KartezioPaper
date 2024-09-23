@@ -249,10 +249,6 @@ class KartezioStacker(KartezioNode):
 
 @registry.stackers.add("MEAN")
 class StackerMean(KartezioStacker):
-
-    def _to_json_kwargs(self) -> dict:
-        return {}
-
     def __init__(self,
                  name="mean_stacker",
                  symbol="MEAN",
@@ -589,8 +585,7 @@ class KartezioParser(GenomeReader):
         for xi in x:
             start_time = time.time()
             y_pred = self._parse_one(genome, graphs, xi)
-            if self.endpoint is not None:
-                y_pred = self.endpoint.call(y_pred)
+            y_pred = self.endpoint.call(y_pred)
             all_times.append(time.time() - start_time)
             all_y_pred.append(y_pred)
         whole_time = np.mean(np.array(all_times))
@@ -598,16 +593,7 @@ class KartezioParser(GenomeReader):
 
 
 class ExportableNode(KartezioNode):
-
-    def _to_json_kwargs(self):
-        return {}
-
-    def to_python(self, input_nodes, p, node_name):
-        pass
-
-    def to_cpp(self, input_nodes, p, node_name):
-        pass
-
+    pass
 
 class KartezioCallback:
 
@@ -622,13 +608,6 @@ class KartezioCallback:
         if event["n"] % self.frequency == 0 or event["force"]:
             self._callback(event["n"], event["name"], event["content"])
 
-    def dumps(self) -> dict:
-        return {}
-
-    def _callback(self, n, e_name, e_content):
-        pass
-
-
 class KartezioMetric(KartezioNode):
 
     def __init__(
@@ -638,9 +617,6 @@ class KartezioMetric(KartezioNode):
         arity: int,
     ):
         super().__init__(name, symbol, arity, 0)
-
-    def _to_json_kwargs(self) -> dict:
-        pass
 
 
 class KartezioFitness(KartezioNode):
@@ -654,8 +630,7 @@ class KartezioFitness(KartezioNode):
     ):
         super().__init__(name, symbol, arity, 0)
         self.metrics = []
-        if default_metric:
-            self.add_metric(default_metric)
+        self.add_metric(default_metric)
 
     def add_metric(self, metric: KartezioMetric):
         self.metrics.append(metric)
@@ -681,19 +656,12 @@ class KartezioFitness(KartezioNode):
             score += metric.call(y_true, y_pred)
         return score
 
-    def _to_json_kwargs(self) -> dict:
-        pass
-
-
 class KartezioMutation(GenomeReaderWriter):
 
     def __init__(self, shape, n_functions):
         super().__init__(shape)
         self.n_functions = n_functions
         self.parameter_max_value = 256
-
-    def dumps(self) -> dict:
-        return {}
 
     @property
     def random_parameters(self):
@@ -720,16 +688,15 @@ class KartezioMutation(GenomeReaderWriter):
                            idx: int,
                            only_one: int = None):
         new_connections = self.random_connections(idx)
-        if only_one is not None:
-            new_value = new_connections[only_one]
-            new_connections = self.read_connections(genome, idx)
-            new_connections[only_one] = new_value
+        new_value = new_connections[only_one]
+        new_connections = self.read_connections(genome, idx)
+        new_connections[only_one] = new_value
         self.write_connections(genome, idx, new_connections)
 
     def mutate_parameters(self,
-                          genome: KartezioGenome,
-                          idx: int,
-                          only_one: int = None):
+                          genome,
+                          idx,
+                          only_one = None):
         new_parameters = self.random_parameters
         if only_one is not None:
             old_parameters = self.read_parameters(genome, idx)
@@ -737,11 +704,8 @@ class KartezioMutation(GenomeReaderWriter):
             new_parameters = old_parameters.copy()
         self.write_parameters(genome, idx, new_parameters)
 
-    def mutate_output(self, genome: KartezioGenome, idx: int):
+    def mutate_output(self, genome, idx):
         self.write_output_connection(genome, idx, self.random_output)
-
-    def mutate(self, genome: KartezioGenome):
-        pass
 
 
 class KartezioPopulation:
@@ -753,9 +717,6 @@ class KartezioPopulation:
             "fitness": np.zeros(self.size),
             "time": np.zeros(self.size)
         }
-
-    def dumps(self) -> dict:
-        return {}
 
     def get_best_individual(self):
         pass
@@ -771,9 +732,6 @@ class KartezioPopulation:
 
     def set_fitness(self, fitness):
         self._fitness["fitness"] = fitness
-
-    def has_best_fitness(self):
-        return min(self.fitness) == 0.0
 
     @property
     def fitness(self):
@@ -792,18 +750,6 @@ class KartezioPopulation:
 
 @jit(nopython=True)
 def _label_overlap(x, y):
-    """fast function to get pixel overlaps between masks in x and y
-    Parameters
-    ------------
-    x: ND-array, int
-        where 0=NO masks; 1,2... are mask labels
-    y: ND-array, int
-        where 0=NO masks; 1,2... are mask labels
-    Returns
-    ------------
-    overlap: ND-array, int
-        matrix of pixel overlaps of size [x.max()+1, y.max()+1]
-    """
     x = x.ravel()
     y = y.ravel()
     overlap = np.zeros((1 + x.max(), 1 + y.max()), dtype=np.uint)
@@ -813,18 +759,6 @@ def _label_overlap(x, y):
 
 
 def _intersection_over_union(masks_true, masks_pred):
-    """intersection over union of all mask pairs
-    Parameters
-    ------------
-    masks_true: ND-array, int
-        ground truth masks, where 0=NO masks; 1,2... are mask labels
-    masks_pred: ND-array, int
-        predicted masks, where 0=NO masks; 1,2... are mask labels
-    Returns
-    ------------
-    iou: ND-array, float
-        matrix of IOU pairs of size [x.max()+1, y.max()+1]
-    """
     overlap = _label_overlap(masks_true, masks_pred)
     n_pixels_pred = np.sum(overlap, axis=0, keepdims=True)
     n_pixels_true = np.sum(overlap, axis=1, keepdims=True)
