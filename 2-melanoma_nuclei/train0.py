@@ -1910,15 +1910,6 @@ class DatasetReader(Directory):
         [input_sizes.append(len(xi)) for xi in testing.x]
         input_sizes = np.array(input_sizes)
         inputs = int(input_sizes[0])
-        if not np.all((input_sizes == inputs)):
-            """
-            raise ValueError(
-                f"Inconsistent size of inputs for this dataset: sizes: {input_sizes}"
-            )
-            """
-            print(
-                f"Inconsistent size of inputs for this dataset: sizes: {input_sizes}"
-            )
         return Dataset(training, testing, self.name, self.label_name, inputs,
                        indices)
 
