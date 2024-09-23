@@ -363,7 +363,7 @@ class KartezioParser:
                 "n_para": g.parameters,
                 "n_conn": g.arity,
             },
-            "functions": g.bundle.ordered_list,
+            "functions": [node.name for node in g.bundle.nodes],
             "endpoint": g.endpoint.dumps(),
             "mode": "default",
         }
@@ -1317,11 +1317,6 @@ class BundleOpenCV:
     @property
     def size(self):
         return len(self.nodes)
-
-    @property
-    def ordered_list(self):
-        return [node.name for node in self.nodes]
-
 
 class EndpointWatershed(KartezioEndpoint):
 
