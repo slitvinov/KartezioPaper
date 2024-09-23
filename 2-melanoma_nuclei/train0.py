@@ -2087,11 +2087,9 @@ class ModelBuilder:
         g.__context.compile_parser(series_stacker)
 
     def set_instance_method(self, instance_method):
-        if type(instance_method) == str:
-            if instance_method == "random":
-                shape = g.__context.genome_shape
-                n_nodes = g.__context.bundle.size
-                instance_method = MutationAllRandom(shape, n_nodes)
+        shape = g.__context.genome_shape
+        n_nodes = g.__context.bundle.size
+        instance_method = MutationAllRandom(shape, n_nodes)
         g.__context.set_instance_method(instance_method)
 
     def set_mutation_method(self,
@@ -2099,20 +2097,17 @@ class ModelBuilder:
                             node_mutation_rate,
                             output_mutation_rate,
                             use_goldman=True):
-        if type(mutation) == str:
-            shape = g.__context.genome_shape
-            n_nodes = g.__context.bundle.size
-            mutation = registry.mutations.instantiate(mutation, shape, n_nodes,
+        shape = g.__context.genome_shape
+        n_nodes = g.__context.bundle.size
+        mutation = registry.mutations.instantiate(mutation, shape, n_nodes,
                                                       node_mutation_rate,
                                                       output_mutation_rate)
-        if use_goldman:
-            parser = g.__context.parser
-            mutation = GoldmanWrapper(mutation, parser)
+        parser = g.__context.parser
+        mutation = GoldmanWrapper(mutation, parser)
         g.__context.set_mutation_method(mutation)
 
     def set_fitness(self, fitness):
-        if type(fitness) == str:
-            fitness = registry.fitness.instantiate(fitness)
+        fitness = registry.fitness.instantiate(fitness)
         g.__context.set_fitness(fitness)
 
     def compile(self,
