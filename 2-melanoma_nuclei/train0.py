@@ -26,10 +26,7 @@ from scipy.stats import skew
 from skimage.morphology import remove_small_holes
 from skimage.morphology import remove_small_objects
 from typing import List
-from typing import NewType
 from typing import Tuple
-import argparse
-import copy
 import cv2
 import numpy as np
 import os
@@ -109,19 +106,6 @@ JSON_HISTORY = "history.json"
 JSON_META = "META.json"
 CSV_DATASET = "dataset.csv"
 DIR_PREVIEW = "__preview__"
-
-
-class Observable:
-
-    def __init__(self):
-        self._observers = []
-
-    def attach(self, observer):
-        self._observers.append(observer)
-
-    def notify(self, event):
-        for observer in self._observers:
-            observer.update(event)
 
 
 def pack_one_directory(directory_path):
@@ -1494,11 +1478,18 @@ class ModelGA:
         g.strategy.evaluation(y_true, y_pred)
 
 
-class ModelCGP(Observable):
+class ModelCGP:
 
     def __init__(self):
-        super().__init__()
+        self._observers = []
         self.callbacks = []
+
+    def attach(self, observer):
+        self._observers.append(observer)
+
+    def notify(self, event):
+        for observer in self._observers:
+            observer.update(event)
 
     def fit(self, x, y):
         genetic_algorithm = ModelGA()
