@@ -384,11 +384,8 @@ class GenomeFactory(Factory):
         super().__init__(prototype)
 
 
-class GenomeAdapter:
-    pass
 
-
-class GenomeWriter(GenomeAdapter):
+class GenomeWriter:
 
     def write_function(self, genome, node, function_id):
         genome[g.inputs + node, 0] = function_id
@@ -405,7 +402,7 @@ class GenomeWriter(GenomeAdapter):
                1] = connection
 
 
-class GenomeReader(GenomeAdapter):
+class GenomeReader:
 
     def read_function(self, genome, node):
         return genome[g.inputs + node, 0]
