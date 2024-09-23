@@ -1918,8 +1918,8 @@ g.out_idx = g.inputs + g.nodes
 g.para_idx = 1 + g.arity
 g.w = 1 + g.arity + g.parameters
 g.h = g.inputs + g.nodes + g.outputs
-g.prototype = np.zeros((g.h, g.w), dtype=np.uint8)
-g.genome_factory = GenomeFactory(g.prototype)
+prototype0 = np.zeros((g.h, g.w), dtype=np.uint8)
+g.genome_factory = GenomeFactory(prototype0)
 g.parser = KartezioParser()
 g.instance_method = MutationAllRandom(g.bundle.size)
 mutation = MutationClassic(g.bundle.size, node_mutation_rate,
