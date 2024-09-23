@@ -53,15 +53,6 @@ import random
 import simplejson
 import time
 
-EXTENSION_IMAGE_PNG = ".png"
-EXTENSION_IMAGE_JPG = ".jpg"
-CSV = ".csv"
-EXTENSION_IMAGE_TIF = ".tif"
-ZIP = ".zip"
-EXTENSION_IMAGE_LSM = ".lsm"
-EXTENSION_IMAGE_CZI = ".czi"
-
-
 @dataclass
 class Directory:
     path: InitVar[str]
@@ -82,47 +73,11 @@ class Directory:
     def __truediv__(self, key):
         return self._path / key
 
-    def write(self, filename, filedata):
-        filepath = self / filename
-        extension = filepath.suffix
-        filepath = str(filepath)
-        if extension == EXTENSION_IMAGE_PNG:
-            imwrite(filepath, filedata)
-        if extension == EXTENSION_IMAGE_TIF or extension == EXTENSION_IMAGE_LSM:
-            imwrite_tiff(filepath, filedata)
-
     def read(self, filename):
         filepath = self / filename
-        if not filepath.exists():
-            _err = f"The file {filepath} does not exist!"
-            raise ValueError(_err)
-        if not filepath.is_file():
-            _err = f"The path {filepath} is not pointing to a file!"
-            raise ValueError(_err)
         extension = filepath.suffix
         filepath = str(filepath)
-        if extension == EXTENSION_IMAGE_PNG or extension == EXTENSION_IMAGE_JPG:
-            return imread_color(filepath)
-        if extension == CSV:
-            return pd.read_csv(filepath)
-        if extension == EXTENSION_IMAGE_TIF or extension == EXTENSION_IMAGE_LSM:
-            return imread_tiff(filepath)
-        if extension == EXTENSION_IMAGE_CZI:
-            return imread_czi(filepath)
-
-    def unzip(self, filename):
-        filepath = self / filename
-        extension = filepath.suffix
-        filepath = str(filepath)
-        unzip_folder = filename.replace(ZIP, "")
-        new_location = self / unzip_folder
-        if new_location.exists():
-            return Directory(new_location)
-
-        if extension == ZIP:
-            with zipfile.ZipFile(filepath, "r") as zip_ref:
-                zip_ref.extractall(str(new_location))
-            return Directory(new_location)
+        return pd.read_csv(filepath)
 
     def next(self, next_location):
         filepath = self / next_location
@@ -133,15 +88,6 @@ class Directory:
         if ordered:
             return sorted(self.glob(regex))
         return self.glob(regex)
-
-    def save_as_csv(self, data, filename):
-        filepath = self / filename
-        if isinstance(data, dict):
-            df = pd.DataFrame(data=data)
-        elif isinstance(data, pd.DataFrame):
-            df = data
-        df.to_csv(str(filepath))
-
 
 class Registry:
 
@@ -747,16 +693,6 @@ class KartezioParser(GenomeReader):
             "mode": "default",
         }
 
-    @staticmethod
-    def from_json(json_data):
-        shape = GenomeShape.from_json(json_data["metadata"])
-        bundle = KartezioBundle.from_json(json_data["functions"])
-        endpoint = KartezioEndpoint.from_json(json_data["endpoint"])
-        if json_data["mode"] == "series":
-            stacker = KartezioStacker.from_json(json_data["stacker"])
-            return ParserChain(shape, bundle, stacker, endpoint)
-        return KartezioParser(shape, bundle, endpoint)
-
     def _parse_one_graph(self, genome, graph_source):
         next_indices = graph_source.copy()
         output_tree = graph_source.copy()
@@ -840,40 +776,6 @@ class ParserSequential(KartezioParser):
     """TODO: default Parser, KartezioParser becomes ABC"""
 
     pass
-
-
-class ParserChain(KartezioParser):
-
-    def __init__(self, shape, bundle, stacker, endpoint):
-        super().__init__(shape, bundle, endpoint)
-        self.stacker = stacker
-
-    def parse(self, genome, x):
-        all_y_pred = []
-        all_times = []
-        graphs = self.parse_to_graphs(genome)
-        for series in x:
-            start_time = time.time()
-            y_pred_series = []
-            # for each image
-
-            for xi in series:
-                y_pred = self._parse_one(genome, graphs, xi)
-                y_pred_series.append(y_pred)
-
-            y_pred = self.endpoint.call(self.stacker.call(y_pred_series))
-
-            all_times.append(time.time() - start_time)
-            all_y_pred.append(y_pred)
-
-        whole_time = np.mean(np.array(all_times))
-        return all_y_pred, whole_time
-
-    def dumps(self) -> dict:
-        json_data = super().dumps()
-        json_data["mode"] = "series"
-        json_data["stacker"] = self.stacker.dumps()
-        return json_data
 
 
 class KartezioToCode(KartezioParser):
