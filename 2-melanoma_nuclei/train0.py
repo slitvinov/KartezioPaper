@@ -1894,13 +1894,10 @@ class GenomeToPython(KartezioToCode):
 
 
 class KartezioInsight(KartezioParser):
-    def __init__(self, parser: KartezioParser, preprocessing=None):
+    def __init__(self, parser):
         super().__init__(parser.shape, parser.function_bundle, parser.endpoint)
-        self.preprocessing = preprocessing
 
     def create_node_images(self, genome, x, prefix="", crop=None):
-        if self.preprocessing:
-            x = self.preprocessing.call([x])[0]
         graphs = self.parse_to_graphs(genome)
         output_map = self._x_to_output_map(genome, graphs, x)
         outputs = self._parse_one(genome, graphs, x)
@@ -2874,7 +2871,6 @@ def train_model(
     model,
     dataset,
     output_directory,
-    preprocessing=None,
     callbacks="default",
     callback_frequency=1,
     pack=True,
@@ -2891,9 +2887,6 @@ def train_model(
             model.attach(callback)
 
     train_x, train_y = dataset.train_xy
-    if preprocessing:
-        train_x = preprocessing.call(train_x)
-
     res = model.fit(train_x, train_y)
     if pack:
         pack_one_directory(workdir)
