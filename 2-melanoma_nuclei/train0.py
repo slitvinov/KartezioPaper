@@ -2069,23 +2069,6 @@ class ModelContext:
 
 
 class ModelBuilder:
-    def create(
-            self,
-            endpoint,
-            bundle,
-            inputs=3,
-            nodes=10,
-            outputs=1,
-            arity=2,
-            parameters=2,
-            series_stacker=StackerMean(),
-    ):
-        g.context = ModelContext(inputs, nodes, outputs, arity,
-                                      parameters)
-        g.context.set_endpoint(endpoint)
-        g.context.set_bundle(bundle)
-        g.context.compile_parser(series_stacker)
-
     def set_instance_method(self, instance_method):
         shape = g.context.genome_shape
         n_nodes = g.context.bundle.size
@@ -2154,16 +2137,11 @@ dataset_inputs = None
 
 builder = ModelBuilder()
 g.context = None
-builder.create(
-    endpoint,
-    bundle,
-    inputs,
-    nodes,
-    outputs,
-    arity,
-    parameters,
-    series_stacker=series_stacker,
-)
+g.context = ModelContext(inputs, nodes, outputs, arity,
+                              parameters)
+g.context.set_endpoint(endpoint)
+g.context.set_bundle(bundle)
+g.context.compile_parser(series_stacker)
 builder.set_instance_method(instance_method)
 builder.set_mutation_method(
     mutation_method,
