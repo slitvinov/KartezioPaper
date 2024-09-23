@@ -497,7 +497,7 @@ class KartezioParser(GenomeReader):
                 "columns": g.nodes,
                 "n_in": g.inputs,
                 "n_out": g.outputs,
-                "n_para": self.shape.parameters,
+                "n_para": g.parameters,
                 "n_conn": g.arity,
             },
             "functions": g.bundle.ordered_list,
@@ -652,7 +652,7 @@ class KartezioMutation(GenomeReaderWriter):
     @property
     def random_parameters(self):
         return np.random.randint(self.parameter_max_value,
-                                 size=self.shape.parameters)
+                                 size=g.parameters)
 
     @property
     def random_functions(self):
