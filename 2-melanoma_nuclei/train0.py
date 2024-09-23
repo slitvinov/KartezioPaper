@@ -1983,8 +1983,7 @@ mutation = MutationClassic(g.genome_shape, g.bundle.size,
                            output_mutation_rate)
 g.mutation_method = GoldmanWrapper(mutation, g.parser)
 g.fitness = FitnessAP()
-factory = g.genome_factory
-strategy = OnePlusLambda(factory, g.instance_method,
+strategy = OnePlusLambda(g.genome_factory, g.instance_method,
                          g.mutation_method, g.fitness)
 model = ModelCGP(strategy, g.parser)
 g.dataset_reader = DatasetReader(g.path, counting=False)
