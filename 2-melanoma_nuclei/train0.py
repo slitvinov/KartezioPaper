@@ -44,7 +44,6 @@ from scipy.stats import kurtosis, skew
 from skimage.morphology import remove_small_holes, remove_small_objects
 from typing import List, NewType
 
-from kartezio.model.components import KartezioCallback
 from kartezio.endpoint import EndpointWatershed
 from kartezio.enums import CSV_DATASET
 from kartezio.enums import DIR_PREVIEW
@@ -55,6 +54,7 @@ from kartezio.metric import MetricMSE
 from kartezio.model.components import GenomeFactory
 from kartezio.model.components import GenomeShape
 from kartezio.model.components import KartezioBundle
+from kartezio.model.components import KartezioCallback
 from kartezio.model.components import KartezioEndpoint
 from kartezio.model.components import KartezioGenome
 from kartezio.model.components import KartezioParser
