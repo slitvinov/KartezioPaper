@@ -46,12 +46,6 @@ class Directory:
 
     def __post_init__(self, path):
         self._path = Path(path)
-        if not self.exists():
-            _err = f"The directory {self._path} does not exist!"
-            raise ValueError(_err)
-        if not self.is_dir():
-            _err = f"The path {self._path} is not pointing to a directory!"
-            raise ValueError(_err)
 
     def __getattr__(self, attr):
         return getattr(self._path, attr)
@@ -71,9 +65,7 @@ class Directory:
         return Directory(filepath)
 
     def ls(self, regex="*", ordered=False):
-        if ordered:
-            return sorted(self.glob(regex))
-        return self.glob(regex)
+        return sorted(self.glob(regex))
 
 
 class Registry:
@@ -86,15 +78,7 @@ class Registry:
         def add(self, item_name, replace=False):
 
             def inner(item_cls):
-                if item_name in self.__components.keys():
-                    if replace:
-                        self.__components[item_name] = item_cls
-                    else:
-                        print(
-                            f"Warning, '{item_name}' already registered, replace it using 'replace=True', or use another name."
-                        )
-                else:
-                    self.__components[item_name] = item_cls
+                self.__components[item_name] = item_cls
 
                 def wrapper(*args, **kwargs):
                     return item_cls(*args, **kwargs)
@@ -104,9 +88,6 @@ class Registry:
             return inner
 
         def get(self, item_name):
-            if item_name not in self.__components.keys():
-                raise ValueError(
-                    f"Component '{item_name}' not found in the registry!")
             return self.__components[item_name]
 
         def instantiate(self, item_name, *args, **kwargs):
