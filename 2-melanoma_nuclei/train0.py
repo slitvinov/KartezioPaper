@@ -9,13 +9,12 @@ from math import isclose
 from numba import jit
 from numena.enums import IMAGE_UINT8_COLOR_1C
 from numena.image.basics import image_ew_max
-from numena.image.basics import image_ew_max, image_ew_mean, image_ew_min
 from numena.image.basics import image_ew_mean
 from numena.image.basics import image_ew_min
 from numena.image.basics import image_new
 from numena.image.basics import image_split
+from numena.image.basics import remove_small_objects
 from numena.image.color import bgr2hed
-from numena.image.color import bgr2hed, bgr2hsv, rgb2bgr, rgb2hed
 from numena.image.color import bgr2hsv
 from numena.image.color import gray2rgb
 from numena.image.color import rgb2bgr
@@ -27,15 +26,12 @@ from numena.image.drawing import fill_polygons_as_labels
 from numena.image.morphology import morph_fill
 from numena.image.morphology import WatershedSkimage
 from numena.image.threshold import threshold_binary
-from numena.image.threshold import threshold_binary, threshold_tozero
 from numena.image.threshold import threshold_tozero
 from numena.io.drive import Directory
 from numena.io.image import imread_color
-from numena.io.image import imread_color, imread_grayscale, imread_tiff
 from numena.io.image import imread_grayscale
 from numena.io.image import imread_tiff
 from numena.io.imagej import read_ellipses_from_csv
-from numena.io.imagej import read_ellipses_from_csv, read_polygons_from_roi
 from numena.io.imagej import read_polygons_from_roi
 from numena.io.json import json_read
 from numena.io.json import json_write
@@ -45,11 +41,11 @@ from scipy.optimize import linear_sum_assignment
 from scipy.stats import kurtosis
 from scipy.stats import skew
 from skimage.morphology import remove_small_holes
-from skimage.morphology import remove_small_holes, remove_small_objects
 from skimage.morphology import remove_small_objects
 from typing import List
 from typing import NewType
 from typing import Tuple
+
 import argparse
 import copy
 import cv2
