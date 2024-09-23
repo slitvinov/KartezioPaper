@@ -328,34 +328,6 @@ class StackerMax(KartezioStacker):
             return cv2.GaussianBlur(yi, (7, 7), 1)
         return yi
 
-
-@registry.stackers.add("MEANW")
-class MeanKartezioStackerForWatershed(KartezioStacker):
-
-    def _to_json_kwargs(self) -> dict:
-        return {
-            "half_kernel_size": self.half_kernel_size,
-            "threshold": self.threshold
-        }
-
-    def __init__(self, half_kernel_size=1, threshold=4):
-        super().__init__(name="mean_stacker_watershed",
-                         symbol="MEANW",
-                         arity=2)
-        self.half_kernel_size = half_kernel_size
-        self.threshold = threshold
-
-    def stack(self, Y):
-        return np.mean(np.array(Y), axis=0).astype(np.uint8)
-
-    def post_stack(self, x, index):
-        yi = x.copy()
-        if index == 1:
-            # supposed markers
-            yi = morph_erode(yi, half_kernel_size=self.half_kernel_size)
-        return threshold_tozero(yi, self.threshold)
-
-
 class KartezioEndpoint(KartezioNode):
     def __init__(self, name: str, symbol: str, arity: int, outputs_keys: list):
         super().__init__(name, symbol, arity, 0)
@@ -2029,7 +2001,7 @@ class ModelContext:
     def set_fitness(self, fitness):
         self.fitness = fitness
 
-    def compile_parser(self, series_stacker):
+    def compile_parser(self):
         parser = KartezioParser(self.genome_shape)
         self.parser = parser
 
@@ -2048,7 +2020,6 @@ g.nodes = 30
 g.outputs = 2
 g.arity = 2
 g.parameters = 2
-series_stacker = MeanKartezioStackerForWatershed()
 instance_method = "random"
 mutation = "classic"
 node_mutation_rate = 0.15
@@ -2058,7 +2029,7 @@ fitness = "AP"
 callbacks = None
 dataset_inputs = None
 g.context = ModelContext()
-g.context.compile_parser(series_stacker)
+g.context.compile_parser()
 shape = g.context.genome_shape
 n_nodes = g.bundle.size
 instance_method = MutationAllRandom(shape, n_nodes)
