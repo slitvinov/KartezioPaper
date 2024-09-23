@@ -397,10 +397,25 @@ class GenomeReaderWriter(GenomeReader, GenomeWriter):
     pass
 
 
-class KartezioParser(GenomeReader):
+class KartezioParser:
 
-    def __init__(self):
-        super().__init__()
+    def read_function(self, genome, node):
+        return genome[g.inputs + node, 0]
+
+    def read_connections(self, genome, node):
+        return genome[g.inputs + node, 1:g.para_idx]
+
+    def read_active_connections(self, genome, node, active_connections):
+        return genome[
+            g.inputs + node,
+            1:1 + active_connections,
+        ]
+
+    def read_parameters(self, genome, node):
+        return genome[g.inputs + node, g.para_idx:]
+
+    def read_outputs(self, genome):
+        return genome[g.out_idx:, :]
 
     def dumps(self) -> dict:
         return {
@@ -1924,8 +1939,7 @@ mutation = MutationClassic(g.bundle.size, node_mutation_rate,
                            output_mutation_rate)
 g.mutation_method = GoldmanWrapper(mutation, g.parser)
 g.fitness = FitnessAP()
-g.strategy = OnePlusLambda(g.instance_method,
-                           g.mutation_method, g.fitness)
+g.strategy = OnePlusLambda(g.instance_method, g.mutation_method, g.fitness)
 model = ModelCGP(g.strategy, g.parser)
 g.dataset_reader = DatasetReader(g.path, counting=False)
 g.dataset = g.dataset_reader.read_dataset(dataset_filename=CSV_DATASET,
