@@ -1934,9 +1934,6 @@ class IndividualHistory:
         self.fitness = {"fitness": 0.0, "time": 0.0}
         self.sequence = None
 
-    def set_sequence(self, sequence):
-        self.sequence = sequence
-
     def set_values(self, sequence, fitness, time):
         self.sequence = sequence
         self.fitness["fitness"] = fitness
@@ -2132,26 +2129,9 @@ class ModelBuilder:
         mutation_method = self.__context.mutation_method
         fitness = self.__context.fitness
         parser = self.__context.parser
-        if parser.endpoint.arity != parser.shape.outputs:
-            raise ValueError(
-                f"Endpoint [{parser.endpoint.name}] requires {parser.endpoint.arity} output nodes. ({parser.shape.outputs} given)"
-            )
-        if not isinstance(fitness, KartezioFitness):
-            raise ValueError(f"Fitness {fitness} has not been properly set.")
-        if not isinstance(mutation_method, KartezioMutation):
-            raise ValueError(
-                f"Mutation {mutation_method} has not been properly set.")
-        if dataset_inputs and (dataset_inputs != parser.shape.inputs):
-            raise ValueError(
-                f"Model has {parser.shape.inputs} input nodes. ({dataset_inputs} given by the dataset)"
-            )
         strategy = OnePlusLambda(_lambda, factory, instance_method,
                                  mutation_method, fitness)
         model = ModelCGP(generations, strategy, parser)
-        if callbacks:
-            for callback in callbacks:
-                callback.set_parser(parser)
-                model.attach(callback)
         return model
 
 
