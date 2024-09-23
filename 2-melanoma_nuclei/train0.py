@@ -523,6 +523,7 @@ class KartezioParser(GenomeReader):
         self.function_bundle = function_bundle
         self.endpoint = endpoint
 
+
     def dumps(self) -> dict:
         return {
             "metadata": {
