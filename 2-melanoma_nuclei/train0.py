@@ -559,6 +559,7 @@ class GenomeFactory(Factory):
 
 
 class GenomeAdapter:
+
     def __init__(self, shape):
         self.shape = shape
 
@@ -1000,7 +1001,6 @@ class MetricCellpose(KartezioMetric):
         _y_pred = y_pred["labels"]
         ap, tp, fp, fn = self.average_precision(_y_true, _y_pred)
         return 1.0 - ap[0]
-
 
     def average_precision(self, masks_true, masks_pred):
         """average precision estimation: AP = TP / (TP + FP + FN)
@@ -2518,65 +2518,55 @@ BUNDLE_DEFAULT_INSTANCE_SEGMENTATION = BUNDLE_OPENCV
 STACKER_DEFAULT_INSTANCE_SEGMENTATION = MeanKartezioStackerForWatershed()
 
 
-def create_instance_segmentation_model(
-    generations,
-    _lambda,
-    endpoint=ENDPOINT_DEFAULT_INSTANCE_SEGMENTATION,
-    bundle=BUNDLE_DEFAULT_INSTANCE_SEGMENTATION,
-    inputs=3,
-    nodes=30,
-    outputs=2,
-    arity=2,
-    parameters=2,
-    series_stacker=STACKER_DEFAULT_INSTANCE_SEGMENTATION,
-    instance_method="random",
-    mutation_method="classic",
-    node_mutation_rate=0.15,
-    output_mutation_rate=0.2,
-    use_goldman=True,
-    fitness="AP",
-    callbacks=None,
-    dataset_inputs=None,
-):
-    builder = ModelBuilder()
-    builder.create(
-        endpoint,
-        bundle,
-        inputs,
-        nodes,
-        outputs,
-        arity,
-        parameters,
-        series_stacker=series_stacker,
-    )
-    builder.set_instance_method(instance_method)
-    builder.set_mutation_method(
-        mutation_method,
-        node_mutation_rate,
-        output_mutation_rate,
-        use_goldman=use_goldman,
-    )
-    builder.set_fitness(fitness)
-    model = builder.compile(generations,
-                            _lambda,
-                            callbacks=callbacks,
-                            dataset_inputs=dataset_inputs)
-    return model
-
-
 class G:
     pass
+
 
 g = G()
 g.path = "dataset"
 
-model = create_instance_segmentation_model(
-    generations=10,
-    _lambda=5,
-    inputs=3,
-    outputs=2,
-    endpoint=EndpointWatershed(),
+_lambda = 5
+generations = 10
+endpoint = EndpointWatershed()
+bundle = BUNDLE_DEFAULT_INSTANCE_SEGMENTATION
+inputs = 3
+nodes = 30
+outputs = 2
+arity = 2
+parameters = 2
+series_stacker = STACKER_DEFAULT_INSTANCE_SEGMENTATION
+instance_method = "random"
+mutation_method = "classic"
+node_mutation_rate = 0.15
+output_mutation_rate = 0.2
+use_goldman = True
+fitness = "AP"
+callbacks = None
+dataset_inputs = None
+
+builder = ModelBuilder()
+builder.create(
+    endpoint,
+    bundle,
+    inputs,
+    nodes,
+    outputs,
+    arity,
+    parameters,
+    series_stacker=series_stacker,
 )
+builder.set_instance_method(instance_method)
+builder.set_mutation_method(
+    mutation_method,
+    node_mutation_rate,
+    output_mutation_rate,
+    use_goldman=use_goldman,
+)
+builder.set_fitness(fitness)
+model = builder.compile(generations,
+                        _lambda,
+                        callbacks=callbacks,
+                        dataset_inputs=dataset_inputs)
 
 g.dataset_reader = DatasetReader(g.path, counting=False)
 g.dataset = g.dataset_reader.read_dataset(dataset_filename=CSV_DATASET,
