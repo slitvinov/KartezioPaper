@@ -2069,20 +2069,6 @@ class ModelContext:
 
 
 class ModelBuilder:
-    def set_mutation_method(self,
-                            mutation,
-                            node_mutation_rate,
-                            output_mutation_rate,
-                            use_goldman=True):
-        shape = g.context.genome_shape
-        n_nodes = g.context.bundle.size
-        mutation = registry.mutations.instantiate(mutation, shape, n_nodes,
-                                                      node_mutation_rate,
-                                                      output_mutation_rate)
-        parser = g.context.parser
-        mutation = GoldmanWrapper(mutation, parser)
-        g.context.set_mutation_method(mutation)
-
     def set_fitness(self, fitness):
         fitness = registry.fitness.instantiate(fitness)
         g.context.set_fitness(fitness)
@@ -2140,12 +2126,15 @@ shape = g.context.genome_shape
 n_nodes = g.context.bundle.size
 instance_method = MutationAllRandom(shape, n_nodes)
 g.context.set_instance_method(instance_method)
-builder.set_mutation_method(
-    mutation,
-    node_mutation_rate,
-    output_mutation_rate,
-    use_goldman=use_goldman,
-)
+shape = g.context.genome_shape
+n_nodes = g.context.bundle.size
+mutation = registry.mutations.instantiate(mutation, shape, n_nodes,
+                                              node_mutation_rate,
+                                              output_mutation_rate)
+parser = g.context.parser
+mutation = GoldmanWrapper(mutation, parser)
+g.context.set_mutation_method(mutation)
+
 builder.set_fitness(fitness)
 model = builder.compile(generations,
                         _lambda,
