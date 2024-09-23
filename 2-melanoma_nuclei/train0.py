@@ -261,28 +261,9 @@ class KartezioNode:
         }
 
 class KartezioStacker(KartezioNode):
-
     def __init__(self, name: str, symbol: str, arity: int):
         super().__init__(name, symbol, arity, 0)
 
-    def call(self, x, args=None):
-        y = []
-        for i in range(self.arity):
-            Y = [xi[i] for xi in x]
-            y.append(self.post_stack(self.stack(Y), i))
-        return y
-
-    def stack(self, Y):
-        pass
-
-    def post_stack(self, x, output_index):
-        return x
-
-    @staticmethod
-    def from_json(json_data):
-        return registry.stackers.instantiate(json_data["abbv"],
-                                             arity=json_data["arity"],
-                                             **json_data["kwargs"])
 
 
 @registry.stackers.add("MEAN")
