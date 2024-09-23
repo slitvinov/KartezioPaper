@@ -2705,9 +2705,9 @@ def train_model(
     model,
     dataset,
     output_directory,
-    callbacks="default",
-    callback_frequency=1,
-    pack=True,
+    callbacks=,
+    callback_frequency,
+    pack,
 ):
     if callbacks == "default":
         verbose = CallbackVerbose(frequency=callback_frequency)
@@ -3001,4 +3001,4 @@ model = create_instance_segmentation_model(
     outputs=2,
     endpoint=EndpointWatershed(),
 )
-elite, _ = train_model(model, read_dataset("dataset"), ".")
+elite, _ = train_model(model, read_dataset("dataset"), ".", "default", 1, True)
