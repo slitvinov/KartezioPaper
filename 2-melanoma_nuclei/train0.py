@@ -357,7 +357,7 @@ class KartezioParser:
         return {
             "metadata": {
                 "rows": 1,
-                "columns": g.nodes,
+                "columns": g.n,
                 "n_in": g.inputs,
                 "n_out": g.outputs,
                 "n_para": g.parameters,
@@ -1437,8 +1437,8 @@ class MutationClassic(KartezioMutation):
         super().__init__(n_functions)
         self.mutation_rate = mutation_rate
         self.output_mutation_rate = output_mutation_rate
-        self.n_mutations = int(np.floor(g.nodes * g.w * self.mutation_rate))
-        self.all_indices = np.indices((g.nodes, g.w))
+        self.n_mutations = int(np.floor(g.n * g.w * self.mutation_rate))
+        self.all_indices = np.indices((g.n, g.w))
         self.all_indices = np.vstack(
             (self.all_indices[0].ravel(), self.all_indices[1].ravel())).T
         self.sampling_range = range(len(self.all_indices))
@@ -1470,7 +1470,7 @@ class MutationAllRandom(KartezioMutation):
 
     def mutate(self, genome):
         # mutate genes
-        for i in range(g.nodes):
+        for i in range(g.n):
             self.mutate_function(genome, i)
             self.mutate_connections(genome, i)
             self.mutate_parameters(genome, i)
@@ -1897,16 +1897,16 @@ g.generations = 10
 g.endpoint = EndpointWatershed()
 g.bundle = BundleOpenCV()
 g.inputs = 3
-g.nodes = 30
+g.n = 30
 g.outputs = 2
 g.arity = 2
 g.parameters = 2
 node_mutation_rate = 0.15
 output_mutation_rate = 0.2
-g.out_idx = g.inputs + g.nodes
+g.out_idx = g.inputs + g.n
 g.para_idx = 1 + g.arity
 g.w = 1 + g.arity + g.parameters
-g.h = g.inputs + g.nodes + g.outputs
+g.h = g.inputs + g.n + g.outputs
 g.parser = KartezioParser()
 g.instance_method = MutationAllRandom(g.bundle.size)
 mutation = MutationClassic(g.bundle.size, node_mutation_rate,
