@@ -1309,26 +1309,26 @@ IMAGE_NODES_ABBV_LIST = registry.nodes.list().keys()
 class BundleOpenCV:
 
     def __init__(self):
-        self.__nodes = {}
+        self.nodes = {}
         for node_abbv in IMAGE_NODES_ABBV_LIST:
             self.add_node(node_abbv)
 
     def add_node(self, node_name):
-        self.__nodes[len(self.__nodes)] = registry.nodes.instantiate(node_name)
+        self.nodes[len(self.nodes)] = registry.nodes.instantiate(node_name)
 
     def arity_of(self, i):
-        return self.__nodes[i].arity
+        return self.nodes[i].arity
 
     def execute(self, name, x, args):
-        return self.__nodes[name].call(x, args)
+        return self.nodes[name].call(x, args)
 
     @property
     def size(self):
-        return len(self.__nodes)
+        return len(self.nodes)
 
     @property
     def ordered_list(self):
-        return [self.__nodes[i].name for i in range(self.size)]
+        return [self.nodes[i].name for i in range(self.size)]
 
 
 class EndpointWatershed(KartezioEndpoint):
