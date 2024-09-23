@@ -965,10 +965,6 @@ class KartezioES:
     def reproduction(self):
         pass
 
-def register_metrics():
-    """Force decorators to wrap KartezioFitness"""
-    print(f"[Kartezio - INFO] -  {len(registry.metrics.list())} metrics registered.")
-
 
 @jit(nopython=True)
 def _label_overlap(x, y):
@@ -1227,11 +1223,6 @@ def kernel_from_parameters(p):
         return cross_kernel(p[0])
     # 25%
     return rect_kernel(p[0])
-
-def register_nodes():
-    """Force decorators to wrap Nodes"""
-    print(f"[Kartezio - INFO] -  {len(registry.nodes.list())} nodes registered.")
-
 
 class NodeImageProcessing(KartezioNode):
     def _to_json_kwargs(self) -> dict:
@@ -1920,12 +1911,6 @@ class KartezioInsight(KartezioParser):
         cv2.imwrite(f"{prefix}_output.png", heatmap_color)
 
 
-def register_endpoints():
-    print(
-        f"[Kartezio - INFO] -  {len(registry.endpoints.list())} endpoints registered."
-    )
-
-
 @registry.endpoints.add("LABELS")
 class EndpointLabels(KartezioEndpoint):
     def __init__(self, connectivity=4):
@@ -2184,10 +2169,6 @@ class CallbackSave(KartezioCallback):
             self.save_population(e_content.get_individuals(), n)
             self.save_elite(e_content.individuals[0])
 
-def register_fitness():
-    """Force decorators to wrap KartezioFitness"""
-    print(f"[Kartezio - INFO] -  {len(registry.fitness.list())} fitness registered.")
-
 
 @registry.fitness.add("AP")
 class FitnessAP(KartezioFitness):
@@ -2198,7 +2179,6 @@ class FitnessAP(KartezioFitness):
             arity=1,
             default_metric=registry.metrics.instantiate("CAP", thresholds=thresholds),
         )
-
 
 class GoldmanWrapper(KartezioMutation):
     def __init__(self, mutation, decoder):
