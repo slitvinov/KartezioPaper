@@ -1400,17 +1400,16 @@ class FitnessAP(KartezioFitness):
 
 class GoldmanWrapper(KartezioMutation):
 
-    def __init__(self, mutation, decoder):
+    def __init__(self, mutation):
         super().__init__(None)
         self.mutation = mutation
-        self.parser = decoder
 
     def mutate(self, genome):
         changed = False
-        active_nodes = self.parser.parse_to_graphs(genome)
+        active_nodes = g.parser.parse_to_graphs(genome)
         while not changed:
             genome = self.mutation.mutate(genome)
-            new_active_nodes = self.parser.parse_to_graphs(genome)
+            new_active_nodes = g.parser.parse_to_graphs(genome)
             changed = active_nodes != new_active_nodes
         return genome
 
@@ -1889,7 +1888,7 @@ g.parser = KartezioParser()
 g.instance_method = MutationAllRandom(len(g.nodes))
 mutation = MutationClassic(len(g.nodes), node_mutation_rate,
                            output_mutation_rate)
-g.mutation_method = GoldmanWrapper(mutation, g.parser)
+g.mutation_method = GoldmanWrapper(mutation)
 g.fitness = FitnessAP()
 g.strategy = OnePlusLambda()
 model = ModelCGP()
