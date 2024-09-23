@@ -953,12 +953,6 @@ class Add(ExportableNode):
     def call(self, x, args=None):
         return cv2.add(x[0], x[1])
 
-    def to_python(self, input_names, p, output_name):
-        return "{output_name} = cv2.add({input_names[0]}, {input_names[1]})"
-
-    def to_cpp(self, input_names, p, output_name):
-        return "cv::add({input_names[0]}, {input_names[1]}, {output_name});"
-
 
 @registry.nodes.add("subtract")
 class Subtract(ExportableNode):
@@ -968,12 +962,6 @@ class Subtract(ExportableNode):
 
     def call(self, x, args=None):
         return cv2.subtract(x[0], x[1])
-
-    def to_python(self, input_names, p, output_name):
-        return "{output_name} = cv2.subtract({input_names[0]}, {input_names[1]})"
-
-    def to_cpp(self, input_names, p, output_name):
-        return "cv::subtract({input_names[0]}, {input_names[1]}, {output_name});"
 
 
 @registry.nodes.add("bitwise_not")
@@ -985,13 +973,6 @@ class BitwiseNot(ExportableNode):
     def call(self, x, args=None):
         return cv2.bitwise_not(x[0])
 
-    def to_python(self, input_names, p, output_name):
-        return "{output_name} = cv2.bitwise_not({input_names[0]})"
-
-    def to_cpp(self, input_names, p, output_name):
-        return "cv::bitwise_not({input_names[0]}, {output_name});"
-
-
 @registry.nodes.add("bitwise_or")
 class BitwiseOr(ExportableNode):
 
@@ -1000,12 +981,6 @@ class BitwiseOr(ExportableNode):
 
     def call(self, x, args=None):
         return cv2.bitwise_or(x[0], x[1])
-
-    def to_python(self, input_names, p, output_name):
-        return "{output_name} = cv2.bitwise_or({input_names[0]}, {input_names[1]})"
-
-    def to_cpp(self, input_names, p, output_name):
-        return "cv::bitwise_or({input_names[0]}, {input_names[1]}, {output_name});"
 
 
 @registry.nodes.add("bitwise_and")
@@ -1017,13 +992,6 @@ class BitwiseAnd(ExportableNode):
     def call(self, x, args=None):
         return cv2.bitwise_and(x[0], x[1])
 
-    def to_python(self, input_names, p, output_name):
-        return "{output_name} = cv2.bitwise_and({input_names[0]}, {input_names[1]})"
-
-    def to_cpp(self, input_names, p, output_name):
-        return "cv::bitwise_and({input_names[0]}, {input_names[1]}, {output_name});"
-
-
 @registry.nodes.add("bitwise_and_mask")
 class BitwiseAndMask(ExportableNode):
 
@@ -1032,12 +1000,6 @@ class BitwiseAndMask(ExportableNode):
 
     def call(self, x, args=None):
         return cv2.bitwise_and(x[0], x[0], mask=x[1])
-
-    def to_python(self, input_names, p, output_name):
-        return "{output_name} = cv2.bitwise_and({input_names[0]}, {input_names[0]}, mask={input_names[1]})"
-
-    def to_cpp(self, input_names, p, output_name):
-        return "cv::bitwise_and({input_names[0]}, {input_names[0]}, {output_name}, {input_names[1]});"
 
 
 @registry.nodes.add("bitwise_xor")
@@ -1048,12 +1010,6 @@ class BitwiseXor(ExportableNode):
 
     def call(self, x, args=None):
         return cv2.bitwise_xor(x[0], x[1])
-
-    def to_python(self, input_names, p, output_name):
-        return "{output_name} = cv2.bitwise_xor({input_names[0]}, {input_names[1]})"
-
-    def to_cpp(self, input_names, p, output_name):
-        return "cv::bitwise_xor({input_names[0]}, {input_names[1]}, {output_name});"
 
 
 @registry.nodes.add("sqrt")
@@ -1268,12 +1224,6 @@ class Erode(ExportableNode):
         kernel = kernel_from_parameters(p)
         return cv2.erode(inputs[0], kernel)
 
-    def to_python(self, input_names, p, output_name):
-        return "{output_name} = cv2.erode({input_names[0]}, kernel_from_parameters({args[0]}))"
-
-    def to_cpp(self, input_names, p, output_name):
-        return "cv::erode({input_names[0]}, {output_name}, kernel_from_parameters({args[0]}));"
-
 
 @registry.nodes.add("dilate")
 class Dilate(ExportableNode):
@@ -1284,12 +1234,6 @@ class Dilate(ExportableNode):
     def call(self, inputs, p):
         kernel = kernel_from_parameters(p)
         return cv2.dilate(inputs[0], kernel)
-
-    def to_python(self, input_names, p, output_name):
-        return "{output_name} = cv2.dilate({input_names[0]}, kernel_from_parameters({args[0]}))"
-
-    def to_cpp(self, input_names, p, output_name):
-        return "cv::dilate({input_names[0]}, {output_name}, kernel_from_parameters({args[0]}));"
 
 
 @registry.nodes.add("open")
@@ -1302,13 +1246,6 @@ class Open(ExportableNode):
         kernel = kernel_from_parameters(p)
         return cv2.morphologyEx(inputs[0], cv2.MORPH_OPEN, kernel)
 
-    def to_python(self, input_names, p, output_name):
-        return "{output_name} = cv2.morphologyEx({input_names[0]}, cv2.MORPH_OPEN, kernel_from_parameters({args[0]}))"
-
-    def to_cpp(self, input_names, p, output_name):
-        return "cv::morphologyEx({input_names[0]}, {output_name}, MORPH_OPEN, kernel_from_parameters({args[0]}));"
-
-
 @registry.nodes.add("close")
 class Close(ExportableNode):
 
@@ -1319,13 +1256,6 @@ class Close(ExportableNode):
         kernel = kernel_from_parameters(p)
         return cv2.morphologyEx(inputs[0], cv2.MORPH_CLOSE, kernel)
 
-    def to_python(self, input_names, p, output_name):
-        return "{output_name} = cv2.morphologyEx({input_names[0]}, cv2.MORPH_CLOSE, kernel_from_parameters({args[0]}))"
-
-    def to_cpp(self, input_names, p, output_name):
-        return "cv::morphologyEx({input_names[0]}, {output_name}, MORPH_CLOSE, kernel_from_parameters({args[0]}));"
-
-
 @registry.nodes.add("morph_gradient")
 class MorphGradient(ExportableNode):
 
@@ -1335,12 +1265,6 @@ class MorphGradient(ExportableNode):
     def call(self, inputs, p):
         kernel = kernel_from_parameters(p)
         return cv2.morphologyEx(inputs[0], cv2.MORPH_GRADIENT, kernel)
-
-    def to_python(self, input_names, p, output_name):
-        return "{output_name} = cv2.morphologyEx({input_names[0]}, cv2.MORPH_GRADIENT, kernel_from_parameters({args[0]}))"
-
-    def to_cpp(self, input_names, p, output_name):
-        return "cv::morphologyEx({input_names[0]}, {output_name}, MORPH_GRADIENT, kernel_from_parameters({args[0]}));"
 
 
 @registry.nodes.add("morph_tophat")
@@ -1353,12 +1277,6 @@ class MorphTopHat(ExportableNode):
         kernel = kernel_from_parameters(p)
         return cv2.morphologyEx(inputs[0], cv2.MORPH_TOPHAT, kernel)
 
-    def to_python(self, input_names, p, output_name):
-        return "{output_name} = cv2.morphologyEx({input_names[0]}, cv2.MORPH_TOPHAT, kernel_from_parameters({args[0]}))"
-
-    def to_cpp(self, input_names, p, output_name):
-        return "cv::morphologyEx({input_names[0]}, {output_name}, MORPH_TOPHAT, kernel_from_parameters({args[0]}));"
-
 
 @registry.nodes.add("morph_blackhat")
 class MorphBlackHat(ExportableNode):
@@ -1370,12 +1288,6 @@ class MorphBlackHat(ExportableNode):
         kernel = kernel_from_parameters(p)
         return cv2.morphologyEx(inputs[0], cv2.MORPH_BLACKHAT, kernel)
 
-    def to_python(self, input_names, p, output_name):
-        return "{output_name} = cv2.morphologyEx({input_names[0]}, cv2.MORPH_BLACKHAT, kernel_from_parameters({args[0]}))"
-
-    def to_cpp(self, input_names, p, output_name):
-        return "cv::morphologyEx({input_names[0]}, {output_name}, MORPH_BLACKHAT, kernel_from_parameters({args[0]}));"
-
 
 @registry.nodes.add("fill_holes")
 class FillHoles(ExportableNode):
@@ -1385,12 +1297,6 @@ class FillHoles(ExportableNode):
 
     def call(self, inputs, p):
         return morph_fill(inputs[0])
-
-    def to_python(self, input_names, p, output_name):
-        return "{output_name} = imfill({input_names[0]})"
-
-    def to_cpp(self, input_names, p, output_name):
-        return "imfill({input_names[0]}, {output_name});"
 
 
 @registry.nodes.add("remove_small_objects")
