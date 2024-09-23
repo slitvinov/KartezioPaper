@@ -72,6 +72,7 @@ from kartezio.stacker import MeanKartezioStackerForWatershed
 from kartezio.stacker import StackerMean
 from kartezio.utils.io import JsonSaver
 from kartezio.utils.io import pack_one_directory
+from kartezio.fitness import register_fitness
 
 class GoldmanWrapper(KartezioMutation):
     def __init__(self, mutation, decoder):
