@@ -1616,10 +1616,9 @@ class CopyGenome:
 
 class ModelGA:
 
-    def __init__(self, strategy, generations):
+    def __init__(self, strategy):
         self.strategy = strategy
         self.current_generation = 0
-        self.generations = generations
 
     def fit(self, x, y):
         pass
@@ -1628,7 +1627,7 @@ class ModelGA:
         self.strategy.initialization()
 
     def is_satisfying(self):
-        end_of_generations = self.current_generation >= self.generations
+        end_of_generations = self.current_generation >= g.generations
         best_fitness_reached = self.strategy.population.fitness[0] == 0.0
         return end_of_generations or best_fitness_reached
 
@@ -1650,9 +1649,8 @@ class ModelGA:
 
 class ModelCGP(Observable):
 
-    def __init__(self, generations, strategy, parser):
+    def __init__(self, strategy, parser):
         super().__init__()
-        self.generations = generations
         self.strategy = strategy
         self.parser = parser
         self.callbacks = []
@@ -1662,7 +1660,7 @@ class ModelCGP(Observable):
         x,
         y,
     ):
-        genetic_algorithm = ModelGA(self.strategy, self.generations)
+        genetic_algorithm = ModelGA(self.strategy)
         genetic_algorithm.initialization()
         y_pred = self.parser.parse_population(self.strategy.population, x)
         genetic_algorithm.evaluation(y, y_pred)
@@ -2072,7 +2070,7 @@ class G:
 g = G()
 g.path = "dataset"
 g._lambda = 5
-generations = 10
+g.generations = 10
 endpoint = EndpointWatershed()
 bundle = BundleOpenCV()
 inputs = 3
@@ -2116,7 +2114,7 @@ fitness = g.context.fitness
 parser = g.context.parser
 strategy = OnePlusLambda(factory, instance_method,
                          mutation_method, fitness)
-model = ModelCGP(generations, strategy, parser)
+model = ModelCGP(strategy, parser)
 g.dataset_reader = DatasetReader(g.path, counting=False)
 g.dataset = g.dataset_reader.read_dataset(dataset_filename=CSV_DATASET,
                                           meta_filename=JSON_META,
