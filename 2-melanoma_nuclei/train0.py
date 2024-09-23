@@ -2518,13 +2518,10 @@ class RoiPolygonReader(DataReader):
 @dataclass
 class DatasetReader(Directory):
     counting: bool = False
-    preview: bool = False
     preview_dir: Directory = field(init=False)
 
     def __post_init__(self, path):
         super().__post_init__(path)
-        if self.preview:
-            self.preview_dir = self.next(DIR_PREVIEW)
 
     def _read_meta(self, meta_filename):
         meta = DatasetMeta.read(self._path, meta_filename=meta_filename)
@@ -2567,22 +2564,6 @@ class DatasetReader(Directory):
             )
             """
             print(f"Inconsistent size of inputs for this dataset: sizes: {input_sizes}")
-
-        if self.preview:
-            for i in range(len(training.x)):
-                visual = training.v[i]
-                label = training.y[i][0]
-                preview = draw_overlay(
-                    visual, label.astype(np.uint8), color=[224, 255, 255], alpha=0.5
-                )
-                self.preview_dir.write(f"train_{i}.png", preview)
-            for i in range(len(testing.x)):
-                visual = testing.v[i]
-                label = testing.y[i][0]
-                preview = draw_overlay(
-                    visual, label.astype(np.uint8), color=[224, 255, 255], alpha=0.5
-                )
-                self.preview_dir.write(f"test_{i}.png", preview)
         return Dataset(training, testing, self.name, self.label_name, inputs, indices)
 
     def _read_auto(self, dataset):
@@ -2889,7 +2870,7 @@ model = create_instance_segmentation_model(
 dataset_path = "dataset"
 filename=CSV_DATASET
 meta_filename=JSON_META
-dataset_reader = DatasetReader(dataset_path, counting=False, preview=False)
+dataset_reader = DatasetReader(dataset_path, counting=False)
 dataset = dataset_reader.read_dataset(dataset_filename=filename, meta_filename=meta_filename, indices=None)
 verbose = CallbackVerbose(frequency=1)
 save = CallbackSave(".", dataset, frequency=1)
