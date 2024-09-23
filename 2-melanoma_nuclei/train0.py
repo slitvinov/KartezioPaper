@@ -45,42 +45,122 @@ from numena.time import eventid
 from scipy.stats import kurtosis, skew
 from skimage.morphology import remove_small_holes, remove_small_objects
 from typing import List, NewType
-
-from kartezio.model.components import (
-    GenomeReaderWriter,
-    KartezioComponent,
-    KartezioGenome,
-    KartezioNode,
-)
 from kartezio.model.types import Score, ScoreList
 from kartezio.model.types import Score
 from kartezio.enums import CSV_DATASET
 from kartezio.enums import DIR_PREVIEW
 from kartezio.enums import JSON_ELITE
 from kartezio.enums import JSON_META
-from kartezio.model.components import ExportableNode
-from kartezio.model.components import GenomeFactory
-from kartezio.model.components import GenomeShape
-from kartezio.model.components import KartezioBundle
-from kartezio.model.components import KartezioCallback
-from kartezio.model.components import KartezioEndpoint
-from kartezio.model.components import KartezioGenome
-from kartezio.model.components import KartezioNode
-from kartezio.model.components import KartezioParser
-from kartezio.model.components import KartezioStacker
-from kartezio.model.components import KartezioToCode
-from kartezio.model.components import ParserChain
 from kartezio.model.helpers import Observable
 from kartezio.model.registry import registry
-from kartezio.stacker import MeanKartezioStackerForWatershed
-from kartezio.stacker import StackerMean
-from kartezio.utils.io import JsonSaver
-from kartezio.utils.io import pack_one_directory
 from kartezio.model.helpers import Factory, Observer, Prototype
+
+def pack_one_directory(directory_path):
+    directory = Directory(directory_path)
+    packed_history = {}
+    elite = json_read(filepath=f"{directory_path}/elite.json")
+    packed_history["dataset"] = elite["dataset"]
+    packed_history["decoding"] = elite["decoding"]
+    packed_history["elite"] = elite["individual"]
+    packed_history["generations"] = []
+    generations = []
+    for g in directory.ls(f"G*.json", ordered=True):
+        generations.append(int(g.name.replace("G", "").split(".")[0]))
+    generations.sort()
+    for generation in generations:
+        current_generation = json_read(filepath=f"{directory_path}/G{generation}.json")
+        generation_json = {
+            "generation": generation,
+            "population": current_generation["population"],
+        }
+        packed_history["generations"].append(generation_json)
+    json_write(
+        filepath=f"{directory_path}/history.json", json_data=packed_history, indent=None
+    )
+    print(f"All generations packed in {directory_path}.")
+    for generation in generations:
+        file_to_delete = f"{directory_path}/G{generation}.json"
+        os.remove(file_to_delete)
+    print(f"All {len(generations)} generation files deleted.")
+
+
+class JsonLoader:
+    def read_individual(self, filepath):
+        json_data = json_read(filepath=filepath)
+        dataset = json_data["dataset"]
+        parser = KartezioParser.from_json(json_data["decoding"])
+        try:
+            individual = KartezioGenome.from_json(json_data["individual"])
+        except KeyError:
+            try:
+                individual = KartezioGenome.from_json(json_data)
+            except KeyError:
+                individual = KartezioGenome.from_json(json_data["population"][0])
+        return dataset, individual, parser
+
+def to_metadata(json_data):
+    return GenomeShape(
+        json_data["n_in"],
+        json_data["columns"],
+        json_data["n_out"],
+        json_data["n_conn"],
+        json_data["n_para"],
+    )
+
+
+def to_genome(json_data):
+    sequence = np.asarray(ast.literal_eval(json_data["sequence"]))
+    return KartezioGenome(sequence=sequence)
+
+
+def from_individual(individual):
+    return {
+        "sequence": simplejson.dumps(individual.sequence.tolist()),
+        "fitness": individual.fitness,
+    }
+
+
+def from_population(population: List):
+    json_data = []
+    for individual_idx, individual in population:
+        json_data.append(from_individual(individual))
+    return json_data
+
+
+def from_dataset(dataset):
+    return {
+        "name": dataset.name,
+        "label_name": dataset.label_name,
+        "indices": dataset.indices,
+    }
+
+
+class JsonSaver:
+    def __init__(self, dataset, parser):
+        self.dataset_json = from_dataset(dataset)
+        self.parser_as_json = parser.dumps()
+
+    def save_population(self, filepath, population):
+        json_data = {
+            "dataset": self.dataset_json,
+            "population": from_population(population),
+            "decoding": self.parser_as_json,
+        }
+        json_write(filepath, json_data)
+
+    def save_individual(self, filepath, individual):
+        json_data = {
+            "dataset": self.dataset_json,
+            "individual": from_individual(individual),
+            "decoding": self.parser_as_json,
+        }
+        json_write(filepath, json_data)
+
+def register_stackers():
+    print(f"[Kartezio - INFO] -  {len(registry.stackers.list())} stackers registered.")
 
 class KartezioComponent(Serializable, ABC):
     pass
-
 
 class KartezioNode(KartezioComponent, ABC):
     """
@@ -120,6 +200,128 @@ class KartezioNode(KartezioComponent, ABC):
     @abstractmethod
     def _to_json_kwargs(self) -> dict:
         pass
+
+class KartezioStacker(KartezioNode, ABC):
+    def __init__(self, name: str, symbol: str, arity: int):
+        super().__init__(name, symbol, arity, 0)
+
+    def call(self, x: List, args: List = None):
+        y = []
+        for i in range(self.arity):
+            Y = [xi[i] for xi in x]
+            y.append(self.post_stack(self.stack(Y), i))
+        return y
+
+    @abstractmethod
+    def stack(self, Y: List):
+        pass
+
+    def post_stack(self, x, output_index):
+        return x
+
+    @staticmethod
+    def from_json(json_data):
+        return registry.stackers.instantiate(
+            json_data["abbv"], arity=json_data["arity"], **json_data["kwargs"]
+        )
+
+@registry.stackers.add("MEAN")
+class StackerMean(KartezioStacker):
+    def _to_json_kwargs(self) -> dict:
+        return {}
+
+    def __init__(self, name="mean_stacker", symbol="MEAN", arity=1, threshold=4):
+        super().__init__(name, symbol, arity)
+        self.threshold = threshold
+
+    def stack(self, Y: List):
+        return np.mean(np.array(Y), axis=0).astype(np.uint8)
+
+    def post_stack(self, x, index):
+        yi = x.copy()
+        return threshold_tozero(yi, self.threshold)
+
+
+@registry.stackers.add("SUM")
+class StackerSum(KartezioStacker):
+    def _to_json_kwargs(self) -> dict:
+        return {}
+
+    def __init__(self, name="Sum KartezioStacker", symbol="SUM", arity=1, threshold=4):
+        super().__init__(name, symbol, arity)
+        self.threshold = threshold
+
+    def stack(self, Y: List):
+        stack_array = np.array(Y).astype(np.float32)
+        stack_array /= 255.0
+        stack_sum = np.sum(stack_array, axis=0)
+        return stack_sum.astype(np.uint8)
+
+    def post_stack(self, x, index):
+        yi = x.copy()
+        if index == 0:
+            return cv2.GaussianBlur(yi, (7, 7), 1)
+        return yi
+
+
+@registry.stackers.add("MIN")
+class StackerMin(KartezioStacker):
+    def _to_json_kwargs(self) -> dict:
+        return {}
+
+    def __init__(self, name="min_stacker", symbol="MIN", arity=1, threshold=4):
+        super().__init__(name, symbol, arity)
+        self.threshold = threshold
+
+    def stack(self, Y: List):
+        return np.min(np.array(Y), axis=0).astype(np.uint8)
+
+    def post_stack(self, x, index):
+        yi = x.copy()
+        return threshold_tozero(yi, self.threshold)
+
+
+@registry.stackers.add("MAX")
+class StackerMax(KartezioStacker):
+    def _to_json_kwargs(self) -> dict:
+        return {}
+
+    def __init__(self, name="max_stacker", symbol="MAX", arity=1, threshold=1):
+        super().__init__(name, symbol, arity)
+        self.threshold = threshold
+
+    def stack(self, Y: List):
+        return np.max(np.array(Y), axis=0).astype(np.uint8)
+
+    def post_stack(self, x, index):
+        yi = x.copy()
+        if index == 0:
+            return cv2.GaussianBlur(yi, (7, 7), 1)
+        return yi
+
+
+@registry.stackers.add("MEANW")
+class MeanKartezioStackerForWatershed(KartezioStacker):
+    def _to_json_kwargs(self) -> dict:
+        return {"half_kernel_size": self.half_kernel_size, "threshold": self.threshold}
+
+    def __init__(self, half_kernel_size=1, threshold=4):
+        super().__init__(name="mean_stacker_watershed", symbol="MEANW", arity=2)
+        self.half_kernel_size = half_kernel_size
+        self.threshold = threshold
+
+    def stack(self, Y: List):
+        return np.mean(np.array(Y), axis=0).astype(np.uint8)
+
+    def post_stack(self, x, index):
+        yi = x.copy()
+        if index == 1:
+            # supposed markers
+            yi = morph_erode(yi, half_kernel_size=self.half_kernel_size)
+        return threshold_tozero(yi, self.threshold)
+
+
+
 
 
 class KartezioEndpoint(KartezioNode, ABC):
@@ -678,31 +880,6 @@ class ParserChain(KartezioParser):
 class KartezioToCode(KartezioParser):
     def to_python_class(self, node_name, genome):
         pass
-
-
-class KartezioStacker(KartezioNode, ABC):
-    def __init__(self, name: str, symbol: str, arity: int):
-        super().__init__(name, symbol, arity, 0)
-
-    def call(self, x: List, args: List = None):
-        y = []
-        for i in range(self.arity):
-            Y = [xi[i] for xi in x]
-            y.append(self.post_stack(self.stack(Y), i))
-        return y
-
-    @abstractmethod
-    def stack(self, Y: List):
-        pass
-
-    def post_stack(self, x, output_index):
-        return x
-
-    @staticmethod
-    def from_json(json_data):
-        return registry.stackers.instantiate(
-            json_data["abbv"], arity=json_data["arity"], **json_data["kwargs"]
-        )
 
 
 class ExportableNode(KartezioNode, ABC):
