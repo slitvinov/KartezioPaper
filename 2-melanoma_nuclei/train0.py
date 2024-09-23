@@ -462,10 +462,6 @@ class KartezioParser:
         return all_y_pred, whole_time
 
 
-class ExportableNode(KartezioNode):
-    pass
-
-
 class KartezioCallback:
 
     def __init__(self, frequency=1):
@@ -839,7 +835,7 @@ class Mean(NodeImageProcessing):
 
 
 @registry.nodes.add("add")
-class Add(ExportableNode):
+class Add(KartezioNode):
 
     def __init__(self):
         super().__init__("add", "ADD", 2, 0, sources="OpenCV")
@@ -849,7 +845,7 @@ class Add(ExportableNode):
 
 
 @registry.nodes.add("subtract")
-class Subtract(ExportableNode):
+class Subtract(KartezioNode):
 
     def __init__(self):
         super().__init__("subtract", "SUB", 2, 0, sources="OpenCV")
@@ -859,7 +855,7 @@ class Subtract(ExportableNode):
 
 
 @registry.nodes.add("bitwise_not")
-class BitwiseNot(ExportableNode):
+class BitwiseNot(KartezioNode):
 
     def __init__(self):
         super().__init__("bitwise_not", "NOT", 1, 0, sources="OpenCV")
@@ -869,7 +865,7 @@ class BitwiseNot(ExportableNode):
 
 
 @registry.nodes.add("bitwise_or")
-class BitwiseOr(ExportableNode):
+class BitwiseOr(KartezioNode):
 
     def __init__(self):
         super().__init__("bitwise_or", "BOR", 2, 0, sources="OpenCV")
@@ -879,7 +875,7 @@ class BitwiseOr(ExportableNode):
 
 
 @registry.nodes.add("bitwise_and")
-class BitwiseAnd(ExportableNode):
+class BitwiseAnd(KartezioNode):
 
     def __init__(self):
         super().__init__("bitwise_and", "BAND", 2, 0, sources="OpenCV")
@@ -889,7 +885,7 @@ class BitwiseAnd(ExportableNode):
 
 
 @registry.nodes.add("bitwise_and_mask")
-class BitwiseAndMask(ExportableNode):
+class BitwiseAndMask(KartezioNode):
 
     def __init__(self):
         super().__init__("bitwise_and_mask", "ANDM", 2, 0, sources="OpenCV")
@@ -899,7 +895,7 @@ class BitwiseAndMask(ExportableNode):
 
 
 @registry.nodes.add("bitwise_xor")
-class BitwiseXor(ExportableNode):
+class BitwiseXor(KartezioNode):
 
     def __init__(self):
         super().__init__("bitwise_xor", "BXOR", 2, 0, sources="OpenCV")
@@ -1111,7 +1107,7 @@ class RelativeDifference(NodeImageProcessing):
 
 
 @registry.nodes.add("erode")
-class Erode(ExportableNode):
+class Erode(KartezioNode):
 
     def __init__(self):
         super().__init__("erode", "EROD", 1, 2, sources="OpenCV")
@@ -1122,7 +1118,7 @@ class Erode(ExportableNode):
 
 
 @registry.nodes.add("dilate")
-class Dilate(ExportableNode):
+class Dilate(KartezioNode):
 
     def __init__(self):
         super().__init__("dilate", "DILT", 1, 2, sources="OpenCV")
@@ -1133,7 +1129,7 @@ class Dilate(ExportableNode):
 
 
 @registry.nodes.add("open")
-class Open(ExportableNode):
+class Open(KartezioNode):
 
     def __init__(self):
         super().__init__("open", "OPEN", 1, 2, sources="OpenCV")
@@ -1144,7 +1140,7 @@ class Open(ExportableNode):
 
 
 @registry.nodes.add("close")
-class Close(ExportableNode):
+class Close(KartezioNode):
 
     def __init__(self):
         super().__init__("close", "CLSE", 1, 2, sources="OpenCV")
@@ -1155,7 +1151,7 @@ class Close(ExportableNode):
 
 
 @registry.nodes.add("morph_gradient")
-class MorphGradient(ExportableNode):
+class MorphGradient(KartezioNode):
 
     def __init__(self):
         super().__init__("morph_gradient", "MGRD", 1, 2, sources="OpenCV")
@@ -1166,7 +1162,7 @@ class MorphGradient(ExportableNode):
 
 
 @registry.nodes.add("morph_tophat")
-class MorphTopHat(ExportableNode):
+class MorphTopHat(KartezioNode):
 
     def __init__(self):
         super().__init__("morph_tophat", "MTHT", 1, 2, sources="OpenCV")
@@ -1177,7 +1173,7 @@ class MorphTopHat(ExportableNode):
 
 
 @registry.nodes.add("morph_blackhat")
-class MorphBlackHat(ExportableNode):
+class MorphBlackHat(KartezioNode):
 
     def __init__(self):
         super().__init__("morph_blackhat", "MBHT", 1, 2, sources="OpenCV")
@@ -1188,7 +1184,7 @@ class MorphBlackHat(ExportableNode):
 
 
 @registry.nodes.add("fill_holes")
-class FillHoles(ExportableNode):
+class FillHoles(KartezioNode):
 
     def __init__(self):
         super().__init__("fill_holes", "FILL", 1, 0, sources="Handmade")
