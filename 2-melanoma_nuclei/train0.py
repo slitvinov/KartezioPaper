@@ -39,9 +39,9 @@ from scipy.stats import kurtosis
 from scipy.stats import skew
 from skimage.morphology import remove_small_holes
 from skimage.morphology import remove_small_objects
-from typing import List
 from typing import NewType
 from typing import Tuple
+from typing import List
 
 import argparse
 import copy
@@ -103,9 +103,6 @@ class Registry:
 
 registry = Registry()
 
-Score = NewType("Score", float)
-ScoreList = List[Score]
-
 JSON_ELITE = "elite.json"
 JSON_HISTORY = "history.json"
 JSON_META = "META.json"
@@ -150,7 +147,7 @@ class Observable:
     """
 
     def __init__(self):
-        self._observers: List[Observer] = []
+        self._observers = []
 
     def attach(self, observer: Observer) -> None:
         self._observers.append(observer)
@@ -200,7 +197,7 @@ def from_individual(individual):
     }
 
 
-def from_population(population: List):
+def from_population(population):
     json_data = []
     for individual_idx, individual in population:
         json_data.append(from_individual(individual))
@@ -261,7 +258,7 @@ class KartezioNode(KartezioComponent):
         self.args = args
         self.sources = sources
 
-    def call(self, x: List, args: List = None):
+    def call(self, x, args=None):
         pass
 
     def dumps(self) -> dict:
@@ -280,14 +277,14 @@ class KartezioStacker(KartezioNode):
     def __init__(self, name: str, symbol: str, arity: int):
         super().__init__(name, symbol, arity, 0)
 
-    def call(self, x: List, args: List = None):
+    def call(self, x, args=None):
         y = []
         for i in range(self.arity):
             Y = [xi[i] for xi in x]
             y.append(self.post_stack(self.stack(Y), i))
         return y
 
-    def stack(self, Y: List):
+    def stack(self, Y):
         pass
 
     def post_stack(self, x, output_index):
@@ -308,7 +305,7 @@ class StackerMean(KartezioStacker):
         super().__init__(name, symbol, arity)
         self.threshold = threshold
 
-    def stack(self, Y: List):
+    def stack(self, Y):
         return np.mean(np.array(Y), axis=0).astype(np.uint8)
 
     def post_stack(self, x, index):
@@ -325,7 +322,7 @@ class StackerSum(KartezioStacker):
         super().__init__(name, symbol, arity)
         self.threshold = threshold
 
-    def stack(self, Y: List):
+    def stack(self, Y):
         stack_array = np.array(Y).astype(np.float32)
         stack_array /= 255.0
         stack_sum = np.sum(stack_array, axis=0)
@@ -347,7 +344,7 @@ class StackerMin(KartezioStacker):
         super().__init__(name, symbol, arity)
         self.threshold = threshold
 
-    def stack(self, Y: List):
+    def stack(self, Y):
         return np.min(np.array(Y), axis=0).astype(np.uint8)
 
     def post_stack(self, x, index):
@@ -364,7 +361,7 @@ class StackerMax(KartezioStacker):
         super().__init__(name, symbol, arity)
         self.threshold = threshold
 
-    def stack(self, Y: List):
+    def stack(self, Y):
         return np.max(np.array(Y), axis=0).astype(np.uint8)
 
     def post_stack(self, x, index):
@@ -384,7 +381,7 @@ class MeanKartezioStackerForWatershed(KartezioStacker):
         self.half_kernel_size = half_kernel_size
         self.threshold = threshold
 
-    def stack(self, Y: List):
+    def stack(self, Y):
         return np.mean(np.array(Y), axis=0).astype(np.uint8)
 
     def post_stack(self, x, index):
@@ -699,7 +696,7 @@ class KartezioParser(GenomeReader):
         ]
         return graphs_list
 
-    def _x_to_output_map(self, genome: KartezioGenome, graphs_list: List, x: List):
+    def _x_to_output_map(self, genome: KartezioGenome, graphs_list, x):
         output_map = {i: x[i].copy() for i in range(self.shape.inputs)}
         for graph in graphs_list:
             for node in graph:
@@ -718,7 +715,7 @@ class KartezioParser(GenomeReader):
                 output_map[node] = value
         return output_map
 
-    def _parse_one(self, genome: KartezioGenome, graphs_list: List, x: List):
+    def _parse_one(self, genome: KartezioGenome, graphs_list, x):
         # fill output_map with inputs
         output_map = self._x_to_output_map(genome, graphs_list, x)
         return [
@@ -736,15 +733,6 @@ class KartezioParser(GenomeReader):
         return y_pred
 
     def parse(self, genome, x):
-        """Decode the Genome given a list of inputs
-
-        Args:
-            genome (KartezioGenome): [description]
-            x (List): [description]
-
-        Returns:
-            [type]: [description]
-        """
         all_y_pred = []
         all_times = []
         graphs = self.parse_to_graphs(genome)
@@ -773,13 +761,6 @@ class ParserChain(KartezioParser):
         self.stacker = stacker
 
     def parse(self, genome, x):
-        """Decode the Genome given a list of inputs
-        Args:
-            genome (KartezioGenome): [description]
-            x (List): [description]
-        Returns:
-            [type]: [description]
-        """
         all_y_pred = []
         all_times = []
         graphs = self.parse_to_graphs(genome)
@@ -816,7 +797,7 @@ class ExportableNode(KartezioNode):
     def _to_json_kwargs(self) -> dict:
         return {}
 
-    def to_python(self, input_nodes: List, p: List, node_name: str):
+    def to_python(self, input_nodes, p, node_name: str):
         """
 
         Parameters
@@ -827,7 +808,7 @@ class ExportableNode(KartezioNode):
         """
         pass
 
-    def to_cpp(self, input_nodes: List, p: List, node_name: str):
+    def to_cpp(self, input_nodes, p, node_name: str):
         """
 
         :param input_nodes:
@@ -872,9 +853,6 @@ class KartezioMetric(KartezioNode):
         pass
 
 
-MetricList = List[KartezioMetric]
-
-
 class KartezioFitness(KartezioNode):
     def __init__(
         self,
@@ -884,30 +862,30 @@ class KartezioFitness(KartezioNode):
         default_metric: KartezioMetric = None,
     ):
         super().__init__(name, symbol, arity, 0)
-        self.metrics: MetricList = []
+        self.metrics = []
         if default_metric:
             self.add_metric(default_metric)
 
     def add_metric(self, metric: KartezioMetric):
         self.metrics.append(metric)
 
-    def call(self, y_true, y_pred) -> ScoreList:
-        scores: ScoreList = []
+    def call(self, y_true, y_pred):
+        scores = []
         for yi_pred in y_pred:
             scores.append(self.compute_one(y_true, yi_pred))
         return scores
 
-    def compute_one(self, y_true, y_pred) -> Score:
+    def compute_one(self, y_true, y_pred):
         score = 0.0
         y_size = len(y_true)
         for i in range(y_size):
             _y_true = y_true[i].copy()
             _y_pred = y_pred[i]
             score += self.__fitness_sum(_y_true, _y_pred)
-        return Score(score / y_size)
+        return score / y_size
 
-    def __fitness_sum(self, y_true, y_pred) -> Score:
-        score = Score(0.0)
+    def __fitness_sum(self, y_true, y_pred):
+        score = 0.0
         for metric in self.metrics:
             score += metric.call(y_true, y_pred)
         return score
@@ -1086,7 +1064,7 @@ class MetricCellpose(KartezioMetric):
             self.thresholds = [self.thresholds]
         self.n_thresholds = len(self.thresholds)
 
-    def call(self, y_true: np.ndarray, y_pred: np.ndarray) -> Score:
+    def call(self, y_true: np.ndarray, y_pred: np.ndarray):
         _y_true = y_true[0]
         _y_pred = y_pred["labels"]
         ap, tp, fp, fn = self.average_precision(_y_true, _y_pred)
@@ -2397,13 +2375,13 @@ class CopyGenome:
         return self.genome.clone()
 
 class ModelML:
-    def fit(self, x: List, y: List):
+    def fit(self, x, y):
         pass
 
-    def evaluate(self, x: List, y: List):
+    def evaluate(self, x, y):
         pass
 
-    def predict(self, x: List):
+    def predict(self, x):
         pass
 
 
@@ -2413,7 +2391,7 @@ class ModelGA:
         self.current_generation = 0
         self.generations = generations
 
-    def fit(self, x: List, y: List):
+    def fit(self, x, y):
         pass
 
     def initialization(self):
