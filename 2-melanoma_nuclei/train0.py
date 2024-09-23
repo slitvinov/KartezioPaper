@@ -465,7 +465,6 @@ class GenomeReaderWriter(GenomeReader, GenomeWriter):
 
 @dataclass
 class GenomeShape:
-    connections: int = 2
     parameters: int = 2
     in_idx: int = field(init=False, repr=False)
     func_idx: int = field(init=False, repr=False)
@@ -482,8 +481,8 @@ class GenomeShape:
         self.func_idx = 0
         self.con_idx = 1
         self.out_idx = g.inputs + g.nodes
-        self.para_idx = self.con_idx + self.connections
-        self.w = 1 + self.connections + self.parameters
+        self.para_idx = self.con_idx + g.arity
+        self.w = 1 + g.arity + self.parameters
         self.h = g.inputs + g.nodes + g.outputs
         self.prototype = KartezioGenome(shape=(self.h, self.w))
 
@@ -500,7 +499,7 @@ class KartezioParser(GenomeReader):
                 "n_in": g.inputs,
                 "n_out": g.outputs,
                 "n_para": self.shape.parameters,
-                "n_conn": self.shape.connections,
+                "n_conn": g.arity,
             },
             "functions": g.bundle.ordered_list,
             "endpoint": g.endpoint.dumps(),
@@ -666,7 +665,7 @@ class KartezioMutation(GenomeReaderWriter):
 
     def random_connections(self, idx: int):
         return np.random.randint(g.inputs + idx,
-                                 size=self.shape.connections)
+                                 size=g.arity)
 
     def mutate_function(self, genome: KartezioGenome, idx: int):
         self.write_function(genome, idx, self.random_functions)
@@ -1558,11 +1557,11 @@ class MutationClassic(KartezioMutation):
         for idx, mutation_parameter_index in sampling_indices:
             if mutation_parameter_index == 0:
                 self.mutate_function(genome, idx)
-            elif mutation_parameter_index <= self.shape.connections:
+            elif mutation_parameter_index <= g.arity:
                 connection_idx = mutation_parameter_index - 1
                 self.mutate_connections(genome, idx, only_one=connection_idx)
             else:
-                parameter_idx = mutation_parameter_index - self.shape.connections - 1
+                parameter_idx = mutation_parameter_index - g.arity - 1
                 self.mutate_parameters(genome, idx, only_one=parameter_idx)
         for output in range(g.outputs):
             if random.random() < self.output_mutation_rate:
@@ -2017,12 +2016,10 @@ class ModelContext:
     fitness: KartezioFitness = field(init=False)
     stacker: KartezioStacker = field(init=False)
     parser: KartezioParser = field(init=False)
-    arity: InitVar[int] = 2
     parameters: InitVar[int] = 2
 
-    def __post_init__(self, arity,
-                      parameters):
-        self.genome_shape = GenomeShape(arity, parameters)
+    def __post_init__(self, parameters):
+        self.genome_shape = GenomeShape(parameters)
         self.genome_factory = GenomeFactory(self.genome_shape.prototype)
 
     def set_instance_method(self, instance_method):
@@ -2051,7 +2048,7 @@ g.bundle = BundleOpenCV()
 g.inputs = 3
 g.nodes = 30
 g.outputs = 2
-arity = 2
+g.arity = 2
 parameters = 2
 series_stacker = MeanKartezioStackerForWatershed()
 instance_method = "random"
@@ -2062,7 +2059,7 @@ use_goldman = True
 fitness = "AP"
 callbacks = None
 dataset_inputs = None
-g.context = ModelContext(arity, parameters)
+g.context = ModelContext(parameters)
 g.context.compile_parser(series_stacker)
 shape = g.context.genome_shape
 n_nodes = g.bundle.size
