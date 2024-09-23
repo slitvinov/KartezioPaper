@@ -1314,10 +1314,6 @@ class BundleOpenCV:
     def execute(self, name, x, args):
         return self.nodes[name].call(x, args)
 
-    @property
-    def size(self):
-        return len(self.nodes)
-
 class EndpointWatershed(KartezioEndpoint):
 
     def __init__(self, use_dt=False, markers_distance=21, markers_area=None):
@@ -1901,8 +1897,8 @@ g.para_idx = 1 + g.arity
 g.w = 1 + g.arity + g.parameters
 g.h = g.inputs + g.n + g.outputs
 g.parser = KartezioParser()
-g.instance_method = MutationAllRandom(g.bundle.size)
-mutation = MutationClassic(g.bundle.size, node_mutation_rate,
+g.instance_method = MutationAllRandom(len(g.bundle.nodes))
+mutation = MutationClassic(len(g.bundle.nodes), node_mutation_rate,
                            output_mutation_rate)
 g.mutation_method = GoldmanWrapper(mutation, g.parser)
 g.fitness = FitnessAP()
