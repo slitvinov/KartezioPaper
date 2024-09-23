@@ -261,11 +261,7 @@ class JsonSaver:
         json_write(filepath, json_data)
 
 
-class KartezioComponent(Serializable):
-    pass
-
-
-class KartezioNode(KartezioComponent):
+class KartezioNode:
 
     def __init__(self,
                  name: str,
@@ -450,7 +446,7 @@ class KartezioEndpoint(KartezioNode):
                                               **json_data["kwargs"])
 
 
-class KartezioBundle(KartezioComponent):
+class KartezioBundle:
 
     def __init__(self):
         self.__nodes = {}
@@ -534,7 +530,7 @@ class EmptyBundle(KartezioBundle):
         pass
 
 
-class KartezioGenome(KartezioComponent):
+class KartezioGenome:
 
     def dumps(self) -> dict:
         pass
@@ -576,11 +572,7 @@ class GenomeFactory(Factory):
         super().__init__(prototype)
 
 
-class GenomeAdapter(KartezioComponent):
-    """
-    Adpater Design Pattern: https://refactoring.guru/design-patterns/adapter
-    """
-
+class GenomeAdapter:
     def __init__(self, shape):
         self.shape = shape
 
@@ -786,7 +778,7 @@ class ExportableNode(KartezioNode):
         pass
 
 
-class KartezioCallback(KartezioComponent, Observer):
+class KartezioCallback(Observer):
 
     def __init__(self, frequency=1):
         self.frequency = frequency
@@ -921,7 +913,7 @@ class KartezioMutation(GenomeReaderWriter):
         pass
 
 
-class KartezioPopulation(KartezioComponent):
+class KartezioPopulation:
 
     def __init__(self, size):
         self.size = size
