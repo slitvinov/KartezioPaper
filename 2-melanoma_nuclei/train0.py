@@ -967,15 +967,6 @@ class KartezioPopulation(KartezioComponent):
                         dtype=[("fitness", float), ("time", float)])
 
 
-class KartezioES:
-
-    def selection(self):
-        pass
-
-    def reproduction(self):
-        pass
-
-
 @jit(nopython=True)
 def _label_overlap(x, y):
     """fast function to get pixel overlaps between masks in x and y
@@ -2381,7 +2372,7 @@ class PopulationWithElite(KartezioPopulation):
         return population_history
 
 
-class OnePlusLambda(KartezioES):
+class OnePlusLambda:
 
     def __init__(self, _lambda, factory, init_method, mutation_method,
                  fitness):
