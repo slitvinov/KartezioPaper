@@ -1303,18 +1303,12 @@ class InRange(NodeImageProcessing):
         )
 
 
-IMAGE_NODES_ABBV_LIST = registry.nodes.list().keys()
-
-
 class BundleOpenCV:
 
     def __init__(self):
         self.nodes = {}
-        for node_abbv in IMAGE_NODES_ABBV_LIST:
-            self.add_node(node_abbv)
-
-    def add_node(self, node_name):
-        self.nodes[len(self.nodes)] = registry.nodes.instantiate(node_name)
+        for name in registry.nodes.list().keys():
+            self.nodes[len(self.nodes)] = registry.nodes.instantiate(name)
 
     def arity_of(self, i):
         return self.nodes[i].arity
