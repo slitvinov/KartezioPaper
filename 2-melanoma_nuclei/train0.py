@@ -3004,7 +3004,6 @@ class ModelContext:
     endpoint: KartezioEndpoint = field(init=False)
     bundle: KartezioBundle = field(init=False)
     parser: KartezioParser = field(init=False)
-    series_mode: bool = field(init=False)
     inputs: InitVar[int] = 3
     nodes: InitVar[int] = 10
     outputs: InitVar[int] = 1
@@ -3032,17 +3031,9 @@ class ModelContext:
     def set_fitness(self, fitness):
         self.fitness = fitness
 
-    def compile_parser(self, series_mode, series_stacker):
-        if series_mode:
-            if type(series_stacker) == str:
-                series_stacker = registry.stackers.instantiate(series_stacker)
-            parser = ParserChain(
-                self.genome_shape, self.bundle, series_stacker, self.endpoint
-            )
-        else:
-            parser = KartezioParser(self.genome_shape, self.bundle, self.endpoint)
+    def compile_parser(self, series_stacker):
+        parser = KartezioParser(self.genome_shape, self.bundle, self.endpoint)
         self.parser = parser
-        self.series_mode = series_mode
 
 
 class ModelBuilder:
@@ -3058,13 +3049,12 @@ class ModelBuilder:
         outputs=1,
         arity=2,
         parameters=2,
-        series_mode=False,
         series_stacker=StackerMean(),
     ):
         self.__context = ModelContext(inputs, nodes, outputs, arity, parameters)
         self.__context.set_endpoint(endpoint)
         self.__context.set_bundle(bundle)
-        self.__context.compile_parser(series_mode, series_stacker)
+        self.__context.compile_parser(series_stacker)
 
     def set_instance_method(self, instance_method):
         if type(instance_method) == str:
@@ -3105,15 +3095,6 @@ class ModelBuilder:
                 f"Endpoint [{parser.endpoint.name}] requires {parser.endpoint.arity} output nodes. ({parser.shape.outputs} given)"
             )
 
-        if self.__context.series_mode:
-            if not isinstance(parser.stacker, KartezioStacker):
-                raise ValueError(f"Stacker {parser.stacker} has not been properly set.")
-
-            if parser.stacker.arity != parser.shape.outputs:
-                raise ValueError(
-                    f"Stacker [{parser.stacker.name}] requires {parser.stacker.arity} output nodes. ({parser.shape.outputs} given)"
-                )
-
         if not isinstance(fitness, KartezioFitness):
             raise ValueError(f"Fitness {fitness} has not been properly set.")
 
@@ -3151,7 +3132,6 @@ def create_instance_segmentation_model(
     outputs=2,
     arity=2,
     parameters=2,
-    series_mode=False,
     series_stacker=STACKER_DEFAULT_INSTANCE_SEGMENTATION,
     instance_method="random",
     mutation_method="classic",
@@ -3171,7 +3151,6 @@ def create_instance_segmentation_model(
         outputs,
         arity,
         parameters,
-        series_mode=series_mode,
         series_stacker=series_stacker,
     )
     builder.set_instance_method(instance_method)
