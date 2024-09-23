@@ -2705,9 +2705,9 @@ def train_model(
     model,
     dataset,
     output_directory,
-    callbacks=,
+    callbacks,
     callback_frequency,
-    pack,
+    pack
 ):
     if callbacks == "default":
         verbose = CallbackVerbose(frequency=callback_frequency)
