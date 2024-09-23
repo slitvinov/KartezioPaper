@@ -1,4 +1,3 @@
-from abc import abstractmethod
 from builtins import print
 from dataclasses import dataclass
 from dataclasses import field
@@ -115,7 +114,6 @@ DIR_PREVIEW = "__preview__"
 
 
 class Prototype:
-    @abstractmethod
     def clone(self):
         pass
 
@@ -138,7 +136,6 @@ class Factory:
 
 
 class Observer:
-    @abstractmethod
     def update(self, event):
         """
         Receive update from subject.
@@ -264,7 +261,6 @@ class KartezioNode(KartezioComponent):
         self.args = args
         self.sources = sources
 
-    @abstractmethod
     def call(self, x: List, args: List = None):
         pass
 
@@ -277,7 +273,6 @@ class KartezioNode(KartezioComponent):
             "kwargs": self._to_json_kwargs(),
         }
 
-    @abstractmethod
     def _to_json_kwargs(self) -> dict:
         pass
 
@@ -292,7 +287,6 @@ class KartezioStacker(KartezioNode):
             y.append(self.post_stack(self.stack(Y), i))
         return y
 
-    @abstractmethod
     def stack(self, Y: List):
         pass
 
@@ -431,7 +425,6 @@ class KartezioBundle(KartezioComponent):
             bundle.add_node(node_name)
         return bundle
 
-    @abstractmethod
     def fill(self):
         pass
 
@@ -823,7 +816,6 @@ class ExportableNode(KartezioNode):
     def _to_json_kwargs(self) -> dict:
         return {}
 
-    @abstractmethod
     def to_python(self, input_nodes: List, p: List, node_name: str):
         """
 
@@ -835,7 +827,6 @@ class ExportableNode(KartezioNode):
         """
         pass
 
-    @abstractmethod
     def to_cpp(self, input_nodes: List, p: List, node_name: str):
         """
 
@@ -864,7 +855,6 @@ class KartezioCallback(KartezioComponent, Observer):
     def dumps(self) -> dict:
         return {}
 
-    @abstractmethod
     def _callback(self, n, e_name, e_content):
         pass
 
@@ -976,7 +966,6 @@ class KartezioMutation(GenomeReaderWriter):
     def mutate_output(self, genome: KartezioGenome, idx: int):
         self.write_output_connection(genome, idx, self.random_output)
 
-    @abstractmethod
     def mutate(self, genome: KartezioGenome):
         pass
 
@@ -990,7 +979,6 @@ class KartezioPopulation(KartezioComponent):
     def dumps(self) -> dict:
         return {}
 
-    @abstractmethod
     def get_best_individual(self):
         pass
 
@@ -1024,11 +1012,9 @@ class KartezioPopulation(KartezioComponent):
 
 
 class KartezioES:
-    @abstractmethod
     def selection(self):
         pass
 
-    @abstractmethod
     def reproduction(self):
         pass
 
@@ -2411,15 +2397,12 @@ class CopyGenome:
         return self.genome.clone()
 
 class ModelML:
-    @abstractmethod
     def fit(self, x: List, y: List):
         pass
 
-    @abstractmethod
     def evaluate(self, x: List, y: List):
         pass
 
-    @abstractmethod
     def predict(self, x: List):
         pass
 
@@ -2632,7 +2615,6 @@ class DataReader:
             filepath = str(self.directory / filename)
         return self._read(filepath, shape)
 
-    @abstractmethod
     def _read(self, filepath, shape=None):
         pass
 
