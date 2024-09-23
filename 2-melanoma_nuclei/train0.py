@@ -579,10 +579,7 @@ class KartezioMutation(GenomeReaderWriter):
     def mutate_function(self, genome, idx: int):
         self.write_function(genome, idx, self.random_functions)
 
-    def mutate_connections(self,
-                           genome,
-                           idx,
-                           only_one = None):
+    def mutate_connections(self, genome, idx, only_one=None):
         new_connections = self.random_connections(idx)
         new_value = new_connections[only_one]
         new_connections = self.read_connections(genome, idx)
@@ -1826,8 +1823,8 @@ class PopulationHistory:
 
     def fill(self, individuals, fitness, times):
         for i in range(len(individuals)):
-            self.individuals[i].set_values(individuals[i],
-                                           float(fitness[i]), float(times[i]))
+            self.individuals[i].set_values(individuals[i], float(fitness[i]),
+                                           float(times[i]))
 
     def get_best_fitness(self):
         return (
