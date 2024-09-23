@@ -44,11 +44,12 @@ from scipy.stats import kurtosis, skew
 from skimage.morphology import remove_small_holes, remove_small_objects
 from typing import List, NewType
 
+from kartezio.image.nodes import IMAGE_NODES_ABBV_LIST
+from kartezio.model.components import KartezioBundle
 from kartezio.enums import CSV_DATASET
 from kartezio.enums import DIR_PREVIEW
 from kartezio.enums import JSON_ELITE
 from kartezio.enums import JSON_META
-from kartezio.image.bundle import BUNDLE_OPENCV
 from kartezio.metric import MetricMSE
 from kartezio.model.components import GenomeFactory
 from kartezio.model.components import GenomeShape
@@ -71,6 +72,16 @@ from kartezio.stacker import MeanKartezioStackerForWatershed
 from kartezio.stacker import StackerMean
 from kartezio.utils.io import JsonSaver
 from kartezio.utils.io import pack_one_directory
+
+
+class BundleOpenCV(KartezioBundle):
+    def fill(self):
+        for node_abbv in IMAGE_NODES_ABBV_LIST:
+            self.add_node(node_abbv)
+
+
+BUNDLE_OPENCV = BundleOpenCV()
+
 
 class GenomeToPython(KartezioToCode):
     def __init__(self, parser: KartezioParser):
