@@ -495,11 +495,9 @@ class GenomeShape:
 
 class KartezioParser(GenomeReader):
 
-    def __init__(self, shape, function_bundle, endpoint):
+    def __init__(self, shape, function_bundle):
         super().__init__(shape)
         self.function_bundle = function_bundle
-        self.endpoint = endpoint
-
 
     def dumps(self) -> dict:
         return {
@@ -512,7 +510,7 @@ class KartezioParser(GenomeReader):
                 "n_conn": self.shape.connections,
             },
             "functions": self.function_bundle.ordered_list,
-            "endpoint": self.endpoint.dumps(),
+            "endpoint": g.endpoint.dumps(),
             "mode": "default",
         }
 
@@ -585,7 +583,7 @@ class KartezioParser(GenomeReader):
         for xi in x:
             start_time = time.time()
             y_pred = self._parse_one(genome, graphs, xi)
-            y_pred = self.endpoint.call(y_pred)
+            y_pred = g.endpoint.call(y_pred)
             all_times.append(time.time() - start_time)
             all_y_pred.append(y_pred)
         whole_time = np.mean(np.array(all_times))
@@ -2029,7 +2027,6 @@ class ModelContext:
     mutation_method: KartezioMutation = field(init=False)
     fitness: KartezioFitness = field(init=False)
     stacker: KartezioStacker = field(init=False)
-    endpoint: KartezioEndpoint = field(init=False)
     bundle: KartezioBundle = field(init=False)
     parser: KartezioParser = field(init=False)
     inputs: InitVar[int] = 3
@@ -2047,9 +2044,6 @@ class ModelContext:
     def set_bundle(self, bundle: KartezioBundle):
         self.bundle = bundle
 
-    def set_endpoint(self, endpoint: KartezioEndpoint):
-        self.endpoint = endpoint
-
     def set_instance_method(self, instance_method):
         self.instance_method = instance_method
 
@@ -2060,7 +2054,7 @@ class ModelContext:
         self.fitness = fitness
 
     def compile_parser(self, series_stacker):
-        parser = KartezioParser(self.genome_shape, self.bundle, self.endpoint)
+        parser = KartezioParser(self.genome_shape, self.bundle)
         self.parser = parser
 
 class G:
@@ -2071,7 +2065,7 @@ g = G()
 g.path = "dataset"
 g._lambda = 5
 g.generations = 10
-endpoint = EndpointWatershed()
+g.endpoint = EndpointWatershed()
 bundle = BundleOpenCV()
 inputs = 3
 nodes = 30
@@ -2089,7 +2083,6 @@ callbacks = None
 dataset_inputs = None
 g.context = ModelContext(inputs, nodes, outputs, arity,
                               parameters)
-g.context.set_endpoint(endpoint)
 g.context.set_bundle(bundle)
 g.context.compile_parser(series_stacker)
 shape = g.context.genome_shape
