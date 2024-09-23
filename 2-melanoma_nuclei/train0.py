@@ -2790,8 +2790,6 @@ def read_dataset(
     reader=None,
 ):
     dataset_reader = DatasetReader(dataset_path, counting=counting, preview=preview)
-    if reader is not None:
-        dataset_reader.add_reader(reader)
     return dataset_reader.read_dataset(
         dataset_filename=filename, meta_filename=meta_filename, indices=indices
     )
