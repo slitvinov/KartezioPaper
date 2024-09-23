@@ -363,7 +363,7 @@ class KartezioParser:
                 "n_para": g.parameters,
                 "n_conn": g.arity,
             },
-            "functions": [node.name for node in g.bundle.nodes],
+            "functions": [node.name for node in g.nodes],
             "endpoint": g.endpoint.dumps(),
             "mode": "default",
         }
@@ -376,7 +376,7 @@ class KartezioParser:
             if next_index < g.inputs:
                 continue
             function_index = self.read_function(genome, next_index - g.inputs)
-            active_connections = g.bundle.arity_of(function_index)
+            active_connections = arity_of(function_index)
             next_connections = set(
                 self.read_active_connections(genome, next_index - g.inputs,
                                              active_connections))
@@ -399,12 +399,12 @@ class KartezioParser:
                     continue
                 node_index = node - g.inputs
                 function_index = self.read_function(genome, node_index)
-                arity = g.bundle.arity_of(function_index)
+                arity = arity_of(function_index)
                 connections = self.read_active_connections(
                     genome, node_index, arity)
                 inputs = [output_map[c] for c in connections]
                 p = self.read_parameters(genome, node_index)
-                value = g.bundle.execute(function_index, inputs, p)
+                value = execute(function_index, inputs, p)
                 output_map[node] = value
         return output_map
 
@@ -1303,16 +1303,11 @@ class InRange(NodeImageProcessing):
         )
 
 
-class BundleOpenCV:
+def arity_of(i):
+    return g.nodes[i].arity
 
-    def __init__(self):
-        self.nodes = [registry.nodes.instantiate(name) for name in registry.nodes.list().keys()]
-
-    def arity_of(self, i):
-        return self.nodes[i].arity
-
-    def execute(self, name, x, args):
-        return self.nodes[name].call(x, args)
+def execute(name, x, args):
+    return g.nodes[name].call(x, args)
 
 class EndpointWatershed(KartezioEndpoint):
 
@@ -1884,7 +1879,7 @@ g.path = "dataset"
 g._lambda = 5
 g.generations = 10
 g.endpoint = EndpointWatershed()
-g.bundle = BundleOpenCV()
+g.nodes = [registry.nodes.instantiate(name) for name in registry.nodes.list().keys()]
 g.inputs = 3
 g.n = 30
 g.outputs = 2
@@ -1897,8 +1892,8 @@ g.para_idx = 1 + g.arity
 g.w = 1 + g.arity + g.parameters
 g.h = g.inputs + g.n + g.outputs
 g.parser = KartezioParser()
-g.instance_method = MutationAllRandom(len(g.bundle.nodes))
-mutation = MutationClassic(len(g.bundle.nodes), node_mutation_rate,
+g.instance_method = MutationAllRandom(len(g.nodes))
+mutation = MutationClassic(len(g.nodes), node_mutation_rate,
                            output_mutation_rate)
 g.mutation_method = GoldmanWrapper(mutation, g.parser)
 g.fitness = FitnessAP()
