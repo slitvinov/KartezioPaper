@@ -47,6 +47,7 @@ from typing import List, NewType
 from kartezio.endpoint import EndpointWatershed
 from kartezio.enums import CSV_DATASET
 from kartezio.enums import DIR_PREVIEW
+from kartezio.enums import JSON_ELITE
 from kartezio.enums import JSON_META
 from kartezio.export import GenomeToPython
 from kartezio.image.bundle import BUNDLE_OPENCV
