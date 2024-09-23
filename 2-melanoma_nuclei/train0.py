@@ -44,10 +44,6 @@ from scipy.stats import kurtosis, skew
 from skimage.morphology import remove_small_holes, remove_small_objects
 from typing import List, NewType
 
-from kartezio.endpoint import EndpointWatershed
-from kartezio.endpoint import EndpointWatershed
-from kartezio.image.bundle import BUNDLE_OPENCV
-from kartezio.stacker import MeanKartezioStackerForWatershed
 from kartezio.model.components import (
     GenomeFactory,
     GenomeShape,
@@ -57,20 +53,17 @@ from kartezio.model.components import (
     KartezioStacker,
     ParserChain,
 )
-from kartezio.model.evolution import KartezioFitness, KartezioMutation
+from kartezio.callback import CallbackSave, CallbackVerbose, Event
+from kartezio.endpoint import EndpointWatershed
+from kartezio.enums import CSV_DATASET, DIR_PREVIEW, JSON_META
+from kartezio.export import GenomeToPython
+from kartezio.image.bundle import BUNDLE_OPENCV
+from kartezio.model.evolution import KartezioFitness, KartezioMutation, KartezioPopulation, KartezioES
+from kartezio.model.helpers import Observable
 from kartezio.model.registry import registry
 from kartezio.mutation import GoldmanWrapper, MutationAllRandom
-from kartezio.stacker import StackerMean
-from kartezio.model.evolution import KartezioES
-from kartezio.model.evolution import KartezioPopulation
-from kartezio.callback import CallbackSave, CallbackVerbose
-from kartezio.enums import CSV_DATASET
-from kartezio.utils.io import pack_one_directory
-from kartezio.enums import CSV_DATASET, DIR_PREVIEW, JSON_META
-from kartezio.callback import Event
-from kartezio.export import GenomeToPython
-from kartezio.model.helpers import Observable
-from kartezio.utils.io import JsonSaver
+from kartezio.stacker import MeanKartezioStackerForWatershed, StackerMean
+from kartezio.utils.io import JsonSaver, pack_one_directory
 
 class ModelML(ABC):
     @abstractmethod
