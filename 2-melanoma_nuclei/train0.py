@@ -2796,45 +2796,6 @@ def read_dataset(
         dataset_filename=filename, meta_filename=meta_filename, indices=indices
     )
 
-class TrainingArgs:
-    def __init__(self):
-        self.parser = argparse.ArgumentParser()
-        self.set_arguments()
-
-    def parse(self):
-        return self.parser.parse_args()
-
-    def set_arguments(self):
-        self.parser.add_argument("output_directory", help="path to output directory")
-        self.parser.add_argument(
-            "dataset_directory", help="path to the dataset directory"
-        )
-        self.parser.add_argument(
-            "--indices",
-            help="list of indices to select among dataset for the training",
-            nargs="+",
-            type=int,
-            default=None,
-        )
-        self.parser.add_argument(
-            "--dataset_filename",
-            help=f"name of the dataset file, default is {CSV_DATASET}",
-            default=CSV_DATASET,
-        )
-        self.parser.add_argument(
-            "--genome", help="initial genome to instantiate population", default=None
-        )
-        self.parser.add_argument(
-            "--generations", help="Number of generations", default=100, type=int
-        )
-
-
-kartezio_parser = TrainingArgs()
-
-
-def get_args():
-    return kartezio_parser.parse()
-
 
 def train_model(
     model,
