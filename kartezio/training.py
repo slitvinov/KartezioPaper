@@ -4,11 +4,9 @@ from kartezio.callback import CallbackSave, CallbackVerbose
 from kartezio.dataset import read_dataset
 from kartezio.enums import CSV_DATASET
 from kartezio.model.base import ModelCGP
-from kartezio.model.helpers import singleton
 from kartezio.utils.io import pack_one_directory
 
 
-@singleton
 class TrainingArgs:
     def __init__(self):
         self.parser = argparse.ArgumentParser()

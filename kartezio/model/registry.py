@@ -1,7 +1,3 @@
-from kartezio.model.helpers import singleton
-
-
-@singleton
 class Registry:
     class SubRegistry:
         def __init__(self):

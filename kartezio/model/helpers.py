@@ -1,21 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import List
 
-
-def singleton(cls):
-    """
-    https://towardsdatascience.com/10-fabulous-python-decorators-ab674a732871
-    """
-    instances = {}
-
-    def wrapper(*args, **kwargs):
-        if cls not in instances:
-            instances[cls] = cls(*args, **kwargs)
-        return instances[cls]
-
-    return wrapper
-
-
 class Prototype(ABC):
     """
     Using Prototype Pattern to duplicate:
