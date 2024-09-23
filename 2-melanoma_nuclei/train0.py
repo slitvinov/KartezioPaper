@@ -206,36 +206,6 @@ def pack_one_directory(directory_path):
         os.remove(file_to_delete)
     print(f"All {len(generations)} generation files deleted.")
 
-
-class JsonLoader:
-    def read_individual(self, filepath):
-        json_data = json_read(filepath=filepath)
-        dataset = json_data["dataset"]
-        parser = KartezioParser.from_json(json_data["decoding"])
-        try:
-            individual = KartezioGenome.from_json(json_data["individual"])
-        except KeyError:
-            try:
-                individual = KartezioGenome.from_json(json_data)
-            except KeyError:
-                individual = KartezioGenome.from_json(json_data["population"][0])
-        return dataset, individual, parser
-
-def to_metadata(json_data):
-    return GenomeShape(
-        json_data["n_in"],
-        json_data["columns"],
-        json_data["n_out"],
-        json_data["n_conn"],
-        json_data["n_para"],
-    )
-
-
-def to_genome(json_data):
-    sequence = np.asarray(ast.literal_eval(json_data["sequence"]))
-    return KartezioGenome(sequence=sequence)
-
-
 def from_individual(individual):
     return {
         "sequence": simplejson.dumps(individual.sequence.tolist()),
@@ -278,9 +248,6 @@ class JsonSaver:
             "decoding": self.parser_as_json,
         }
         json_write(filepath, json_data)
-
-def register_stackers():
-    print(f"[Kartezio - INFO] -  {len(registry.stackers.list())} stackers registered.")
 
 class KartezioComponent(Serializable, ABC):
     pass
@@ -460,16 +427,6 @@ class KartezioEndpoint(KartezioNode, ABC):
     @staticmethod
     def from_json(json_data):
         return registry.endpoints.instantiate(json_data["abbv"], **json_data["kwargs"])
-
-
-class KartezioPreprocessing(KartezioNode, ABC):
-    """
-    First KartezioNode, executed before evolution loop.
-    Not submitted to evolution.
-    """
-
-    def __init__(self, name: str, symbol: str):
-        super().__init__(name, symbol, 1, 0)
 
 
 class KartezioBundle(KartezioComponent, ABC):
@@ -786,139 +743,6 @@ class KartezioParser(GenomeReader):
             for output_gene in self.read_outputs(genome)
         ]
 
-    def active_size(self, genome):
-        node_list = []
-        graphs_list = self.parse_to_graphs(genome)
-        for graph in graphs_list:
-            for node in graph:
-                if node < self.shape.inputs:
-                    continue
-                if node < self.shape.out_idx:
-                    node_list.append(node)
-                else:
-                    continue
-        return len(node_list)
-
-    def node_histogram(self, genome):
-        nodes = {}
-        graphs_list = self.parse_to_graphs(genome)
-        for graph in graphs_list:
-            for node in graph:
-                # inputs are already in the map
-                if node < self.shape.inputs:
-                    continue
-                node_index = node - self.shape.inputs
-                # fill the map with active nodes
-                function_index = self.read_function(genome, node_index)
-                function_name = self.function_bundle.symbol_of(function_index)
-                if function_name not in nodes.keys():
-                    nodes[function_name] = 0
-                nodes[function_name] += 1
-        return nodes
-
-    def get_last_node(self, genome):
-        graphs_list = self.parse_to_graphs(genome)
-        output_functions = []
-        for graph in graphs_list:
-            for node in graph[-1:]:
-                # inputs are already in the map
-                if node < self.shape.inputs:
-                    print(f"output {node} directly connected to input.")
-                    continue
-                node_index = node - self.shape.inputs
-                # fill the map with active nodes
-                function_index = self.read_function(genome, node_index)
-                function_name = self.function_bundle.symbol_of(function_index)
-                output_functions.append(function_name)
-        return output_functions
-
-    def get_first_node(self, genome):
-        graphs_list = self.parse_to_graphs(genome)
-        input_functions = []
-
-        for graph in graphs_list:
-            for node in graph:
-                if node < self.shape.inputs:
-                    print(f"output {node} directly connected to input.")
-                    continue
-                node_index = node - self.shape.inputs
-                # fill the map with active nodes
-                function_index = self.read_function(genome, node_index)
-                function_name = self.function_bundle.symbol_of(function_index)
-                arity = self.function_bundle.arity_of(function_index)
-                connections = self.read_active_connections(genome, node_index, arity)
-                for c in connections:
-                    if c < self.shape.inputs:
-                        input_functions.append(function_name)
-        return input_functions
-
-    def bigrams(self, genome):
-        graphs_list = self.parse_to_graphs(genome)
-        outputs = self.read_outputs(genome)
-        print(graphs_list)
-        bigram_list = []
-        for i, graph in enumerate(graphs_list):
-            for j, node in enumerate(graph):
-                if node < self.shape.inputs:
-                    continue
-                node_index = node - self.shape.inputs
-                function_index = self.read_function(genome, node_index)
-                fname = self.function_bundle.symbol_of(function_index)
-                arity = self.function_bundle.arity_of(function_index)
-                connections = self.read_active_connections(genome, node_index, arity)
-                for k, c in enumerate(connections):
-                    if c < self.shape.inputs:
-                        in_name = f"IN-{c}"
-                        pair = (f"{fname}", in_name)
-                        """
-                        if arity == 1:
-                            pair = (f"{fname}", in_name)
-                        else:
-                            pair = (f"{fname}-{k}", in_name)
-                        """
-
-                    else:
-                        f2_index = self.read_function(genome, c - self.shape.inputs)
-                        f2_name = self.function_bundle.symbol_of(f2_index)
-                        """
-                        if arity == 1:
-                            pair = (f"{fname}", f2_name)
-                        else:
-                            pair = (f"{fname}-{k}", f2_name)
-                        """
-                        pair = (f"{fname}", f2_name)
-                    bigram_list.append(pair)
-
-            f_last = self.read_function(genome, outputs[i][1] - self.shape.inputs)
-            fname = self.function_bundle.symbol_of(f_last)
-            pair = (f"OUT-{i}", fname)
-            bigram_list.append(pair)
-        print(bigram_list)
-        return bigram_list
-
-    def function_distribution(self, genome):
-        graphs_list = self.parse_to_graphs(genome)
-        active_list = []
-        for graph in graphs_list:
-            for node in graph:
-                if node < self.shape.inputs:
-                    continue
-                if node >= self.shape.out_idx:
-                    continue
-                active_list.append(node)
-        functions = []
-        is_active = []
-        for i, _ in enumerate(genome.sequence):
-            if i < self.shape.inputs:
-                continue
-            if i >= self.shape.out_idx:
-                continue
-            node_index = i - self.shape.inputs
-            function_index = self.read_function(genome, node_index)
-            function_name = self.function_bundle.symbol_of(function_index)
-            functions.append(function_name)
-            is_active.append(i in active_list)
-        return functions, is_active
 
     def parse_population(self, population, x):
         y_pred = []
@@ -1403,71 +1227,6 @@ class MetricCellpose(KartezioMetric):
         match_ok = iou[true_ind, pred_ind] >= th
         tp = match_ok.sum()
         return tp
-
-
-@registry.metrics.add("IOU")
-class MetricIOU(KartezioMetric):
-    def __init__(self):
-        super().__init__("Intersection Over Union", symbol="IOU", arity=1)
-
-    def call(self, y_true: np.ndarray, y_pred: np.ndarray) -> Score:
-        _y_true = y_true[0]
-        _y_pred = y_pred["mask"]
-        _y_pred[_y_pred > 0] = 1
-        if np.sum(_y_true) == 0:
-            _y_true = 1 - _y_true
-            _y_pred = 1 - _y_pred
-        intersection = np.logical_and(_y_true, _y_pred)
-        union = np.logical_or(_y_true, _y_pred)
-        score = Score(1.0 - np.sum(intersection) / np.sum(union))
-        return score
-
-
-@registry.metrics.add("IOU2")
-class MetricIOU2(KartezioMetric):
-    def call(self, y_true: np.ndarray, y_pred: np.ndarray) -> Score:
-        _y_true = y_true[0]
-        _y_pred = y_pred["mask"]
-        _y_pred[_y_pred > 0] = 1
-        _y_true[_y_true > 0] = 1
-        iou = _intersection_over_union(_y_true, _y_pred)
-        len_true, len_pred = iou.shape
-        if len_pred == 1 and len_true > 1:
-            return Score(1.0)
-        return Score(1.0 - iou[-1, -1])
-
-
-@registry.metrics.add("MSE")
-class MetricMSE(KartezioMetric):
-    def __init__(self):
-        super().__init__("Mean Squared Error", symbol="MSE", arity=1)
-
-    def call(self, y_true: np.ndarray, y_pred: np.ndarray):
-        return np.square(np.subtract(y_true, y_pred)).mean()
-
-
-@registry.metrics.add("precision")
-class MetricPrecision(KartezioMetric):
-    def call(self, y_true: np.ndarray, y_pred: np.ndarray):
-        _y_pred = y_pred["mask"]
-        _y_pred[_y_pred > 0] = 1
-        pred_1 = _y_pred == 1
-        pred_0 = _y_pred == 0
-        label_1 = y_true == 1
-        label_0 = y_true == 0
-
-        TP = (pred_1 & label_1).sum()
-        FP = (pred_1 & label_0).sum()
-        FN = (pred_0 & label_0).sum()
-
-        if TP == 0 and FP == 0 and FN == 0:
-            precision = 1.0
-        elif TP == 0 and (FP > 0 or FN > 0):
-            precision = 0.0
-        else:
-            precision = TP / (TP + FP)
-
-        return precision
 
 SHARPEN_KERNEL = np.array(([0, -1, 0], [-1, 5, -1], [0, -1, 0]), dtype="int")
 ROBERT_CROSS_H_KERNEL = np.array(([0, 1], [-1, 0]), dtype="int")
