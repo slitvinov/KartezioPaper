@@ -2080,46 +2080,46 @@ class ModelBuilder:
             parameters=2,
             series_stacker=StackerMean(),
     ):
-        g.__context = ModelContext(inputs, nodes, outputs, arity,
+        g.context = ModelContext(inputs, nodes, outputs, arity,
                                       parameters)
-        g.__context.set_endpoint(endpoint)
-        g.__context.set_bundle(bundle)
-        g.__context.compile_parser(series_stacker)
+        g.context.set_endpoint(endpoint)
+        g.context.set_bundle(bundle)
+        g.context.compile_parser(series_stacker)
 
     def set_instance_method(self, instance_method):
-        shape = g.__context.genome_shape
-        n_nodes = g.__context.bundle.size
+        shape = g.context.genome_shape
+        n_nodes = g.context.bundle.size
         instance_method = MutationAllRandom(shape, n_nodes)
-        g.__context.set_instance_method(instance_method)
+        g.context.set_instance_method(instance_method)
 
     def set_mutation_method(self,
                             mutation,
                             node_mutation_rate,
                             output_mutation_rate,
                             use_goldman=True):
-        shape = g.__context.genome_shape
-        n_nodes = g.__context.bundle.size
+        shape = g.context.genome_shape
+        n_nodes = g.context.bundle.size
         mutation = registry.mutations.instantiate(mutation, shape, n_nodes,
                                                       node_mutation_rate,
                                                       output_mutation_rate)
-        parser = g.__context.parser
+        parser = g.context.parser
         mutation = GoldmanWrapper(mutation, parser)
-        g.__context.set_mutation_method(mutation)
+        g.context.set_mutation_method(mutation)
 
     def set_fitness(self, fitness):
         fitness = registry.fitness.instantiate(fitness)
-        g.__context.set_fitness(fitness)
+        g.context.set_fitness(fitness)
 
     def compile(self,
                 generations,
                 _lambda,
                 callbacks=None,
                 dataset_inputs=None):
-        factory = g.__context.genome_factory
-        instance_method = g.__context.instance_method
-        mutation_method = g.__context.mutation_method
-        fitness = g.__context.fitness
-        parser = g.__context.parser
+        factory = g.context.genome_factory
+        instance_method = g.context.instance_method
+        mutation_method = g.context.mutation_method
+        fitness = g.context.fitness
+        parser = g.context.parser
         strategy = OnePlusLambda(_lambda, factory, instance_method,
                                  mutation_method, fitness)
         model = ModelCGP(generations, strategy, parser)
@@ -2153,7 +2153,7 @@ callbacks = None
 dataset_inputs = None
 
 builder = ModelBuilder()
-g.__context = None
+g.context = None
 builder.create(
     endpoint,
     bundle,
