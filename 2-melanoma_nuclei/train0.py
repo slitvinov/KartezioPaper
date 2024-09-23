@@ -2566,28 +2566,16 @@ class DatasetReader(Directory):
             print(f"Inconsistent size of inputs for this dataset: sizes: {input_sizes}")
         return Dataset(training, testing, self.name, self.label_name, inputs, indices)
 
-    def _read_auto(self, dataset):
-        pass
-
     def _read_dataset(self, dataframe, indices=None):
         dataset = Dataset.SubSet(dataframe)
         dataframe.reset_index(inplace=True)
-        if indices:
-            dataframe = dataframe.loc[indices]
         for row in dataframe.itertuples():
             x = self.input_reader.read(row.input, shape=None)
             y = self.label_reader.read(row.label, shape=x.shape)
-            if self.counting:
-                y = [y.datalist[0], y.count]
-            else:
-                y = y.datalist
+            y = y.datalist
             dataset.n_inputs = x.size
             dataset.add_item(x.datalist, y)
             visual_from_table = False
-            if "visual" in dataframe.columns:
-                if str(row.visual) != "nan":
-                    dataset.add_visual(self.read(row.visual))
-                    visual_from_table = True
             if not visual_from_table:
                 dataset.add_visual(x.visual)
         return dataset
