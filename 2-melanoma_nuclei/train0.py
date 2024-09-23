@@ -44,17 +44,34 @@ from scipy.stats import kurtosis, skew
 from skimage.morphology import remove_small_holes, remove_small_objects
 from typing import List, NewType
 
-from kartezio.model.components import GenomeFactory, GenomeShape, KartezioBundle, KartezioEndpoint, KartezioParser, KartezioStacker, ParserChain, KartezioGenome
-from kartezio.callback import CallbackSave, CallbackVerbose, Event
+from kartezio.callback import CallbackSave
+from kartezio.callback import CallbackVerbose
+from kartezio.callback import Event
 from kartezio.endpoint import EndpointWatershed
-from kartezio.enums import CSV_DATASET, DIR_PREVIEW, JSON_META
+from kartezio.enums import CSV_DATASET
+from kartezio.enums import DIR_PREVIEW
+from kartezio.enums import JSON_META
 from kartezio.export import GenomeToPython
 from kartezio.image.bundle import BUNDLE_OPENCV
-from kartezio.model.evolution import KartezioFitness, KartezioMutation, KartezioPopulation, KartezioES, KartezioMutation
+from kartezio.model.components import GenomeFactory
+from kartezio.model.components import GenomeShape
+from kartezio.model.components import KartezioBundle
+from kartezio.model.components import KartezioEndpoint
+from kartezio.model.components import KartezioGenome
+from kartezio.model.components import KartezioParser
+from kartezio.model.components import KartezioStacker
+from kartezio.model.components import ParserChain
+from kartezio.model.evolution import KartezioES
+from kartezio.model.evolution import KartezioFitness
+from kartezio.model.evolution import KartezioMutation
+from kartezio.model.evolution import KartezioMutation
+from kartezio.model.evolution import KartezioPopulation
 from kartezio.model.helpers import Observable
 from kartezio.model.registry import registry
-from kartezio.stacker import MeanKartezioStackerForWatershed, StackerMean
-from kartezio.utils.io import JsonSaver, pack_one_directory
+from kartezio.stacker import MeanKartezioStackerForWatershed
+from kartezio.stacker import StackerMean
+from kartezio.utils.io import JsonSaver
+from kartezio.utils.io import pack_one_directory
 
 class GoldmanWrapper(KartezioMutation):
     def __init__(self, mutation, decoder):
