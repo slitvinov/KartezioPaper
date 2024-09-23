@@ -1306,8 +1306,10 @@ class InRange(NodeImageProcessing):
 def arity_of(i):
     return g.nodes[i].arity
 
+
 def execute(name, x, args):
     return g.nodes[name].call(x, args)
+
 
 class EndpointWatershed(KartezioEndpoint):
 
@@ -1491,9 +1493,6 @@ class ModelGA:
     def evaluation(self, y_true, y_pred):
         g.strategy.evaluation(y_true, y_pred)
 
-    def next(self):
-        self.current_generation += 1
-
 
 class ModelCGP(Observable):
 
@@ -1501,11 +1500,7 @@ class ModelCGP(Observable):
         super().__init__()
         self.callbacks = []
 
-    def fit(
-        self,
-        x,
-        y,
-    ):
+    def fit(self, x, y):
         genetic_algorithm = ModelGA()
         genetic_algorithm.initialization()
         y_pred = g.parser.parse_population(g.strategy.population, x)
@@ -1519,7 +1514,7 @@ class ModelCGP(Observable):
             genetic_algorithm.mutation()
             y_pred = g.parser.parse_population(g.strategy.population, x)
             genetic_algorithm.evaluation(y, y_pred)
-            genetic_algorithm.next()
+            genetic_algorithm.current_generation += 1
             self._notify(genetic_algorithm.current_generation, Event.END_STEP)
         self._notify(genetic_algorithm.current_generation,
                      Event.END_LOOP,
@@ -1855,8 +1850,7 @@ class OnePlusLambda:
 
     def mutation(self):
         for i in range(self._mu, g._lambda + 1):
-            self.population[i] = g.mutation_method.mutate(
-                self.population[i])
+            self.population[i] = g.mutation_method.mutate(self.population[i])
 
     def evaluation(self, y_true, y_pred):
         fitness = g.fitness.call(y_true, y_pred)
@@ -1872,7 +1866,9 @@ g.path = "dataset"
 g._lambda = 5
 g.generations = 10
 g.endpoint = EndpointWatershed()
-g.nodes = [registry.nodes.instantiate(name) for name in registry.nodes.list().keys()]
+g.nodes = [
+    registry.nodes.instantiate(name) for name in registry.nodes.list().keys()
+]
 g.inputs = 3
 g.n = 30
 g.outputs = 2
