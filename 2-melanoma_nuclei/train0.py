@@ -385,80 +385,56 @@ class GenomeFactory(Factory):
 
 
 class GenomeAdapter:
-
-    def __init__(self, shape):
-        self.shape = shape
+    pass
 
 
 class GenomeWriter(GenomeAdapter):
 
     def write_function(self, genome, node, function_id):
-        genome[g.inputs + node, self.shape.func_idx] = function_id
+        genome[g.inputs + node, 0] = function_id
 
     def write_connections(self, genome, node, connections):
         genome[g.inputs + node,
-               self.shape.con_idx:self.shape.para_idx] = connections
+               1:g.para_idx] = connections
 
     def write_parameters(self, genome, node, parameters):
-        genome[g.inputs + node, self.shape.para_idx:] = parameters
+        genome[g.inputs + node, g.para_idx:] = parameters
 
     def write_output_connection(self, genome, output_index, connection):
-        genome[self.shape.out_idx + output_index,
-               self.shape.con_idx] = connection
+        genome[g.out_idx + output_index,
+               1] = connection
 
 
 class GenomeReader(GenomeAdapter):
 
     def read_function(self, genome, node):
-        return genome[g.inputs + node, self.shape.func_idx]
+        return genome[g.inputs + node, 0]
 
     def read_connections(self, genome, node):
         return genome[g.inputs + node,
-                      self.shape.con_idx:self.shape.para_idx]
+                      1:g.para_idx]
 
     def read_active_connections(self, genome, node, active_connections):
         return genome[
             g.inputs + node,
-            self.shape.con_idx:self.shape.con_idx + active_connections,
+            1:1 + active_connections,
         ]
 
     def read_parameters(self, genome, node):
-        return genome[g.inputs + node, self.shape.para_idx:]
+        return genome[g.inputs + node, g.para_idx:]
 
     def read_outputs(self, genome):
-        return genome[self.shape.out_idx:, :]
+        return genome[g.out_idx:, :]
 
 
 class GenomeReaderWriter(GenomeReader, GenomeWriter):
     pass
 
 
-@dataclass
-class GenomeShape:
-    in_idx: int = field(init=False, repr=False)
-    func_idx: int = field(init=False, repr=False)
-    con_idx: int = field(init=False, repr=False)
-    nodes_idx = None
-    out_idx = None
-    para_idx = None
-    w: int = field(init=False)
-    h: int = field(init=False)
-    prototype = None
-
-    def __post_init__(self):
-        self.in_idx = 0
-        self.func_idx = 0
-        self.con_idx = 1
-        self.out_idx = g.inputs + g.nodes
-        self.para_idx = self.con_idx + g.arity
-        self.w = 1 + g.arity + g.parameters
-        self.h = g.inputs + g.nodes + g.outputs
-        self.prototype = KartezioGenome(shape=(self.h, self.w))
-
 
 class KartezioParser(GenomeReader):
-    def __init__(self, shape):
-        super().__init__(shape)
+    def __init__(self):
+        super().__init__()
 
     def dumps(self) -> dict:
         return {
@@ -496,7 +472,7 @@ class KartezioParser(GenomeReader):
     def parse_to_graphs(self, genome):
         outputs = self.read_outputs(genome)
         graphs_list = [
-            self._parse_one_graph(genome, {output[self.shape.con_idx]})
+            self._parse_one_graph(genome, {output[1]})
             for output in outputs
         ]
         return graphs_list
@@ -521,7 +497,7 @@ class KartezioParser(GenomeReader):
     def _parse_one(self, genome, graphs_list, x):
         output_map = self._x_to_output_map(genome, graphs_list, x)
         return [
-            output_map[output_gene[self.shape.con_idx]]
+            output_map[output_gene[1]]
             for output_gene in self.read_outputs(genome)
         ]
 
@@ -614,8 +590,8 @@ class KartezioFitness(KartezioNode):
 
 class KartezioMutation(GenomeReaderWriter):
 
-    def __init__(self, shape, n_functions):
-        super().__init__(shape)
+    def __init__(self, n_functions):
+        super().__init__()
         self.n_functions = n_functions
         self.parameter_max_value = 256
 
@@ -630,7 +606,7 @@ class KartezioMutation(GenomeReaderWriter):
 
     @property
     def random_output(self):
-        return np.random.randint(self.shape.out_idx, size=1)
+        return np.random.randint(g.out_idx, size=1)
 
     def random_connections(self, idx: int):
         return np.random.randint(g.inputs + idx,
@@ -1487,7 +1463,7 @@ class FitnessAP(KartezioFitness):
 class GoldmanWrapper(KartezioMutation):
 
     def __init__(self, mutation, decoder):
-        super().__init__(None, None)
+        super().__init__(None)
         self.mutation = mutation
         self.parser = decoder
 
@@ -1503,14 +1479,14 @@ class GoldmanWrapper(KartezioMutation):
 
 class MutationClassic(KartezioMutation):
 
-    def __init__(self, shape, n_functions, mutation_rate,
+    def __init__(self, n_functions, mutation_rate,
                  output_mutation_rate):
-        super().__init__(shape, n_functions)
+        super().__init__(n_functions)
         self.mutation_rate = mutation_rate
         self.output_mutation_rate = output_mutation_rate
         self.n_mutations = int(
-            np.floor(g.nodes * self.shape.w * self.mutation_rate))
-        self.all_indices = np.indices((g.nodes, self.shape.w))
+            np.floor(g.nodes * g.w * self.mutation_rate))
+        self.all_indices = np.indices((g.nodes, g.w))
         self.all_indices = np.vstack(
             (self.all_indices[0].ravel(), self.all_indices[1].ravel())).T
         self.sampling_range = range(len(self.all_indices))
@@ -1536,8 +1512,8 @@ class MutationClassic(KartezioMutation):
 
 
 class MutationAllRandom(KartezioMutation):
-    def __init__(self, metadata: GenomeShape, n_functions: int):
-        super().__init__(metadata, n_functions)
+    def __init__(self, n_functions: int):
+        super().__init__(n_functions)
 
     def mutate(self, genome: KartezioGenome):
         # mutate genes
@@ -1974,11 +1950,15 @@ g.arity = 2
 g.parameters = 2
 node_mutation_rate = 0.15
 output_mutation_rate = 0.2
-g.genome_shape = GenomeShape()
-g.genome_factory = GenomeFactory(g.genome_shape.prototype)
-g.parser = KartezioParser(g.genome_shape)
-g.instance_method = MutationAllRandom(g.genome_shape, g.bundle.size)
-mutation = MutationClassic(g.genome_shape, g.bundle.size,
+g.out_idx = g.inputs + g.nodes
+g.para_idx = 1 + g.arity
+g.w = 1 + g.arity + g.parameters
+g.h = g.inputs + g.nodes + g.outputs
+g.prototype = KartezioGenome(shape=(g.h, g.w))
+g.genome_factory = GenomeFactory(g.prototype)
+g.parser = KartezioParser()
+g.instance_method = MutationAllRandom(g.bundle.size)
+mutation = MutationClassic(g.bundle.size,
                            node_mutation_rate,
                            output_mutation_rate)
 g.mutation_method = GoldmanWrapper(mutation, g.parser)
