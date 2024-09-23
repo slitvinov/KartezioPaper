@@ -493,10 +493,8 @@ class GenomeShape:
 
 
 class KartezioParser(GenomeReader):
-
-    def __init__(self, shape, function_bundle):
+    def __init__(self, shape):
         super().__init__(shape)
-        self.function_bundle = function_bundle
 
     def dumps(self) -> dict:
         return {
@@ -508,7 +506,7 @@ class KartezioParser(GenomeReader):
                 "n_para": self.shape.parameters,
                 "n_conn": self.shape.connections,
             },
-            "functions": self.function_bundle.ordered_list,
+            "functions": g.bundle.ordered_list,
             "endpoint": g.endpoint.dumps(),
             "mode": "default",
         }
@@ -522,7 +520,7 @@ class KartezioParser(GenomeReader):
                 continue
             function_index = self.read_function(genome,
                                                 next_index - self.shape.inputs)
-            active_connections = self.function_bundle.arity_of(function_index)
+            active_connections = g.bundle.arity_of(function_index)
             next_connections = set(
                 self.read_active_connections(genome,
                                              next_index - self.shape.inputs,
@@ -543,23 +541,20 @@ class KartezioParser(GenomeReader):
         output_map = {i: x[i].copy() for i in range(self.shape.inputs)}
         for graph in graphs_list:
             for node in graph:
-                # inputs are already in the map
                 if node < self.shape.inputs:
                     continue
                 node_index = node - self.shape.inputs
-                # fill the map with active nodes
                 function_index = self.read_function(genome, node_index)
-                arity = self.function_bundle.arity_of(function_index)
+                arity = g.bundle.arity_of(function_index)
                 connections = self.read_active_connections(
                     genome, node_index, arity)
                 inputs = [output_map[c] for c in connections]
                 p = self.read_parameters(genome, node_index)
-                value = self.function_bundle.execute(function_index, inputs, p)
+                value = g.bundle.execute(function_index, inputs, p)
                 output_map[node] = value
         return output_map
 
-    def _parse_one(self, genome: KartezioGenome, graphs_list, x):
-        # fill output_map with inputs
+    def _parse_one(self, genome, graphs_list, x):
         output_map = self._x_to_output_map(genome, graphs_list, x)
         return [
             output_map[output_gene[self.shape.con_idx]]
@@ -2025,7 +2020,6 @@ class ModelContext:
     mutation_method: KartezioMutation = field(init=False)
     fitness: KartezioFitness = field(init=False)
     stacker: KartezioStacker = field(init=False)
-    bundle: KartezioBundle = field(init=False)
     parser: KartezioParser = field(init=False)
     inputs: InitVar[int] = 3
     nodes: InitVar[int] = 10
@@ -2039,9 +2033,6 @@ class ModelContext:
                                         parameters)
         self.genome_factory = GenomeFactory(self.genome_shape.prototype)
 
-    def set_bundle(self, bundle: KartezioBundle):
-        self.bundle = bundle
-
     def set_instance_method(self, instance_method):
         self.instance_method = instance_method
 
@@ -2052,7 +2043,7 @@ class ModelContext:
         self.fitness = fitness
 
     def compile_parser(self, series_stacker):
-        parser = KartezioParser(self.genome_shape, self.bundle)
+        parser = KartezioParser(self.genome_shape)
         self.parser = parser
 
 class G:
@@ -2064,7 +2055,7 @@ g.path = "dataset"
 g._lambda = 5
 g.generations = 10
 g.endpoint = EndpointWatershed()
-bundle = BundleOpenCV()
+g.bundle = BundleOpenCV()
 inputs = 3
 nodes = 30
 outputs = 2
@@ -2081,14 +2072,12 @@ callbacks = None
 dataset_inputs = None
 g.context = ModelContext(inputs, nodes, outputs, arity,
                               parameters)
-g.context.set_bundle(bundle)
 g.context.compile_parser(series_stacker)
 shape = g.context.genome_shape
-n_nodes = g.context.bundle.size
+n_nodes = g.bundle.size
 instance_method = MutationAllRandom(shape, n_nodes)
 g.context.set_instance_method(instance_method)
 shape = g.context.genome_shape
-n_nodes = g.context.bundle.size
 mutation = registry.mutations.instantiate(mutation, shape, n_nodes,
                                               node_mutation_rate,
                                               output_mutation_rate)
