@@ -251,9 +251,6 @@ class KartezioNode:
         self.args = args
         self.sources = sources
 
-    def call(self, x, args=None):
-        pass
-
     def dumps(self) -> dict:
         return {
             "name": self.name,
@@ -262,10 +259,6 @@ class KartezioNode:
             "args": self.args,
             "kwargs": self._to_json_kwargs(),
         }
-
-    def _to_json_kwargs(self) -> dict:
-        pass
-
 
 class KartezioStacker(KartezioNode):
 
