@@ -1050,11 +1050,6 @@ def _intersection_over_union(masks_true, masks_pred):
 
 @registry.metrics.add("CAP")
 class MetricCellpose(KartezioMetric):
-    """
-    from MouseLand/cellpose:
-    https://github.com/MouseLand/cellpose/blob/5cc03de9c2aa342d4b4469ff476ca04541b63414/cellpose/metrics.py
-    """
-
     def __init__(self, thresholds=0.5):
         super().__init__("Cellpose Average Precision", symbol="CAP", arity=1)
         self.thresholds = thresholds
