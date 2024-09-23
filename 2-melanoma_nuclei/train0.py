@@ -21,15 +21,15 @@ from numena.io.imagej import read_polygons_from_roi
 from numena.io.json import json_read
 from numena.io.json import json_write
 from numena.time import eventid
+from pathlib import Path
 from scipy.optimize import linear_sum_assignment
 from scipy.stats import kurtosis
 from scipy.stats import skew
 from skimage.morphology import remove_small_holes
 from skimage.morphology import remove_small_objects
+from typing import List
 from typing import NewType
 from typing import Tuple
-from typing import List
-from pathlib import Path
 import argparse
 import copy
 import cv2
