@@ -1779,9 +1779,7 @@ class InRange(NodeImageProcessing):
 
 IMAGE_NODES_ABBV_LIST = registry.nodes.list().keys()
 
-
 class BundleOpenCV(KartezioBundle):
-
     def fill(self):
         for node_abbv in IMAGE_NODES_ABBV_LIST:
             self.add_node(node_abbv)
