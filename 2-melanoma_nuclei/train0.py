@@ -2067,28 +2067,6 @@ class ModelContext:
         parser = KartezioParser(self.genome_shape, self.bundle, self.endpoint)
         self.parser = parser
 
-
-class ModelBuilder:
-    def set_fitness(self, fitness):
-        fitness = registry.fitness.instantiate(fitness)
-        g.context.set_fitness(fitness)
-
-    def compile(self,
-                generations,
-                _lambda,
-                callbacks=None,
-                dataset_inputs=None):
-        factory = g.context.genome_factory
-        instance_method = g.context.instance_method
-        mutation_method = g.context.mutation_method
-        fitness = g.context.fitness
-        parser = g.context.parser
-        strategy = OnePlusLambda(_lambda, factory, instance_method,
-                                 mutation_method, fitness)
-        model = ModelCGP(generations, strategy, parser)
-        return model
-
-
 class G:
     pass
 
@@ -2114,8 +2092,6 @@ use_goldman = True
 fitness = "AP"
 callbacks = None
 dataset_inputs = None
-
-builder = ModelBuilder()
 g.context = None
 g.context = ModelContext(inputs, nodes, outputs, arity,
                               parameters)
@@ -2135,12 +2111,16 @@ parser = g.context.parser
 mutation = GoldmanWrapper(mutation, parser)
 g.context.set_mutation_method(mutation)
 
-builder.set_fitness(fitness)
-model = builder.compile(generations,
-                        _lambda,
-                        callbacks=callbacks,
-                        dataset_inputs=dataset_inputs)
-
+fitness = registry.fitness.instantiate(fitness)
+g.context.set_fitness(fitness)
+factory = g.context.genome_factory
+instance_method = g.context.instance_method
+mutation_method = g.context.mutation_method
+fitness = g.context.fitness
+parser = g.context.parser
+strategy = OnePlusLambda(_lambda, factory, instance_method,
+                         mutation_method, fitness)
+model = ModelCGP(generations, strategy, parser)
 g.dataset_reader = DatasetReader(g.path, counting=False)
 g.dataset = g.dataset_reader.read_dataset(dataset_filename=CSV_DATASET,
                                           meta_filename=JSON_META,
