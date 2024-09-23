@@ -1992,10 +1992,8 @@ g.nodes = 30
 g.outputs = 2
 g.arity = 2
 g.parameters = 2
-mutation = "classic"
 node_mutation_rate = 0.15
 output_mutation_rate = 0.2
-use_goldman = True
 fitness = "AP"
 callbacks = None
 dataset_inputs = None
@@ -2006,20 +2004,15 @@ shape = g.genome_shape
 n_nodes = g.bundle.size
 g.instance_method = MutationAllRandom(shape, n_nodes)
 shape = g.genome_shape
-mutation = registry.mutations.instantiate(mutation, shape, n_nodes,
+mutation = registry.mutations.instantiate("classic", shape, n_nodes,
                                               node_mutation_rate,
                                               output_mutation_rate)
-parser = g.parser
-g.mutation_method = GoldmanWrapper(mutation, parser)
-fitness = registry.fitness.instantiate(fitness)
-g.fitness = fitness
+g.mutation_method = GoldmanWrapper(mutation, g.parser)
+g.fitness = registry.fitness.instantiate("AP")
 factory = g.genome_factory
-mutation_method = g.mutation_method
-fitness = g.fitness
-parser = g.parser
 strategy = OnePlusLambda(factory, g.instance_method,
-                         mutation_method, fitness)
-model = ModelCGP(strategy, parser)
+                         g.mutation_method, g.fitness)
+model = ModelCGP(strategy, g.parser)
 g.dataset_reader = DatasetReader(g.path, counting=False)
 g.dataset = g.dataset_reader.read_dataset(dataset_filename=CSV_DATASET,
                                           meta_filename=JSON_META,
