@@ -2069,12 +2069,6 @@ class ModelContext:
 
 
 class ModelBuilder:
-    def set_instance_method(self, instance_method):
-        shape = g.context.genome_shape
-        n_nodes = g.context.bundle.size
-        instance_method = MutationAllRandom(shape, n_nodes)
-        g.context.set_instance_method(instance_method)
-
     def set_mutation_method(self,
                             mutation,
                             node_mutation_rate,
@@ -2142,7 +2136,10 @@ g.context = ModelContext(inputs, nodes, outputs, arity,
 g.context.set_endpoint(endpoint)
 g.context.set_bundle(bundle)
 g.context.compile_parser(series_stacker)
-builder.set_instance_method(instance_method)
+shape = g.context.genome_shape
+n_nodes = g.context.bundle.size
+instance_method = MutationAllRandom(shape, n_nodes)
+g.context.set_instance_method(instance_method)
 builder.set_mutation_method(
     mutation_method,
     node_mutation_rate,
