@@ -2069,10 +2069,6 @@ class ModelContext:
 
 
 class ModelBuilder:
-
-    def __init__(self):
-        g.__context = None
-
     def create(
             self,
             endpoint,
