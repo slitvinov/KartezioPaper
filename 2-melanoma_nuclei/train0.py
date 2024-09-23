@@ -2261,17 +2261,6 @@ class CopyGenome:
     def mutate(self, _genome: KartezioGenome):
         return self.genome.clone()
 
-class ModelML:
-    def fit(self, x, y):
-        pass
-
-    def evaluate(self, x, y):
-        pass
-
-    def predict(self, x):
-        pass
-
-
 class ModelGA:
     def __init__(self, strategy, generations):
         self.strategy = strategy
@@ -2305,7 +2294,7 @@ class ModelGA:
         self.current_generation += 1
 
 
-class ModelCGP(ModelML, Observable):
+class ModelCGP(Observable):
     def __init__(self, generations, strategy, parser):
         super().__init__()
         self.generations = generations
@@ -2345,23 +2334,6 @@ class ModelCGP(ModelML, Observable):
             "force": force,
         }
         self.notify(event)
-
-    def evaluate(self, x, y):
-        y_pred, t = self.predict(x)
-        return self.strategy.fitness.compute(y, [y_pred])
-
-    def predict(self, x):
-        return self.parser.parse(self.strategy.elite, x)
-
-    def save_elite(self, filepath, dataset):
-        JsonSaver(dataset, self.parser).save_individual(
-            filepath, self.strategy.population.history().individuals[0]
-        )
-
-    def print_python_class(self, class_name):
-        python_writer = GenomeToPython(self.parser)
-        python_writer.to_python_class(class_name, self.strategy.elite)
-
 
 class Dataset:
     class SubSet:
