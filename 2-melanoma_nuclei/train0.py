@@ -465,7 +465,6 @@ class GenomeReaderWriter(GenomeReader, GenomeWriter):
 
 @dataclass
 class GenomeShape:
-    parameters: int = 2
     in_idx: int = field(init=False, repr=False)
     func_idx: int = field(init=False, repr=False)
     con_idx: int = field(init=False, repr=False)
@@ -482,7 +481,7 @@ class GenomeShape:
         self.con_idx = 1
         self.out_idx = g.inputs + g.nodes
         self.para_idx = self.con_idx + g.arity
-        self.w = 1 + g.arity + self.parameters
+        self.w = 1 + g.arity + g.parameters
         self.h = g.inputs + g.nodes + g.outputs
         self.prototype = KartezioGenome(shape=(self.h, self.w))
 
@@ -2016,10 +2015,9 @@ class ModelContext:
     fitness: KartezioFitness = field(init=False)
     stacker: KartezioStacker = field(init=False)
     parser: KartezioParser = field(init=False)
-    parameters: InitVar[int] = 2
 
-    def __post_init__(self, parameters):
-        self.genome_shape = GenomeShape(parameters)
+    def __post_init__(self):
+        self.genome_shape = GenomeShape()
         self.genome_factory = GenomeFactory(self.genome_shape.prototype)
 
     def set_instance_method(self, instance_method):
@@ -2049,7 +2047,7 @@ g.inputs = 3
 g.nodes = 30
 g.outputs = 2
 g.arity = 2
-parameters = 2
+g.parameters = 2
 series_stacker = MeanKartezioStackerForWatershed()
 instance_method = "random"
 mutation = "classic"
@@ -2059,7 +2057,7 @@ use_goldman = True
 fitness = "AP"
 callbacks = None
 dataset_inputs = None
-g.context = ModelContext(parameters)
+g.context = ModelContext()
 g.context.compile_parser(series_stacker)
 shape = g.context.genome_shape
 n_nodes = g.bundle.size
