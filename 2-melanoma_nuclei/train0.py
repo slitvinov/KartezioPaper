@@ -462,7 +462,7 @@ class KartezioParser(GenomeReader):
         ]
         return graphs_list
 
-    def _x_to_output_map(self, genome: KartezioGenome, graphs_list, x):
+    def _x_to_output_map(self, genome, graphs_list, x):
         output_map = {i: x[i].copy() for i in range(g.inputs)}
         for graph in graphs_list:
             for node in graph:
@@ -598,13 +598,13 @@ class KartezioMutation(GenomeReaderWriter):
     def random_connections(self, idx: int):
         return np.random.randint(g.inputs + idx, size=g.arity)
 
-    def mutate_function(self, genome: KartezioGenome, idx: int):
+    def mutate_function(self, genome, idx: int):
         self.write_function(genome, idx, self.random_functions)
 
     def mutate_connections(self,
-                           genome: KartezioGenome,
-                           idx: int,
-                           only_one: int = None):
+                           genome,
+                           idx,
+                           only_one = None):
         new_connections = self.random_connections(idx)
         new_value = new_connections[only_one]
         new_connections = self.read_connections(genome, idx)
@@ -1504,7 +1504,7 @@ class MutationAllRandom(KartezioMutation):
     def __init__(self, n_functions: int):
         super().__init__(n_functions)
 
-    def mutate(self, genome: KartezioGenome):
+    def mutate(self, genome):
         # mutate genes
         for i in range(g.nodes):
             self.mutate_function(genome, i)
