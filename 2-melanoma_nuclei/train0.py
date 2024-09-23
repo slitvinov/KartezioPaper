@@ -1036,40 +1036,6 @@ class MetricCellpose(KartezioMetric):
         ap, tp, fp, fn = self.average_precision(_y_true, _y_pred)
         return 1.0 - ap[0]
 
-    def aggregated_jaccard_index(self, masks_true, masks_pred):
-        """AJI = intersection of all matched masks / union of all masks
-        Parameters
-        ------------
-        masks_true: list of ND-arrays (int) or ND-array (int)
-            where 0=NO masks; 1,2... are mask labels
-        masks_pred: list of ND-arrays (int) or ND-array (int)
-            ND-array (int) where 0=NO masks; 1,2... are mask labels
-        Returns
-        ------------
-        aji : aggregated jaccard index for each set of masks
-        """
-        aji = np.zeros(len(masks_true))
-        for n in range(len(masks_true)):
-            iout, preds = self.mask_ious(masks_true[n], masks_pred[n])
-            inds = np.arange(0, masks_true[n].max(), 1, int)
-            overlap = self._label_overlap(masks_true[n], masks_pred[n])
-            union = np.logical_or(masks_true[n] > 0, masks_pred[n] > 0).sum()
-            overlap = overlap[inds[preds > 0] + 1,
-                              preds[preds > 0].astype(int)]
-            aji[n] = overlap.sum() / union
-        return aji
-
-    def mask_ious(self, masks_true, masks_pred):
-        """return best-matched masks"""
-        iou = _intersection_over_union(masks_true, masks_pred)[1:, 1:]
-        n_min = min(iou.shape[0], iou.shape[1])
-        costs = -(iou >= 0.5).astype(float) - iou / (2 * n_min)
-        true_ind, pred_ind = linear_sum_assignment(costs)
-        iout = np.zeros(masks_true.max())
-        iout[true_ind] = iou[true_ind, pred_ind]
-        preds = np.zeros(masks_true.max(), "int")
-        preds[true_ind] = pred_ind + 1
-        return iout, preds
 
     def average_precision(self, masks_true, masks_pred):
         """average precision estimation: AP = TP / (TP + FP + FN)
