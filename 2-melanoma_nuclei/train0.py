@@ -785,26 +785,6 @@ class MetricCellpose(KartezioMetric):
         return 1.0 - ap[0]
 
     def average_precision(self, masks_true, masks_pred):
-        """average precision estimation: AP = TP / (TP + FP + FN)
-        This function is based heavily on the *fast* stardist matching functions
-        (https://github.com/mpicbg-csbd/stardist/blob/master/stardist/matching.py)
-        Parameters
-        ------------
-        masks_true: list of ND-arrays (int) or ND-array (int)
-            where 0=NO masks; 1,2... are mask labels
-        masks_pred: list of ND-arrays (int) or ND-array (int)
-            ND-array (int) where 0=NO masks; 1,2... are mask labels
-        Returns
-        ------------
-        ap: array [len(masks_true) x len(threshold)]
-            average precision at thresholds
-        tp: array [len(masks_true) x len(threshold)]
-            number of true positives at thresholds
-        fp: array [len(masks_true) x len(threshold)]
-            number of false positives at thresholds
-        fn: array [len(masks_true) x len(threshold)]
-            number of false negatives at thresholds
-        """
         not_list = False
         if not isinstance(masks_true, list):
             masks_true = [masks_true]
@@ -837,18 +817,6 @@ class MetricCellpose(KartezioMetric):
         return ap, tp, fp, fn
 
     def _true_positive(self, iou, th):
-        """true positive at threshold th
-        Parameters
-        ------------
-        iou: float, ND-array
-            array of IOU pairs
-        th: float
-            threshold on IOU for positive label
-        Returns
-        ------------
-        tp: float
-            number of true positives at threshold
-        """
         n_min = min(iou.shape[0], iou.shape[1])
         costs = -(iou >= th).astype(float) - iou / (2 * n_min)
         true_ind, pred_ind = linear_sum_assignment(costs)
