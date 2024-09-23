@@ -99,9 +99,7 @@ class Registry:
     def __init__(self):
         self.nodes = self.SubRegistry()
         self.stackers = self.SubRegistry()
-        self.fitness = self.SubRegistry()
         self.metrics = self.SubRegistry()
-        self.mutations = self.SubRegistry()
         self.readers = self.SubRegistry()
 
 
@@ -1475,9 +1473,7 @@ class CallbackSave(KartezioCallback):
             self.save_elite(e_content.individuals[0])
 
 
-@registry.fitness.add("AP")
 class FitnessAP(KartezioFitness):
-
     def __init__(self, thresholds=0.5):
         super().__init__(
             name=f"Average Precision ({thresholds})",
@@ -1505,7 +1501,6 @@ class GoldmanWrapper(KartezioMutation):
         return genome
 
 
-@registry.mutations.add("classic")
 class MutationClassic(KartezioMutation):
 
     def __init__(self, shape, n_functions, mutation_rate,
@@ -1540,12 +1535,7 @@ class MutationClassic(KartezioMutation):
         return genome
 
 
-@registry.mutations.add("all_random")
 class MutationAllRandom(KartezioMutation):
-    """
-    Can be used to initialize genome (genome) randomly
-    """
-
     def __init__(self, metadata: GenomeShape, n_functions: int):
         super().__init__(metadata, n_functions)
 
@@ -1993,11 +1983,11 @@ shape = g.genome_shape
 n_nodes = g.bundle.size
 g.instance_method = MutationAllRandom(shape, n_nodes)
 shape = g.genome_shape
-mutation = registry.mutations.instantiate("classic", shape, n_nodes,
-                                              node_mutation_rate,
-                                              output_mutation_rate)
+mutation = MutationClassic(shape, n_nodes,
+                           node_mutation_rate,
+                           output_mutation_rate)
 g.mutation_method = GoldmanWrapper(mutation, g.parser)
-g.fitness = registry.fitness.instantiate("AP")
+g.fitness = FitnessAP()
 factory = g.genome_factory
 strategy = OnePlusLambda(factory, g.instance_method,
                          g.mutation_method, g.fitness)
