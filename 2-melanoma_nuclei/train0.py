@@ -465,7 +465,6 @@ class GenomeReaderWriter(GenomeReader, GenomeWriter):
 
 @dataclass
 class GenomeShape:
-    nodes: int = 10
     outputs: int = 1
     connections: int = 2
     parameters: int = 2
@@ -2019,14 +2018,13 @@ class ModelContext:
     fitness: KartezioFitness = field(init=False)
     stacker: KartezioStacker = field(init=False)
     parser: KartezioParser = field(init=False)
-    nodes: InitVar[int] = 10
     outputs: InitVar[int] = 1
     arity: InitVar[int] = 2
     parameters: InitVar[int] = 2
 
-    def __post_init__(self, nodes, outputs, arity,
+    def __post_init__(self, outputs, arity,
                       parameters):
-        self.genome_shape = GenomeShape(nodes, outputs, arity,
+        self.genome_shape = GenomeShape(outputs, arity,
                                         parameters)
         self.genome_factory = GenomeFactory(self.genome_shape.prototype)
 
@@ -2054,7 +2052,7 @@ g.generations = 10
 g.endpoint = EndpointWatershed()
 g.bundle = BundleOpenCV()
 g.inputs = 3
-nodes = 30
+g.nodes = 30
 outputs = 2
 arity = 2
 parameters = 2
@@ -2067,7 +2065,7 @@ use_goldman = True
 fitness = "AP"
 callbacks = None
 dataset_inputs = None
-g.context = ModelContext(nodes, outputs, arity,
+g.context = ModelContext(outputs, arity,
                               parameters)
 g.context.compile_parser(series_stacker)
 shape = g.context.genome_shape
