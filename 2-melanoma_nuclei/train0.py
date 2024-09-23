@@ -1,12 +1,3 @@
-import argparse
-import copy
-import cv2
-import numpy as np
-import os
-import pandas as pd
-import random
-import simplejson
-import time
 from abc import ABC
 from abc import abstractmethod
 from builtins import print
@@ -53,14 +44,21 @@ from numena.time import eventid
 from scipy.optimize import linear_sum_assignment
 from scipy.stats import kurtosis
 from scipy.stats import skew
-from scipy.stats import skew
 from skimage.morphology import remove_small_holes
 from skimage.morphology import remove_small_holes, remove_small_objects
 from skimage.morphology import remove_small_objects
 from typing import List
-from typing import List, NewType
 from typing import NewType
 from typing import Tuple
+import argparse
+import copy
+import cv2
+import numpy as np
+import os
+import pandas as pd
+import random
+import simplejson
+import time
 
 class Registry:
     class SubRegistry:
