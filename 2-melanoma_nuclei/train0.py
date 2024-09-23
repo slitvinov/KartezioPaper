@@ -220,21 +220,7 @@ class KartezioComponent(Serializable):
     pass
 
 class KartezioNode(KartezioComponent):
-    """
-    Single graph node for the Cartesian Graph.
-    One node can be a simple function (e.g. Threshold, Subtract...), but also a more complex function such as an KartezioEndpoint.
-    """
-
     def __init__(self, name: str, symbol: str, arity: int, args: int, sources=None):
-        """
-        Args:
-            name (str): Name of the node
-            symbol (str): Abbreviation of the node, it must be written in capital letters with 3 or 4 characters (e.g. "ADD", "NOT", "OPEN"..)
-            arity (int): Number of inputs the node needs (e.g. 2 for addition (x1+x2), 1 for sqrt (sqrt(x1)))
-            args (int): Number of parameters the node needs (e.g. 0 for addition (x1+x2), 1 for threshold (threshold(x1, p1)))
-        >>> threshold_node = Threshold("threshold", "TRSH", 1, 1)
-        >>> watershed_endpoint = Watershed("watershed", "WSHD", 2, 0)
-        """
         self.name = name
         self.symbol = symbol
         self.arity = arity
