@@ -61,30 +61,26 @@ ZIP = ".zip"
 EXTENSION_IMAGE_LSM = ".lsm"
 EXTENSION_IMAGE_CZI = ".czi"
 
+
 @dataclass
-class DriveEntity:
+class Directory:
     path: InitVar[str]
     _path: Path = field(init=False)
 
     def __post_init__(self, path):
         self._path = Path(path)
-
-    def __getattr__(self, attr):
-        return getattr(self._path, attr)
-
-    def __truediv__(self, key):
-        return self._path / key
-
-@dataclass
-class Directory(DriveEntity):
-    def __post_init__(self, path):
-        super().__post_init__(path)
         if not self.exists():
             _err = f"The directory {self._path} does not exist!"
             raise ValueError(_err)
         if not self.is_dir():
             _err = f"The path {self._path} is not pointing to a directory!"
             raise ValueError(_err)
+
+    def __getattr__(self, attr):
+        return getattr(self._path, attr)
+
+    def __truediv__(self, key):
+        return self._path / key
 
     def write(self, filename, filedata):
         filepath = self / filename
@@ -148,11 +144,14 @@ class Directory(DriveEntity):
 
 
 class Registry:
+
     class SubRegistry:
+
         def __init__(self):
             self.__components = {}
 
         def add(self, item_name, replace=False):
+
             def inner(item_cls):
                 if item_name in self.__components.keys():
                     if replace:
@@ -173,7 +172,8 @@ class Registry:
 
         def get(self, item_name):
             if item_name not in self.__components.keys():
-                raise ValueError(f"Component '{item_name}' not found in the registry!")
+                raise ValueError(
+                    f"Component '{item_name}' not found in the registry!")
             return self.__components[item_name]
 
         def instantiate(self, item_name, *args, **kwargs):
@@ -201,8 +201,6 @@ CSV_DATASET = "dataset.csv"
 DIR_PREVIEW = "__preview__"
 
 
-
-
 class Factory:
     """
     Using Factory Pattern:
@@ -221,6 +219,7 @@ class Factory:
 
 
 class Observer:
+
     def update(self, event):
         """
         Receive update from subject.
@@ -229,6 +228,7 @@ class Observer:
 
 
 class Observable:
+
     def __init__(self):
         self._observers = []
 
@@ -238,6 +238,7 @@ class Observable:
     def notify(self, event) -> None:
         for observer in self._observers:
             observer.update(event)
+
 
 def pack_one_directory(directory_path):
     directory = Directory(directory_path)
@@ -252,20 +253,22 @@ def pack_one_directory(directory_path):
         generations.append(int(g.name.replace("G", "").split(".")[0]))
     generations.sort()
     for generation in generations:
-        current_generation = json_read(filepath=f"{directory_path}/G{generation}.json")
+        current_generation = json_read(
+            filepath=f"{directory_path}/G{generation}.json")
         generation_json = {
             "generation": generation,
             "population": current_generation["population"],
         }
         packed_history["generations"].append(generation_json)
-    json_write(
-        filepath=f"{directory_path}/history.json", json_data=packed_history, indent=None
-    )
+    json_write(filepath=f"{directory_path}/history.json",
+               json_data=packed_history,
+               indent=None)
     print(f"All generations packed in {directory_path}.")
     for generation in generations:
         file_to_delete = f"{directory_path}/G{generation}.json"
         os.remove(file_to_delete)
     print(f"All {len(generations)} generation files deleted.")
+
 
 def from_individual(individual):
     return {
@@ -290,6 +293,7 @@ def from_dataset(dataset):
 
 
 class JsonSaver:
+
     def __init__(self, dataset, parser):
         self.dataset_json = from_dataset(dataset)
         self.parser_as_json = parser.dumps()
@@ -310,11 +314,19 @@ class JsonSaver:
         }
         json_write(filepath, json_data)
 
+
 class KartezioComponent(Serializable):
     pass
 
+
 class KartezioNode(KartezioComponent):
-    def __init__(self, name: str, symbol: str, arity: int, args: int, sources=None):
+
+    def __init__(self,
+                 name: str,
+                 symbol: str,
+                 arity: int,
+                 args: int,
+                 sources=None):
         self.name = name
         self.symbol = symbol
         self.arity = arity
@@ -336,7 +348,9 @@ class KartezioNode(KartezioComponent):
     def _to_json_kwargs(self) -> dict:
         pass
 
+
 class KartezioStacker(KartezioNode):
+
     def __init__(self, name: str, symbol: str, arity: int):
         super().__init__(name, symbol, arity, 0)
 
@@ -355,16 +369,22 @@ class KartezioStacker(KartezioNode):
 
     @staticmethod
     def from_json(json_data):
-        return registry.stackers.instantiate(
-            json_data["abbv"], arity=json_data["arity"], **json_data["kwargs"]
-        )
+        return registry.stackers.instantiate(json_data["abbv"],
+                                             arity=json_data["arity"],
+                                             **json_data["kwargs"])
+
 
 @registry.stackers.add("MEAN")
 class StackerMean(KartezioStacker):
+
     def _to_json_kwargs(self) -> dict:
         return {}
 
-    def __init__(self, name="mean_stacker", symbol="MEAN", arity=1, threshold=4):
+    def __init__(self,
+                 name="mean_stacker",
+                 symbol="MEAN",
+                 arity=1,
+                 threshold=4):
         super().__init__(name, symbol, arity)
         self.threshold = threshold
 
@@ -378,10 +398,15 @@ class StackerMean(KartezioStacker):
 
 @registry.stackers.add("SUM")
 class StackerSum(KartezioStacker):
+
     def _to_json_kwargs(self) -> dict:
         return {}
 
-    def __init__(self, name="Sum KartezioStacker", symbol="SUM", arity=1, threshold=4):
+    def __init__(self,
+                 name="Sum KartezioStacker",
+                 symbol="SUM",
+                 arity=1,
+                 threshold=4):
         super().__init__(name, symbol, arity)
         self.threshold = threshold
 
@@ -400,6 +425,7 @@ class StackerSum(KartezioStacker):
 
 @registry.stackers.add("MIN")
 class StackerMin(KartezioStacker):
+
     def _to_json_kwargs(self) -> dict:
         return {}
 
@@ -417,6 +443,7 @@ class StackerMin(KartezioStacker):
 
 @registry.stackers.add("MAX")
 class StackerMax(KartezioStacker):
+
     def _to_json_kwargs(self) -> dict:
         return {}
 
@@ -436,11 +463,17 @@ class StackerMax(KartezioStacker):
 
 @registry.stackers.add("MEANW")
 class MeanKartezioStackerForWatershed(KartezioStacker):
+
     def _to_json_kwargs(self) -> dict:
-        return {"half_kernel_size": self.half_kernel_size, "threshold": self.threshold}
+        return {
+            "half_kernel_size": self.half_kernel_size,
+            "threshold": self.threshold
+        }
 
     def __init__(self, half_kernel_size=1, threshold=4):
-        super().__init__(name="mean_stacker_watershed", symbol="MEANW", arity=2)
+        super().__init__(name="mean_stacker_watershed",
+                         symbol="MEANW",
+                         arity=2)
         self.half_kernel_size = half_kernel_size
         self.threshold = threshold
 
@@ -455,9 +488,6 @@ class MeanKartezioStackerForWatershed(KartezioStacker):
         return threshold_tozero(yi, self.threshold)
 
 
-
-
-
 class KartezioEndpoint(KartezioNode):
     """
     Terminal KartezioNode, executed after graph parsing.
@@ -470,10 +500,12 @@ class KartezioEndpoint(KartezioNode):
 
     @staticmethod
     def from_json(json_data):
-        return registry.endpoints.instantiate(json_data["abbv"], **json_data["kwargs"])
+        return registry.endpoints.instantiate(json_data["abbv"],
+                                              **json_data["kwargs"])
 
 
 class KartezioBundle(KartezioComponent):
+
     def __init__(self):
         self.__nodes = {}
         self.fill()
@@ -551,11 +583,13 @@ class KartezioBundle(KartezioComponent):
 
 
 class EmptyBundle(KartezioBundle):
+
     def fill(self):
         pass
 
 
 class KartezioGenome(KartezioComponent):
+
     def dumps(self) -> dict:
         pass
 
@@ -591,6 +625,7 @@ class KartezioGenome(KartezioComponent):
 
 
 class GenomeFactory(Factory):
+
     def __init__(self, prototype: KartezioGenome):
         super().__init__(prototype)
 
@@ -605,41 +640,42 @@ class GenomeAdapter(KartezioComponent):
 
 
 class GenomeWriter(GenomeAdapter):
+
     def write_function(self, genome, node, function_id):
         genome[self.shape.nodes_idx + node, self.shape.func_idx] = function_id
 
     def write_connections(self, genome, node, connections):
-        genome[
-            self.shape.nodes_idx + node, self.shape.con_idx : self.shape.para_idx
-        ] = connections
+        genome[self.shape.nodes_idx + node,
+               self.shape.con_idx:self.shape.para_idx] = connections
 
     def write_parameters(self, genome, node, parameters):
-        genome[self.shape.nodes_idx + node, self.shape.para_idx :] = parameters
+        genome[self.shape.nodes_idx + node, self.shape.para_idx:] = parameters
 
     def write_output_connection(self, genome, output_index, connection):
-        genome[self.shape.out_idx + output_index, self.shape.con_idx] = connection
+        genome[self.shape.out_idx + output_index,
+               self.shape.con_idx] = connection
 
 
 class GenomeReader(GenomeAdapter):
+
     def read_function(self, genome, node):
         return genome[self.shape.nodes_idx + node, self.shape.func_idx]
 
     def read_connections(self, genome, node):
-        return genome[
-            self.shape.nodes_idx + node, self.shape.con_idx : self.shape.para_idx
-        ]
+        return genome[self.shape.nodes_idx + node,
+                      self.shape.con_idx:self.shape.para_idx]
 
     def read_active_connections(self, genome, node, active_connections):
         return genome[
             self.shape.nodes_idx + node,
-            self.shape.con_idx : self.shape.con_idx + active_connections,
+            self.shape.con_idx:self.shape.con_idx + active_connections,
         ]
 
     def read_parameters(self, genome, node):
-        return genome[self.shape.nodes_idx + node, self.shape.para_idx :]
+        return genome[self.shape.nodes_idx + node, self.shape.para_idx:]
 
     def read_outputs(self, genome):
-        return genome[self.shape.out_idx :, :]
+        return genome[self.shape.out_idx:, :]
 
 
 class GenomeReaderWriter(GenomeReader, GenomeWriter):
@@ -686,13 +722,15 @@ class GenomeShape:
 
 
 class KartezioParser(GenomeReader):
+
     def __init__(self, shape, function_bundle, endpoint):
         super().__init__(shape)
         self.function_bundle = function_bundle
         self.endpoint = endpoint
 
     def to_series_parser(self, stacker):
-        return ParserChain(self.shape, self.function_bundle, stacker, self.endpoint)
+        return ParserChain(self.shape, self.function_bundle, stacker,
+                           self.endpoint)
 
     def dumps(self) -> dict:
         return {
@@ -726,13 +764,13 @@ class KartezioParser(GenomeReader):
             next_index = next_indices.pop()
             if next_index < self.shape.inputs:
                 continue
-            function_index = self.read_function(genome, next_index - self.shape.inputs)
+            function_index = self.read_function(genome,
+                                                next_index - self.shape.inputs)
             active_connections = self.function_bundle.arity_of(function_index)
             next_connections = set(
-                self.read_active_connections(
-                    genome, next_index - self.shape.inputs, active_connections
-                )
-            )
+                self.read_active_connections(genome,
+                                             next_index - self.shape.inputs,
+                                             active_connections))
             next_indices = next_indices.union(next_connections)
             output_tree = output_tree.union(next_connections)
         return sorted(list(output_tree))
@@ -756,7 +794,8 @@ class KartezioParser(GenomeReader):
                 # fill the map with active nodes
                 function_index = self.read_function(genome, node_index)
                 arity = self.function_bundle.arity_of(function_index)
-                connections = self.read_active_connections(genome, node_index, arity)
+                connections = self.read_active_connections(
+                    genome, node_index, arity)
                 inputs = [output_map[c] for c in connections]
                 p = self.read_parameters(genome, node_index)
                 value = self.function_bundle.execute(function_index, inputs, p)
@@ -771,7 +810,6 @@ class KartezioParser(GenomeReader):
             output_map[output_gene[self.shape.con_idx]]
             for output_gene in self.read_outputs(genome)
         ]
-
 
     def parse_population(self, population, x):
         y_pred = []
@@ -805,6 +843,7 @@ class ParserSequential(KartezioParser):
 
 
 class ParserChain(KartezioParser):
+
     def __init__(self, shape, bundle, stacker, endpoint):
         super().__init__(shape, bundle, endpoint)
         self.stacker = stacker
@@ -838,11 +877,13 @@ class ParserChain(KartezioParser):
 
 
 class KartezioToCode(KartezioParser):
+
     def to_python_class(self, node_name, genome):
         pass
 
 
 class ExportableNode(KartezioNode):
+
     def _to_json_kwargs(self) -> dict:
         return {}
 
@@ -871,6 +912,7 @@ class ExportableNode(KartezioNode):
 
 
 class KartezioCallback(KartezioComponent, Observer):
+
     def __init__(self, frequency=1):
         self.frequency = frequency
         self.parser = None
@@ -890,6 +932,7 @@ class KartezioCallback(KartezioComponent, Observer):
 
 
 class KartezioMetric(KartezioNode):
+
     def __init__(
         self,
         name: str,
@@ -903,6 +946,7 @@ class KartezioMetric(KartezioNode):
 
 
 class KartezioFitness(KartezioNode):
+
     def __init__(
         self,
         name: str,
@@ -944,6 +988,7 @@ class KartezioFitness(KartezioNode):
 
 
 class KartezioMutation(GenomeReaderWriter):
+
     def __init__(self, shape, n_functions):
         super().__init__(shape)
         self.n_functions = n_functions
@@ -954,7 +999,8 @@ class KartezioMutation(GenomeReaderWriter):
 
     @property
     def random_parameters(self):
-        return np.random.randint(self.parameter_max_value, size=self.shape.parameters)
+        return np.random.randint(self.parameter_max_value,
+                                 size=self.shape.parameters)
 
     @property
     def random_functions(self):
@@ -965,16 +1011,16 @@ class KartezioMutation(GenomeReaderWriter):
         return np.random.randint(self.shape.out_idx, size=1)
 
     def random_connections(self, idx: int):
-        return np.random.randint(
-            self.shape.nodes_idx + idx, size=self.shape.connections
-        )
+        return np.random.randint(self.shape.nodes_idx + idx,
+                                 size=self.shape.connections)
 
     def mutate_function(self, genome: KartezioGenome, idx: int):
         self.write_function(genome, idx, self.random_functions)
 
-    def mutate_connections(
-        self, genome: KartezioGenome, idx: int, only_one: int = None
-    ):
+    def mutate_connections(self,
+                           genome: KartezioGenome,
+                           idx: int,
+                           only_one: int = None):
         new_connections = self.random_connections(idx)
         if only_one is not None:
             new_value = new_connections[only_one]
@@ -982,7 +1028,10 @@ class KartezioMutation(GenomeReaderWriter):
             new_connections[only_one] = new_value
         self.write_connections(genome, idx, new_connections)
 
-    def mutate_parameters(self, genome: KartezioGenome, idx: int, only_one: int = None):
+    def mutate_parameters(self,
+                          genome: KartezioGenome,
+                          idx: int,
+                          only_one: int = None):
         new_parameters = self.random_parameters
         if only_one is not None:
             old_parameters = self.read_parameters(genome, idx)
@@ -998,10 +1047,14 @@ class KartezioMutation(GenomeReaderWriter):
 
 
 class KartezioPopulation(KartezioComponent):
+
     def __init__(self, size):
         self.size = size
         self.individuals = [None] * self.size
-        self._fitness = {"fitness": np.zeros(self.size), "time": np.zeros(self.size)}
+        self._fitness = {
+            "fitness": np.zeros(self.size),
+            "time": np.zeros(self.size)
+        }
 
     def dumps(self) -> dict:
         return {}
@@ -1035,10 +1088,12 @@ class KartezioPopulation(KartezioComponent):
     @property
     def score(self):
         score_list = list(zip(self.fitness, self.time))
-        return np.array(score_list, dtype=[("fitness", float), ("time", float)])
+        return np.array(score_list,
+                        dtype=[("fitness", float), ("time", float)])
 
 
 class KartezioES:
+
     def selection(self):
         pass
 
@@ -1095,12 +1150,12 @@ def _intersection_over_union(masks_true, masks_pred):
 
 @registry.metrics.add("CAP")
 class MetricCellpose(KartezioMetric):
+
     def __init__(self, thresholds=0.5):
         super().__init__("Cellpose Average Precision", symbol="CAP", arity=1)
         self.thresholds = thresholds
         if not isinstance(self.thresholds, list) and not isinstance(
-            self.thresholds, np.ndarray
-        ):
+                self.thresholds, np.ndarray):
             self.thresholds = [self.thresholds]
         self.n_thresholds = len(self.thresholds)
 
@@ -1131,7 +1186,8 @@ class MetricCellpose(KartezioMetric):
             inds = np.arange(0, masks_true[n].max(), 1, int)
             overlap = self._label_overlap(masks_true[n], masks_pred[n])
             union = np.logical_or(masks_true[n] > 0, masks_pred[n] > 0).sum()
-            overlap = overlap[inds[preds > 0] + 1, preds[preds > 0].astype(int)]
+            overlap = overlap[inds[preds > 0] + 1,
+                              preds[preds > 0].astype(int)]
             aji[n] = overlap.sum() / union
         return aji
 
@@ -1184,7 +1240,8 @@ class MetricCellpose(KartezioMetric):
         for n in range(len(masks_true)):
             #  _,mt = np.reshape(np.unique(masks_true[n], return_index=True), masks_pred[n].shape)
             if n_pred[n] > 0:
-                iou = _intersection_over_union(masks_true[n], masks_pred[n])[1:, 1:]
+                iou = _intersection_over_union(masks_true[n],
+                                               masks_pred[n])[1:, 1:]
                 for k, th in enumerate(self.thresholds):
                     tp[n, k] = self._true_positive(iou, th)
             fp[n] = n_pred[n] - tp[n]
@@ -1222,6 +1279,7 @@ class MetricCellpose(KartezioMetric):
         tp = match_ok.sum()
         return tp
 
+
 SHARPEN_KERNEL = np.array(([0, -1, 0], [-1, 5, -1], [0, -1, 0]), dtype="int")
 ROBERT_CROSS_H_KERNEL = np.array(([0, 1], [-1, 0]), dtype="int")
 ROBERT_CROSS_V_KERNEL = np.array(([1, 0], [0, -1]), dtype="int")
@@ -1234,9 +1292,13 @@ OPENCV_INTENSITY_RANGE = OPENCV_MAX_INTENSITY - OPENCV_MIN_INTENSITY
 
 KERNEL_SCALE = OPENCV_KERNEL_RANGE / OPENCV_INTENSITY_RANGE
 
-GABOR_SIGMAS = [0.1, 0.25, 0.5, 0.75, 1, 1.5, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
+GABOR_SIGMAS = [
+    0.1, 0.25, 0.5, 0.75, 1, 1.5, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20
+]
 GABOR_THETAS = np.arange(0, 2, step=1.0 / 8) * np.pi
-GABOR_LAMBDS = [0.1, 0.25, 0.5, 0.75, 1, 1.5, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
+GABOR_LAMBDS = [
+    0.1, 0.25, 0.5, 0.75, 1, 1.5, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20
+]
 GABOR_GAMMAS = np.arange(0.0625, 1.001, step=1.0 / 16)
 
 
@@ -1304,13 +1366,16 @@ def kernel_from_parameters(p):
     # 25%
     return rect_kernel(p[0])
 
+
 class NodeImageProcessing(KartezioNode):
+
     def _to_json_kwargs(self) -> dict:
         return {}
 
 
 @registry.nodes.add("max")
 class Max(NodeImageProcessing):
+
     def __init__(self):
         super().__init__("max", "MAX", 2, 0, sources="OpenCV")
 
@@ -1320,6 +1385,7 @@ class Max(NodeImageProcessing):
 
 @registry.nodes.add("min")
 class Min(NodeImageProcessing):
+
     def __init__(self):
         super().__init__("min", "MIN", 2, 0, sources="OpenCV")
 
@@ -1329,6 +1395,7 @@ class Min(NodeImageProcessing):
 
 @registry.nodes.add("mean")
 class Mean(NodeImageProcessing):
+
     def __init__(self):
         super().__init__("mean", "MEAN", 2, 0, sources="OpenCV")
 
@@ -1338,6 +1405,7 @@ class Mean(NodeImageProcessing):
 
 @registry.nodes.add("add")
 class Add(ExportableNode):
+
     def __init__(self):
         super().__init__("add", "ADD", 2, 0, sources="OpenCV")
 
@@ -1353,6 +1421,7 @@ class Add(ExportableNode):
 
 @registry.nodes.add("subtract")
 class Subtract(ExportableNode):
+
     def __init__(self):
         super().__init__("subtract", "SUB", 2, 0, sources="OpenCV")
 
@@ -1368,6 +1437,7 @@ class Subtract(ExportableNode):
 
 @registry.nodes.add("bitwise_not")
 class BitwiseNot(ExportableNode):
+
     def __init__(self):
         super().__init__("bitwise_not", "NOT", 1, 0, sources="OpenCV")
 
@@ -1383,6 +1453,7 @@ class BitwiseNot(ExportableNode):
 
 @registry.nodes.add("bitwise_or")
 class BitwiseOr(ExportableNode):
+
     def __init__(self):
         super().__init__("bitwise_or", "BOR", 2, 0, sources="OpenCV")
 
@@ -1398,6 +1469,7 @@ class BitwiseOr(ExportableNode):
 
 @registry.nodes.add("bitwise_and")
 class BitwiseAnd(ExportableNode):
+
     def __init__(self):
         super().__init__("bitwise_and", "BAND", 2, 0, sources="OpenCV")
 
@@ -1413,6 +1485,7 @@ class BitwiseAnd(ExportableNode):
 
 @registry.nodes.add("bitwise_and_mask")
 class BitwiseAndMask(ExportableNode):
+
     def __init__(self):
         super().__init__("bitwise_and_mask", "ANDM", 2, 0, sources="OpenCV")
 
@@ -1428,6 +1501,7 @@ class BitwiseAndMask(ExportableNode):
 
 @registry.nodes.add("bitwise_xor")
 class BitwiseXor(ExportableNode):
+
     def __init__(self):
         super().__init__("bitwise_xor", "BXOR", 2, 0, sources="OpenCV")
 
@@ -1443,33 +1517,40 @@ class BitwiseXor(ExportableNode):
 
 @registry.nodes.add("sqrt")
 class SquareRoot(NodeImageProcessing):
+
     def __init__(self):
         super().__init__("sqrt", "SQRT", 1, 0, sources="OpenCV")
 
     def call(self, x, args=None):
-        return (cv2.sqrt((x[0] / 255.0).astype(np.float32)) * 255).astype(np.uint8)
+        return (cv2.sqrt(
+            (x[0] / 255.0).astype(np.float32)) * 255).astype(np.uint8)
 
 
 @registry.nodes.add("pow2")
 class Square(NodeImageProcessing):
+
     def __init__(self):
         super().__init__("pow2", "POW", 1, 0, sources="OpenCV")
 
     def call(self, x, args=None):
-        return (cv2.pow((x[0] / 255.0).astype(np.float32), 2) * 255).astype(np.uint8)
+        return (cv2.pow(
+            (x[0] / 255.0).astype(np.float32), 2) * 255).astype(np.uint8)
 
 
 @registry.nodes.add("exp")
 class Exp(NodeImageProcessing):
+
     def __init__(self):
         super().__init__("exp", "EXP", 1, 0, sources="OpenCV")
 
     def call(self, x, args=None):
-        return (cv2.exp((x[0] / 255.0).astype(np.float32), 2) * 255).astype(np.uint8)
+        return (cv2.exp(
+            (x[0] / 255.0).astype(np.float32), 2) * 255).astype(np.uint8)
 
 
 @registry.nodes.add("log")
 class Log(NodeImageProcessing):
+
     def __init__(self):
         super().__init__("log", "LOG", 1, 0, sources="Numpy")
 
@@ -1479,6 +1560,7 @@ class Log(NodeImageProcessing):
 
 @registry.nodes.add("median_blur")
 class MedianBlur(NodeImageProcessing):
+
     def __init__(self):
         super().__init__("median_blur", "BLRM", 1, 1, sources="OpenCV")
 
@@ -1489,6 +1571,7 @@ class MedianBlur(NodeImageProcessing):
 
 @registry.nodes.add("gaussian_blur")
 class GaussianBlur(NodeImageProcessing):
+
     def __init__(self):
         super().__init__("gaussian_blur", "BLRG", 1, 1, sources="OpenCV")
 
@@ -1499,6 +1582,7 @@ class GaussianBlur(NodeImageProcessing):
 
 @registry.nodes.add("laplacian")
 class Laplacian(NodeImageProcessing):
+
     def __init__(self):
         super().__init__("laplacian", "LPLC", 1, 0, sources="OpenCV")
 
@@ -1508,18 +1592,21 @@ class Laplacian(NodeImageProcessing):
 
 @registry.nodes.add("sobel")
 class Sobel(NodeImageProcessing):
+
     def __init__(self):
         super().__init__("sobel", "SOBL", 1, 2, sources="OpenCV")
 
     def call(self, x, args=None):
         ksize = correct_ksize(args[0])
         if args[1] < 128:
-            return cv2.Sobel(x[0], cv2.CV_64F, 1, 0, ksize=ksize).astype(np.uint8)
+            return cv2.Sobel(x[0], cv2.CV_64F, 1, 0,
+                             ksize=ksize).astype(np.uint8)
         return cv2.Sobel(x[0], cv2.CV_64F, 0, 1, ksize=ksize).astype(np.uint8)
 
 
 @registry.nodes.add("robert_cross")
 class RobertCross(NodeImageProcessing):
+
     def __init__(self):
         super().__init__("robert_cross", "RBRT", 1, 1, sources="OpenCV")
 
@@ -1532,6 +1619,7 @@ class RobertCross(NodeImageProcessing):
 
 @registry.nodes.add("canny")
 class Canny(NodeImageProcessing):
+
     def __init__(self):
         super().__init__("canny", "CANY", 1, 2, sources="OpenCV")
 
@@ -1541,6 +1629,7 @@ class Canny(NodeImageProcessing):
 
 @registry.nodes.add("sharpen")
 class Sharpen(NodeImageProcessing):
+
     def __init__(self):
         super().__init__("sharpen", "SHRP", 1, 0, sources="OpenCV")
 
@@ -1550,6 +1639,7 @@ class Sharpen(NodeImageProcessing):
 
 @registry.nodes.add("gabor")
 class GaborFilter(NodeImageProcessing):
+
     def __init__(self, ksize=11):
         super().__init__("gabor", "GABR", 1, 2, sources="OpenCV")
         self.ksize = ksize
@@ -1574,6 +1664,7 @@ class AbsoluteDifference(NodeImageProcessing):
 
 @registry.nodes.add("abs_diff2")
 class AbsoluteDifference2(NodeImageProcessing):
+
     def __init__(self):
         super().__init__("abs_diff2", "ABS2", 2, 0, sources="OpenCV")
 
@@ -1631,6 +1722,7 @@ class RelativeDifference(NodeImageProcessing):
 
 @registry.nodes.add("erode")
 class Erode(ExportableNode):
+
     def __init__(self):
         super().__init__("erode", "EROD", 1, 2, sources="OpenCV")
 
@@ -1647,6 +1739,7 @@ class Erode(ExportableNode):
 
 @registry.nodes.add("dilate")
 class Dilate(ExportableNode):
+
     def __init__(self):
         super().__init__("dilate", "DILT", 1, 2, sources="OpenCV")
 
@@ -1663,6 +1756,7 @@ class Dilate(ExportableNode):
 
 @registry.nodes.add("open")
 class Open(ExportableNode):
+
     def __init__(self):
         super().__init__("open", "OPEN", 1, 2, sources="OpenCV")
 
@@ -1679,6 +1773,7 @@ class Open(ExportableNode):
 
 @registry.nodes.add("close")
 class Close(ExportableNode):
+
     def __init__(self):
         super().__init__("close", "CLSE", 1, 2, sources="OpenCV")
 
@@ -1695,6 +1790,7 @@ class Close(ExportableNode):
 
 @registry.nodes.add("morph_gradient")
 class MorphGradient(ExportableNode):
+
     def __init__(self):
         super().__init__("morph_gradient", "MGRD", 1, 2, sources="OpenCV")
 
@@ -1711,6 +1807,7 @@ class MorphGradient(ExportableNode):
 
 @registry.nodes.add("morph_tophat")
 class MorphTopHat(ExportableNode):
+
     def __init__(self):
         super().__init__("morph_tophat", "MTHT", 1, 2, sources="OpenCV")
 
@@ -1727,6 +1824,7 @@ class MorphTopHat(ExportableNode):
 
 @registry.nodes.add("morph_blackhat")
 class MorphBlackHat(ExportableNode):
+
     def __init__(self):
         super().__init__("morph_blackhat", "MBHT", 1, 2, sources="OpenCV")
 
@@ -1743,6 +1841,7 @@ class MorphBlackHat(ExportableNode):
 
 @registry.nodes.add("fill_holes")
 class FillHoles(ExportableNode):
+
     def __init__(self):
         super().__init__("fill_holes", "FILL", 1, 0, sources="Handmade")
 
@@ -1758,8 +1857,13 @@ class FillHoles(ExportableNode):
 
 @registry.nodes.add("remove_small_objects")
 class RemoveSmallObjects(NodeImageProcessing):
+
     def __init__(self):
-        super().__init__("remove_small_objects", "RMSO", 1, 1, sources="Skimage")
+        super().__init__("remove_small_objects",
+                         "RMSO",
+                         1,
+                         1,
+                         sources="Skimage")
 
     def call(self, x, args=None):
         return remove_small_objects(x[0] > 0, args[0]).astype(np.uint8)
@@ -1767,6 +1871,7 @@ class RemoveSmallObjects(NodeImageProcessing):
 
 @registry.nodes.add("remove_small_holes")
 class RemoveSmallHoles(NodeImageProcessing):
+
     def __init__(self):
         super().__init__("remove_small_holes", "RMSH", 1, 1, sources="Skimage")
 
@@ -1776,6 +1881,7 @@ class RemoveSmallHoles(NodeImageProcessing):
 
 @registry.nodes.add("threshold")
 class Threshold(NodeImageProcessing):
+
     def __init__(self):
         super().__init__("threshold", "TRH", 1, 2, sources="OpenCV")
 
@@ -1787,6 +1893,7 @@ class Threshold(NodeImageProcessing):
 
 @registry.nodes.add("threshold_at_1")
 class ThresholdAt1(NodeImageProcessing):
+
     def __init__(self):
         super().__init__("threshold_at_1", "TRH1", 1, 1, sources="OpenCV")
 
@@ -1798,6 +1905,7 @@ class ThresholdAt1(NodeImageProcessing):
 
 # @registry.nodes.add("TRHA")
 class ThresholdAdaptive(NodeImageProcessing):
+
     def __init__(self):
         super().__init__("adaptive_threshold", "TRHA", 1, 2, sources="OpenCV")
 
@@ -1816,6 +1924,7 @@ class ThresholdAdaptive(NodeImageProcessing):
 
 @registry.nodes.add("distance_transform")
 class DistanceTransform(NodeImageProcessing):
+
     def __init__(self):
         super().__init__("distance_transform", "DTRF", 1, 1, sources="OpenCV")
 
@@ -1832,10 +1941,13 @@ class DistanceTransform(NodeImageProcessing):
 
 @registry.nodes.add("distance_transform_and_thresh")
 class DistanceTransformAndThresh(NodeImageProcessing):
+
     def __init__(self):
-        super().__init__(
-            "distance_transform_and_thresh", "DTTR", 1, 2, sources="OpenCV"
-        )
+        super().__init__("distance_transform_and_thresh",
+                         "DTTR",
+                         1,
+                         2,
+                         sources="OpenCV")
 
     def call(self, x, args=None):
         d = cv2.normalize(
@@ -1851,6 +1963,7 @@ class DistanceTransformAndThresh(NodeImageProcessing):
 
 @registry.nodes.add("inrange_bin")
 class BinaryInRange(NodeImageProcessing):
+
     def __init__(self):
         super().__init__("inrange_bin", "BRNG", 1, 2, sources="OpenCV")
 
@@ -1862,6 +1975,7 @@ class BinaryInRange(NodeImageProcessing):
 
 @registry.nodes.add("inrange")
 class InRange(NodeImageProcessing):
+
     def __init__(self):
         super().__init__("inrange", "RNG", 1, 2, sources="OpenCV")
 
@@ -1879,6 +1993,7 @@ IMAGE_NODES_ABBV_LIST = registry.nodes.list().keys()
 
 
 class BundleOpenCV(KartezioBundle):
+
     def fill(self):
         for node_abbv in IMAGE_NODES_ABBV_LIST:
             self.add_node(node_abbv)
@@ -1886,18 +2001,22 @@ class BundleOpenCV(KartezioBundle):
 
 BUNDLE_OPENCV = BundleOpenCV()
 
+
 @registry.endpoints.add("WSHD")
 class EndpointWatershed(KartezioEndpoint):
+
     def __init__(self, use_dt=False, markers_distance=21, markers_area=None):
         super().__init__("Marker-Based Watershed", "WSHD", 2, [])
-        self.wt = WatershedSkimage(
-            use_dt=use_dt, markers_distance=markers_distance, markers_area=markers_area
-        )
+        self.wt = WatershedSkimage(use_dt=use_dt,
+                                   markers_distance=markers_distance,
+                                   markers_area=markers_area)
 
     def call(self, x, args=None):
         mask = x[0]
         markers = x[1]
-        mask, markers, labels = self.wt.apply(mask, markers=markers, mask=mask > 0)
+        mask, markers, labels = self.wt.apply(mask,
+                                              markers=markers,
+                                              mask=mask > 0)
         return {
             "mask_raw": x[0],
             "markers_raw": x[1],
@@ -1923,6 +2042,7 @@ class Event(Enum):
 
 
 class CallbackVerbose(KartezioCallback):
+
     def _callback(self, n, e_name, e_content):
         fitness, time = e_content.get_best_fitness()
         if e_name == Event.END_STEP:
@@ -1934,6 +2054,7 @@ class CallbackVerbose(KartezioCallback):
 
 
 class CallbackSave(KartezioCallback):
+
     def __init__(self, workdir, dataset, frequency=1):
         super().__init__(frequency)
         self.workdir = Directory(workdir).next(eventid())
@@ -1961,15 +2082,19 @@ class CallbackSave(KartezioCallback):
 
 @registry.fitness.add("AP")
 class FitnessAP(KartezioFitness):
+
     def __init__(self, thresholds=0.5):
         super().__init__(
             name=f"Average Precision ({thresholds})",
             symbol="AP",
             arity=1,
-            default_metric=registry.metrics.instantiate("CAP", thresholds=thresholds),
+            default_metric=registry.metrics.instantiate("CAP",
+                                                        thresholds=thresholds),
         )
 
+
 class GoldmanWrapper(KartezioMutation):
+
     def __init__(self, mutation, decoder):
         super().__init__(None, None)
         self.mutation = mutation
@@ -1987,23 +2112,23 @@ class GoldmanWrapper(KartezioMutation):
 
 @registry.mutations.add("classic")
 class MutationClassic(KartezioMutation):
-    def __init__(self, shape, n_functions, mutation_rate, output_mutation_rate):
+
+    def __init__(self, shape, n_functions, mutation_rate,
+                 output_mutation_rate):
         super().__init__(shape, n_functions)
         self.mutation_rate = mutation_rate
         self.output_mutation_rate = output_mutation_rate
         self.n_mutations = int(
-            np.floor(self.shape.nodes * self.shape.w * self.mutation_rate)
-        )
+            np.floor(self.shape.nodes * self.shape.w * self.mutation_rate))
         self.all_indices = np.indices((self.shape.nodes, self.shape.w))
         self.all_indices = np.vstack(
-            (self.all_indices[0].ravel(), self.all_indices[1].ravel())
-        ).T
+            (self.all_indices[0].ravel(), self.all_indices[1].ravel())).T
         self.sampling_range = range(len(self.all_indices))
 
     def mutate(self, genome):
-        sampling_indices = np.random.choice(
-            self.sampling_range, self.n_mutations, replace=False
-        )
+        sampling_indices = np.random.choice(self.sampling_range,
+                                            self.n_mutations,
+                                            replace=False)
         sampling_indices = self.all_indices[sampling_indices]
 
         for idx, mutation_parameter_index in sampling_indices:
@@ -2044,13 +2169,16 @@ class MutationAllRandom(KartezioMutation):
 
 @registry.mutations.add("copy")
 class CopyGenome:
+
     def __init__(self, genome: KartezioGenome):
         self.genome = genome
 
     def mutate(self, _genome: KartezioGenome):
         return self.genome.clone()
 
+
 class ModelGA:
+
     def __init__(self, strategy, generations):
         self.strategy = strategy
         self.current_generation = 0
@@ -2084,6 +2212,7 @@ class ModelGA:
 
 
 class ModelCGP(Observable):
+
     def __init__(self, generations, strategy, parser):
         super().__init__()
         self.generations = generations
@@ -2102,7 +2231,8 @@ class ModelCGP(Observable):
         genetic_algorithm.evaluation(y, y_pred)
         self._notify(0, Event.START_LOOP, force=True)
         while not genetic_algorithm.is_satisfying():
-            self._notify(genetic_algorithm.current_generation, Event.START_STEP)
+            self._notify(genetic_algorithm.current_generation,
+                         Event.START_STEP)
             genetic_algorithm.selection()
             genetic_algorithm.reproduction()
             genetic_algorithm.mutation()
@@ -2110,7 +2240,9 @@ class ModelCGP(Observable):
             genetic_algorithm.evaluation(y, y_pred)
             genetic_algorithm.next()
             self._notify(genetic_algorithm.current_generation, Event.END_STEP)
-        self._notify(genetic_algorithm.current_generation, Event.END_LOOP, force=True)
+        self._notify(genetic_algorithm.current_generation,
+                     Event.END_LOOP,
+                     force=True)
         history = self.strategy.population.history()
         elite = self.strategy.elite
         return elite, history
@@ -2124,8 +2256,11 @@ class ModelCGP(Observable):
         }
         self.notify(event)
 
+
 class Dataset:
+
     class SubSet:
+
         def __init__(self, dataframe):
             self.x = []
             self.y = []
@@ -2147,7 +2282,13 @@ class Dataset:
         def xyv(self):
             return self.x, self.y, self.v
 
-    def __init__(self, train_set, test_set, name, label_name, inputs, indices=None):
+    def __init__(self,
+                 train_set,
+                 test_set,
+                 name,
+                 label_name,
+                 inputs,
+                 indices=None):
         self.train_set = train_set
         self.test_set = test_set
         self.name = name
@@ -2201,6 +2342,7 @@ class Dataset:
 
 
 class DatasetMeta:
+
     @staticmethod
     def write(
         filepath,
@@ -2219,8 +2361,14 @@ class DatasetMeta:
             "scale": scale,
             "label_name": label_name,
             "mode": mode,
-            "input": {"type": input_type, "format": input_format},
-            "label": {"type": label_type, "format": label_format},
+            "input": {
+                "type": input_type,
+                "format": input_format
+            },
+            "label": {
+                "type": label_type,
+                "format": label_format
+            },
         }
         json_write(filepath + "/" + meta_filename, json_data)
 
@@ -2230,6 +2378,7 @@ class DatasetMeta:
 
 
 class DataReader:
+
     def __init__(self, directory, scale=1.0):
         self.scale = scale
         self.directory = directory
@@ -2256,17 +2405,21 @@ class DataItem:
     def size(self):
         return len(self.datalist)
 
+
 @registry.readers.add("image_rgb")
 class ImageRGBReader(DataReader):
+
     def _read(self, filepath, shape=None):
         image = imread_color(filepath, rgb=False)
-        return DataItem(
-            image_split(image), image.shape[:2], None, visual=rgb2bgr(image)
-        )
+        return DataItem(image_split(image),
+                        image.shape[:2],
+                        None,
+                        visual=rgb2bgr(image))
 
 
 @registry.readers.add("roi_polygon")
 class RoiPolygonReader(DataReader):
+
     def _read(self, filepath, shape=None):
         label_mask = image_new(shape)
         if filepath == "":
@@ -2292,16 +2445,17 @@ class DatasetReader(Directory):
         self.label_name = meta["label_name"]
         input_reader_name = f"{meta['input']['type']}_{meta['input']['format']}"
         label_reader_name = f"{meta['label']['type']}_{meta['label']['format']}"
-        self.input_reader = registry.readers.instantiate(
-            input_reader_name, directory=self, scale=self.scale
-        )
-        self.label_reader = registry.readers.instantiate(
-            label_reader_name, directory=self, scale=self.scale
-        )
+        self.input_reader = registry.readers.instantiate(input_reader_name,
+                                                         directory=self,
+                                                         scale=self.scale)
+        self.label_reader = registry.readers.instantiate(label_reader_name,
+                                                         directory=self,
+                                                         scale=self.scale)
 
-    def read_dataset(
-        self, dataset_filename=CSV_DATASET, meta_filename=JSON_META, indices=None
-    ):
+    def read_dataset(self,
+                     dataset_filename=CSV_DATASET,
+                     meta_filename=JSON_META,
+                     indices=None):
         self._read_meta(meta_filename)
         if self.mode == "dataframe":
             return self._read_from_dataframe(dataset_filename, indices)
@@ -2324,8 +2478,11 @@ class DatasetReader(Directory):
                 f"Inconsistent size of inputs for this dataset: sizes: {input_sizes}"
             )
             """
-            print(f"Inconsistent size of inputs for this dataset: sizes: {input_sizes}")
-        return Dataset(training, testing, self.name, self.label_name, inputs, indices)
+            print(
+                f"Inconsistent size of inputs for this dataset: sizes: {input_sizes}"
+            )
+        return Dataset(training, testing, self.name, self.label_name, inputs,
+                       indices)
 
     def _read_dataset(self, dataframe, indices=None):
         dataset = Dataset.SubSet(dataframe)
@@ -2341,7 +2498,9 @@ class DatasetReader(Directory):
                 dataset.add_visual(x.visual)
         return dataset
 
+
 class IndividualHistory:
+
     def __init__(self):
         self.fitness = {"fitness": 0.0, "time": 0.0}
         self.sequence = None
@@ -2356,6 +2515,7 @@ class IndividualHistory:
 
 
 class PopulationHistory:
+
     def __init__(self, n_individuals):
         self.individuals = {}
         for i in range(n_individuals):
@@ -2363,9 +2523,8 @@ class PopulationHistory:
 
     def fill(self, individuals, fitness, times):
         for i in range(len(individuals)):
-            self.individuals[i].set_values(
-                individuals[i].sequence, float(fitness[i]), float(times[i])
-            )
+            self.individuals[i].set_values(individuals[i].sequence,
+                                           float(fitness[i]), float(times[i]))
 
     def get_best_fitness(self):
         return (
@@ -2378,6 +2537,7 @@ class PopulationHistory:
 
 
 class PopulationWithElite(KartezioPopulation):
+
     def __init__(self, _lambda):
         super().__init__(1 + _lambda)
 
@@ -2398,8 +2558,11 @@ class PopulationWithElite(KartezioPopulation):
         population_history.fill(self.individuals, self.fitness, self.time)
         return population_history
 
+
 class OnePlusLambda(KartezioES):
-    def __init__(self, _lambda, factory, init_method, mutation_method, fitness):
+
+    def __init__(self, _lambda, factory, init_method, mutation_method,
+                 fitness):
         self._mu = 1
         self._lambda = _lambda
         self.factory = factory
@@ -2428,11 +2591,13 @@ class OnePlusLambda(KartezioES):
 
     def mutation(self):
         for i in range(self._mu, self.population.size):
-            self.population[i] = self.mutation_method.mutate(self.population[i])
+            self.population[i] = self.mutation_method.mutate(
+                self.population[i])
 
     def evaluation(self, y_true, y_pred):
         fitness = self.fitness.call(y_true, y_pred)
         self.population.set_fitness(fitness)
+
 
 @dataclass
 class ModelContext:
@@ -2451,10 +2616,10 @@ class ModelContext:
     arity: InitVar[int] = 2
     parameters: InitVar[int] = 2
 
-    def __post_init__(
-        self, inputs: int, nodes: int, outputs: int, arity: int, parameters: int
-    ):
-        self.genome_shape = GenomeShape(inputs, nodes, outputs, arity, parameters)
+    def __post_init__(self, inputs: int, nodes: int, outputs: int, arity: int,
+                      parameters: int):
+        self.genome_shape = GenomeShape(inputs, nodes, outputs, arity,
+                                        parameters)
         self.genome_factory = GenomeFactory(self.genome_shape.prototype)
 
     def set_bundle(self, bundle: KartezioBundle):
@@ -2478,21 +2643,23 @@ class ModelContext:
 
 
 class ModelBuilder:
+
     def __init__(self):
         self.__context = None
 
     def create(
-        self,
-        endpoint,
-        bundle,
-        inputs=3,
-        nodes=10,
-        outputs=1,
-        arity=2,
-        parameters=2,
-        series_stacker=StackerMean(),
+            self,
+            endpoint,
+            bundle,
+            inputs=3,
+            nodes=10,
+            outputs=1,
+            arity=2,
+            parameters=2,
+            series_stacker=StackerMean(),
     ):
-        self.__context = ModelContext(inputs, nodes, outputs, arity, parameters)
+        self.__context = ModelContext(inputs, nodes, outputs, arity,
+                                      parameters)
         self.__context.set_endpoint(endpoint)
         self.__context.set_bundle(bundle)
         self.__context.compile_parser(series_stacker)
@@ -2505,15 +2672,17 @@ class ModelBuilder:
                 instance_method = MutationAllRandom(shape, n_nodes)
         self.__context.set_instance_method(instance_method)
 
-    def set_mutation_method(
-        self, mutation, node_mutation_rate, output_mutation_rate, use_goldman=True
-    ):
+    def set_mutation_method(self,
+                            mutation,
+                            node_mutation_rate,
+                            output_mutation_rate,
+                            use_goldman=True):
         if type(mutation) == str:
             shape = self.__context.genome_shape
             n_nodes = self.__context.bundle.size
-            mutation = registry.mutations.instantiate(
-                mutation, shape, n_nodes, node_mutation_rate, output_mutation_rate
-            )
+            mutation = registry.mutations.instantiate(mutation, shape, n_nodes,
+                                                      node_mutation_rate,
+                                                      output_mutation_rate)
         if use_goldman:
             parser = self.__context.parser
             mutation = GoldmanWrapper(mutation, parser)
@@ -2524,7 +2693,11 @@ class ModelBuilder:
             fitness = registry.fitness.instantiate(fitness)
         self.__context.set_fitness(fitness)
 
-    def compile(self, generations, _lambda, callbacks=None, dataset_inputs=None):
+    def compile(self,
+                generations,
+                _lambda,
+                callbacks=None,
+                dataset_inputs=None):
         factory = self.__context.genome_factory
         instance_method = self.__context.instance_method
         mutation_method = self.__context.mutation_method
@@ -2540,16 +2713,16 @@ class ModelBuilder:
             raise ValueError(f"Fitness {fitness} has not been properly set.")
 
         if not isinstance(mutation_method, KartezioMutation):
-            raise ValueError(f"Mutation {mutation_method} has not been properly set.")
+            raise ValueError(
+                f"Mutation {mutation_method} has not been properly set.")
 
         if dataset_inputs and (dataset_inputs != parser.shape.inputs):
             raise ValueError(
                 f"Model has {parser.shape.inputs} input nodes. ({dataset_inputs} given by the dataset)"
             )
 
-        strategy = OnePlusLambda(
-            _lambda, factory, instance_method, mutation_method, fitness
-        )
+        strategy = OnePlusLambda(_lambda, factory, instance_method,
+                                 mutation_method, fitness)
         model = ModelCGP(generations, strategy, parser)
         if callbacks:
             for callback in callbacks:
@@ -2602,9 +2775,10 @@ def create_instance_segmentation_model(
         use_goldman=use_goldman,
     )
     builder.set_fitness(fitness)
-    model = builder.compile(
-        generations, _lambda, callbacks=callbacks, dataset_inputs=dataset_inputs
-    )
+    model = builder.compile(generations,
+                            _lambda,
+                            callbacks=callbacks,
+                            dataset_inputs=dataset_inputs)
     return model
 
 
@@ -2616,13 +2790,21 @@ model = create_instance_segmentation_model(
     endpoint=EndpointWatershed(),
 )
 
+
 class G:
     pass
+
+
 g = G()
 g.path = "dataset"
 g.dataset_reader = DatasetReader(g.path, counting=False)
-g.dataset = g.dataset_reader.read_dataset(dataset_filename=CSV_DATASET, meta_filename=JSON_META, indices=None)
-g.callbacks = [CallbackVerbose(frequency=1), CallbackSave(".", g.dataset, frequency=1)]
+g.dataset = g.dataset_reader.read_dataset(dataset_filename=CSV_DATASET,
+                                          meta_filename=JSON_META,
+                                          indices=None)
+g.callbacks = [
+    CallbackVerbose(frequency=1),
+    CallbackSave(".", g.dataset, frequency=1)
+]
 g.workdir = str(g.callbacks[1].workdir._path)
 for callback in g.callbacks:
     callback.set_parser(model.parser)
