@@ -1977,11 +1977,8 @@ output_mutation_rate = 0.2
 g.genome_shape = GenomeShape()
 g.genome_factory = GenomeFactory(g.genome_shape.prototype)
 g.parser = KartezioParser(g.genome_shape)
-shape = g.genome_shape
-n_nodes = g.bundle.size
-g.instance_method = MutationAllRandom(shape, n_nodes)
-shape = g.genome_shape
-mutation = MutationClassic(shape, n_nodes,
+g.instance_method = MutationAllRandom(g.genome_shape, g.bundle.size)
+mutation = MutationClassic(g.genome_shape, g.bundle.size,
                            node_mutation_rate,
                            output_mutation_rate)
 g.mutation_method = GoldmanWrapper(mutation, g.parser)
