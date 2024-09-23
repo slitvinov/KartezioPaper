@@ -1977,26 +1977,6 @@ class OnePlusLambda:
         fitness = self.fitness.call(y_true, y_pred)
         self.population.set_fitness(fitness)
 
-
-@dataclass
-class ModelContext:
-    def __post_init__(self):
-        self.genome_shape = GenomeShape()
-        self.genome_factory = GenomeFactory(self.genome_shape.prototype)
-
-    def set_instance_method(self, instance_method):
-        self.instance_method = instance_method
-
-    def set_mutation_method(self, mutation_method):
-        self.mutation_method = mutation_method
-
-    def set_fitness(self, fitness):
-        self.fitness = fitness
-
-    def compile_parser(self):
-        parser = KartezioParser(self.genome_shape)
-        self.parser = parser
-
 class G:
     pass
 
@@ -2020,27 +2000,26 @@ use_goldman = True
 fitness = "AP"
 callbacks = None
 dataset_inputs = None
-g.context = ModelContext()
-g.context.compile_parser()
-shape = g.context.genome_shape
+g.genome_shape = GenomeShape()
+g.genome_factory = GenomeFactory(g.genome_shape.prototype)
+g.parser = KartezioParser(g.genome_shape)
+shape = g.genome_shape
 n_nodes = g.bundle.size
 instance_method = MutationAllRandom(shape, n_nodes)
-g.context.set_instance_method(instance_method)
-shape = g.context.genome_shape
+g.instance_method = instance_method
+shape = g.genome_shape
 mutation = registry.mutations.instantiate(mutation, shape, n_nodes,
                                               node_mutation_rate,
                                               output_mutation_rate)
-parser = g.context.parser
-mutation = GoldmanWrapper(mutation, parser)
-g.context.set_mutation_method(mutation)
-
+parser = g.parser
+g.mutation_method = GoldmanWrapper(mutation, parser)
 fitness = registry.fitness.instantiate(fitness)
-g.context.set_fitness(fitness)
-factory = g.context.genome_factory
-instance_method = g.context.instance_method
-mutation_method = g.context.mutation_method
-fitness = g.context.fitness
-parser = g.context.parser
+g.fitness = fitness
+factory = g.genome_factory
+instance_method = g.instance_method
+mutation_method = g.mutation_method
+fitness = g.fitness
+parser = g.parser
 strategy = OnePlusLambda(factory, instance_method,
                          mutation_method, fitness)
 model = ModelCGP(strategy, parser)
