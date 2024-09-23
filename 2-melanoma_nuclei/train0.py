@@ -2121,7 +2121,7 @@ arity = 2
 parameters = 2
 series_stacker = MeanKartezioStackerForWatershed()
 instance_method = "random"
-mutation_method = "classic"
+mutation = "classic"
 node_mutation_rate = 0.15
 output_mutation_rate = 0.2
 use_goldman = True
@@ -2141,7 +2141,7 @@ n_nodes = g.context.bundle.size
 instance_method = MutationAllRandom(shape, n_nodes)
 g.context.set_instance_method(instance_method)
 builder.set_mutation_method(
-    mutation_method,
+    mutation,
     node_mutation_rate,
     output_mutation_rate,
     use_goldman=use_goldman,
