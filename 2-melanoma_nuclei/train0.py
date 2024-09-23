@@ -618,13 +618,13 @@ class KartezioParser(GenomeReader):
 
 class ExportableNode(KartezioNode):
 
-    def _to_json_kwargs(self) -> dict:
+    def _to_json_kwargs(self):
         return {}
 
-    def to_python(self, input_nodes, p, node_name: str):
+    def to_python(self, input_nodes, p, node_name):
         pass
 
-    def to_cpp(self, input_nodes, p, node_name: str):
+    def to_cpp(self, input_nodes, p, node_name):
         pass
 
 
