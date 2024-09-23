@@ -2085,11 +2085,6 @@ class LocalMaxWatershed(KartezioEndpoint):
 
 @registry.endpoints.add("RLMW")
 class RawLocalMaxWatershed(KartezioEndpoint):
-    """Watershed based KartezioEndpoint, but only based on one single mask.
-    Markers are computed as the local max of the mask
-
-    """
-
     def __init__(self, threshold=1, markers_distance=21):
         super().__init__("Raw Local-Max Watershed", "RLMW", 1, [])
         self.wt = WatershedSkimage(markers_distance=markers_distance)
