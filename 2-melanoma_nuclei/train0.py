@@ -748,10 +748,6 @@ class KartezioParser(GenomeReader):
         return all_y_pred, whole_time
 
 
-class ParserSequential(KartezioParser):
-    pass
-
-
 class ExportableNode(KartezioNode):
 
     def _to_json_kwargs(self) -> dict:
@@ -2568,6 +2564,12 @@ def create_instance_segmentation_model(
     return model
 
 
+class G:
+    pass
+
+g = G()
+g.path = "dataset"
+
 model = create_instance_segmentation_model(
     generations=10,
     _lambda=5,
@@ -2576,13 +2578,6 @@ model = create_instance_segmentation_model(
     endpoint=EndpointWatershed(),
 )
 
-
-class G:
-    pass
-
-
-g = G()
-g.path = "dataset"
 g.dataset_reader = DatasetReader(g.path, counting=False)
 g.dataset = g.dataset_reader.read_dataset(dataset_filename=CSV_DATASET,
                                           meta_filename=JSON_META,
