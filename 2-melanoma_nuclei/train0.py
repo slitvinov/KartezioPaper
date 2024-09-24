@@ -50,6 +50,7 @@ class Directory:
         filepath = str(filepath)
         return pd.read_csv(filepath)
 
+
 class Registry:
 
     class SubRegistry:
@@ -119,7 +120,6 @@ class Parser:
     def read_outputs(self, genome):
         return genome[g.out_idx:, :]
 
-
     def _parse_one_graph(self, genome, graph_source):
         next_indices = graph_source.copy()
         output_tree = graph_source.copy()
@@ -167,10 +167,10 @@ class Parser:
             for output_gene in self.read_outputs(genome)
         ]
 
-    def parse_population(self, population, x):
+    def parse_population(self, x):
         y_pred = []
-        for i in range(len(population.individuals)):
-            y = self.parse(population.individuals[i], x)
+        for i in range(len(g.individuals)):
+            y = self.parse(g.individuals[i], x)
             y_pred.append(y)
         return y_pred
 
@@ -1222,6 +1222,7 @@ class PopulationWithElite:
         self.individuals = [None] * (g._lambda + 1)
         self.fitness = np.zeros(g._lambda + 1)
 
+
 class G:
     pass
 
@@ -1252,7 +1253,8 @@ mutation = MutationClassic(len(g.nodes), node_mutation_rate,
                            output_mutation_rate)
 g.mutation_method = GoldmanWrapper(mutation)
 g.fit = FitnessAP()
-g.population = PopulationWithElite()
+g.individuals = [None] * (g._lambda + 1)
+g.fitness = np.zeros(g._lambda + 1)
 g.dataset_reader = DatasetReader(g.path)
 g.dataset = g.dataset_reader.read_dataset(dataset_filename=CSV_DATASET,
                                           meta_filename=JSON_META,
@@ -1261,20 +1263,19 @@ x, y = g.dataset.train_xy
 current_generation = 0
 for i in range(g._lambda + 1):
     zero = np.zeros((g.h, g.w), dtype=np.uint8)
-    g.population.individuals[i] = g.instance_method.mutate(zero)
-y_pred = g.parser.parse_population(g.population, x)
-g.population.fitness = g.fit.call(y, y_pred)
-print(f"{0:08} {g.population.fitness[0]:.16e}")
+    g.individuals[i] = g.instance_method.mutate(zero)
+y_pred = g.parser.parse_population(x)
+g.fitness = g.fit.call(y, y_pred)
+print(f"{0:08} {g.fitness[0]:.16e}")
 while current_generation < g.generations:
-    i = np.argmin(g.population.fitness)
-    elite = g.population.individuals[i]
-    g.population.individuals[0] = elite
+    i = np.argmin(g.fitness)
+    elite = g.individuals[i]
+    g.individuals[0] = elite
     for i in range(1, g._lambda + 1):
-        g.population.individuals[i] = elite.copy()
+        g.individuals[i] = elite.copy()
     for i in range(1, g._lambda + 1):
-        g.population.individuals[i] = g.mutation_method.mutate(
-            g.population.individuals[i])
-    y_pred = g.parser.parse_population(g.population, x)
-    g.population.fitness = g.fit.call(y, y_pred)
+        g.individuals[i] = g.mutation_method.mutate(g.individuals[i])
+    y_pred = g.parser.parse_population(x)
+    g.fitness = g.fit.call(y, y_pred)
     current_generation += 1
-    print(f"{current_generation:08} {g.population.fitness[0]:.16e}")
+    print(f"{current_generation:08} {g.fitness[0]:.16e}")
