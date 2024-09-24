@@ -146,6 +146,7 @@ def _parse_one(genome, graphs_list, x):
     output_map = _x_to_output_map(genome, graphs_list, x)
     return [output_map[output_gene[1]] for output_gene in read_outputs(genome)]
 
+
 def parse(genome, x):
     all_y_pred = []
     graphs = parse_to_graphs(genome)
@@ -913,11 +914,9 @@ class GoldmanWrapper:
 
 class MutationClassic:
 
-    def __init__(self, mutation_rate, output_mutation_rate):
+    def __init__(self):
         self.parameter_max_value = 256
-        self.mutation_rate = mutation_rate
-        self.output_mutation_rate = output_mutation_rate
-        self.n_mutations = int(np.floor(g.n * g.w * self.mutation_rate))
+        self.n_mutations = int(np.floor(0.15 * g.n * g.w))
         self.all_indices = np.indices((g.n, g.w))
         self.all_indices = np.vstack(
             (self.all_indices[0].ravel(), self.all_indices[1].ravel())).T
@@ -992,7 +991,7 @@ class MutationClassic:
                 parameter_idx = mutation_parameter_index - g.arity - 1
                 self.mutate_parameters(genome, idx, only_one=parameter_idx)
         for output in range(g.outputs):
-            if random.random() < self.output_mutation_rate:
+            if random.random() < 0.2:
                 self.mutate_output(genome, output)
         return genome
 
@@ -1126,15 +1125,13 @@ g.n = 30
 g.outputs = 2
 g.arity = 2
 g.parameters = 2
-node_mutation_rate = 0.15
-output_mutation_rate = 0.2
 g.out_idx = g.inputs + g.n
 g.para_idx = 1 + g.arity
 g.w = 1 + g.arity + g.parameters
 g.h = g.inputs + g.n + g.outputs
 g.metric = MetricCellpose(thresholds=0.5)
 g.instance_method = MutationAllRandom()
-mutation = MutationClassic(node_mutation_rate, output_mutation_rate)
+mutation = MutationClassic()
 g.mutation_method = GoldmanWrapper(mutation)
 g.fit = FitnessAP()
 g.individuals = [None] * (g._lambda + 1)
