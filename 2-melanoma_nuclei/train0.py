@@ -100,36 +100,6 @@ JSON_META = "META.json"
 CSV_DATASET = "dataset.csv"
 
 
-def pack_one_directory(directory_path):
-    directory = Directory(directory_path)
-    packed_history = {}
-    elite = json_read(filepath=f"{directory_path}/elite.json")
-    packed_history["dataset"] = elite["dataset"]
-    packed_history["decoding"] = elite["decoding"]
-    packed_history["elite"] = elite["individual"]
-    packed_history["generations"] = []
-    generations = []
-    for g in directory.ls(f"G*.json", ordered=True):
-        generations.append(int(g.name.replace("G", "").split(".")[0]))
-    generations.sort()
-    for generation in generations:
-        current_generation = json_read(
-            filepath=f"{directory_path}/G{generation}.json")
-        generation_json = {
-            "generation": generation,
-            "population": current_generation["population"],
-        }
-        packed_history["generations"].append(generation_json)
-    json_write(filepath=f"{directory_path}/history.json",
-               json_data=packed_history,
-               indent=None)
-    print(f"All generations packed in {directory_path}.")
-    for generation in generations:
-        file_to_delete = f"{directory_path}/G{generation}.json"
-        os.remove(file_to_delete)
-    print(f"All {len(generations)} generation files deleted.")
-
-
 def from_individual(individual):
     return {
         "fitness": individual.fitness,
@@ -1483,4 +1453,3 @@ while not (current_generation >= g.generations
     current_generation += 1
     notify(current_generation, Event.END_STEP)
 notify(current_generation, Event.END_LOOP, force=True)
-pack_one_directory(g.workdir)
