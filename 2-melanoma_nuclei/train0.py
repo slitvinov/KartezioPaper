@@ -1101,11 +1101,10 @@ class DataItem:
         return len(self.datalist)
 
 
-class ImageRGBReader:
-    def read(self, filename, shape):
-        filepath = os.path.join("dataset", filename)
-        image = imread_color(filepath, rgb=False)
-        return DataItem(image_split(image), image.shape[:2], None)
+def read0(filename, shape):
+    filepath = os.path.join("dataset", filename)
+    image = imread_color(filepath, rgb=False)
+    return DataItem(image_split(image), image.shape[:2], None)
 
 
 class RoiPolygonReader:
@@ -1142,7 +1141,7 @@ class DatasetReader:
         dataset = SubSet(dataframe)
         dataframe.reset_index(inplace=True)
         for row in dataframe.itertuples():
-            x = g.input_reader.read(row.input, shape=None)
+            x = read0(row.input, shape=None)
             y = g.label_reader.read(row.label, shape=x.shape)
             y = y.datalist
             dataset.x.append(x.datalist)
@@ -1183,7 +1182,6 @@ g.fit = FitnessAP()
 g.individuals = [None] * (g._lambda + 1)
 g.fitness = np.zeros(g._lambda + 1)
 g.dataset_reader = DatasetReader()
-g.input_reader = ImageRGBReader()
 g.label_reader = RoiPolygonReader()
 g.dataset = g.dataset_reader.read_dataset()
 x = g.dataset.train_set.x
