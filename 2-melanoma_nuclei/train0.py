@@ -1359,10 +1359,6 @@ class Dataset:
     def train_xy(self):
         return self.train_set.xy
 
-    @property
-    def test_xy(self):
-        return self.test_set.xy
-
 @dataclass
 class DataItem:
     datalist: List
