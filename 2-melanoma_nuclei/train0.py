@@ -1498,12 +1498,6 @@ class Dataset:
         return self.train_x, self.train_y, self.test_x, self.test_y
 
 
-class DatasetMeta:
-    @staticmethod
-    def read0(filepath, meta_filename):
-        return json_read(filepath / meta_filename)
-
-
 class DataReader:
 
     def __init__(self, directory, scale=1.0):
@@ -1565,7 +1559,7 @@ class DatasetReader(Directory):
         super().__post_init__(path)
 
     def _read_meta(self, meta_filename):
-        meta = DatasetMeta.read0(self._path, meta_filename=meta_filename)
+        meta = json_read(self._path / meta_filename)
         self.name = meta["name"]
         self.scale = meta["scale"]
         self.mode = meta["mode"]
