@@ -1041,15 +1041,14 @@ def execute(name, x, args):
 
 class EndpointWatershed(KartezioNode):
 
-    def __init__(self, use_dt=False, markers_distance=21, markers_area=None):
+    def __init__(self):
         super().__init__("Marker-Based Watershed", "WSHD", 2, [])
         self.name = "Marker-Based Watershed"
         self.symbol = "WSHD"
         self.arity = 2
-        self.outputs_keys = []
-        self.wt = WatershedSkimage(use_dt=use_dt,
-                                   markers_distance=markers_distance,
-                                   markers_area=markers_area)
+        self.wt = WatershedSkimage(use_dt=False,
+                                   markers_distance=21,
+                                   markers_area=None)
 
     def call(self, x, args=None):
         mask = x[0]
