@@ -1407,8 +1407,7 @@ for i in range(g._lambda + 1):
 y_pred = g.parser.parse_population(g.population, x)
 g.population.fitness = g.fitness.call(y, y_pred)
 notify(0, Event.START_LOOP, force=True)
-while not (current_generation >= g.generations
-           or g.population.fitness[0] == 0.0):
+while current_generation < g.generations:
     notify(current_generation, Event.START_STEP)
     new_elite, fitness = g.population.get_best_individual()
     g.population.set_elite(new_elite)
