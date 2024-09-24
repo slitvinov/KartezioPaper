@@ -100,27 +100,6 @@ JSON_META = "META.json"
 CSV_DATASET = "dataset.csv"
 
 
-def from_individual(individual):
-    return {
-        "fitness": individual.fitness,
-    }
-
-
-def from_population(population):
-    json_data = []
-    for individual_idx, individual in population:
-        json_data.append(from_individual(individual))
-    return json_data
-
-
-def from_dataset(dataset):
-    return {
-        "name": dataset.name,
-        "label_name": dataset.label_name,
-        "indices": dataset.indices,
-    }
-
-
 class Node:
 
     def __init__(self,
