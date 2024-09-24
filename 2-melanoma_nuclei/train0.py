@@ -1403,9 +1403,6 @@ class MutationClassic:
             new_parameters = old_parameters.copy()
         self.write_parameters(genome, idx, new_parameters)
 
-    def mutate_output(self, genome, idx):
-        self.write_output_connection(genome, idx, self.random_output)
-
     def mutate(self, genome):
         sampling_indices = np.random.choice(self.sampling_range,
                                             self.n_mutations,
