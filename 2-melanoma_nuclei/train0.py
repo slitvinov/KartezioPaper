@@ -1610,6 +1610,4 @@ while not (current_generation >= g.generations
     current_generation += 1
     notify(current_generation, Event.END_STEP)
 notify(current_generation, Event.END_LOOP, force=True)
-history = g.population.history()
-elite = g.population.get_elite()
 pack_one_directory(g.workdir)
