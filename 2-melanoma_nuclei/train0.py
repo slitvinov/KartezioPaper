@@ -436,25 +436,15 @@ class KartezioCallback:
             self._callback(event["n"], event["name"], event["content"])
 
 
-class KartezioMetric(KartezioNode):
-
-    def __init__(
-        self,
-        name: str,
-        symbol: str,
-        arity: int,
-    ):
-        super().__init__(name, symbol, arity, 0)
-
-
 class FitnessAP(KartezioNode):
+
     def __init__(self):
-        thresholds=0.5
-        name=f"Average Precision ({thresholds})"
+        thresholds = 0.5
+        name = f"Average Precision ({thresholds})"
         symbol = "AP"
         arity = 1
         default_metric = registry.metrics.instantiate("CAP",
-                                                        thresholds=thresholds)
+                                                      thresholds=thresholds)
         super().__init__(name, symbol, arity, 0)
         self.metrics = []
         self.add_metric(default_metric)
@@ -578,15 +568,18 @@ def _intersection_over_union(masks_true, masks_pred):
 
 
 @registry.metrics.add("CAP")
-class MetricCellpose(KartezioMetric):
+class MetricCellpose(KartezioNode):
 
     def __init__(self, thresholds=0.5):
-        super().__init__("Cellpose Average Precision", symbol="CAP", arity=1)
         self.thresholds = thresholds
         if not isinstance(self.thresholds, list) and not isinstance(
                 self.thresholds, np.ndarray):
             self.thresholds = [self.thresholds]
         self.n_thresholds = len(self.thresholds)
+        name = "Cellpose Average Precision"
+        symbol = "CAP"
+        arity = 1
+        super().__init__(name, symbol, arity, 0)
 
     def call(self, y_true: np.ndarray, y_pred: np.ndarray):
         _y_true = y_true[0]
