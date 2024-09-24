@@ -1191,6 +1191,8 @@ class G:
     pass
 
 
+random.seed(12345)
+np.random.seed(12345)
 g = G()
 g.path = "dataset"
 g._lambda = 5
