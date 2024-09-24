@@ -1332,9 +1332,6 @@ class Dataset:
             self.x.append(x)
             self.y.append(y)
 
-        def add_visual(self, visual):
-            self.v.append(visual)
-
         @property
         def xy(self):
             return self.x, self.y
@@ -1362,7 +1359,6 @@ class DataItem:
     datalist: List
     shape: Tuple
     count: int
-    visual: np.ndarray = None
 
     @property
     def size(self):
@@ -1379,8 +1375,7 @@ class ImageRGBReader:
         image = imread_color(filepath, rgb=False)
         return DataItem(image_split(image),
                         image.shape[:2],
-                        None,
-                        visual=rgb2bgr(image))
+                        None)
 
 
 class RoiPolygonReader:
@@ -1445,9 +1440,6 @@ class DatasetReader(Directory):
             y = y.datalist
             dataset.n_inputs = x.size
             dataset.add_item(x.datalist, y)
-            visual_from_table = False
-            if not visual_from_table:
-                dataset.add_visual(x.visual)
         return dataset
 
 
