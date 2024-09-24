@@ -1114,10 +1114,6 @@ class Dataset:
         self.inputs = inputs
         self.indices = indices
 
-    @property
-    def train_xy(self):
-        return self.train_set.x, self.train_set.y
-
 
 @dataclass
 class DataItem:
@@ -1242,7 +1238,8 @@ g.dataset_reader = DatasetReader(g.path)
 g.dataset = g.dataset_reader.read_dataset(dataset_filename=CSV_DATASET,
                                           meta_filename=JSON_META,
                                           indices=None)
-x, y = g.dataset.train_xy
+x = g.dataset.train_set.x
+y = g.dataset.train_set.y
 current_generation = 0
 for i in range(g._lambda + 1):
     zero = np.zeros((g.h, g.w), dtype=np.uint8)
