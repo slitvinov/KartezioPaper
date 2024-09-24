@@ -570,7 +570,7 @@ def _intersection_over_union(masks_true, masks_pred):
 @registry.metrics.add("CAP")
 class MetricCellpose(KartezioNode):
 
-    def __init__(self, thresholds=0.5):
+    def __init__(self, thresholds):
         self.thresholds = thresholds
         if not isinstance(self.thresholds, list) and not isinstance(
                 self.thresholds, np.ndarray):
