@@ -1107,18 +1107,17 @@ def read0(filename, shape):
     return DataItem(image_split(image), image.shape[:2], None)
 
 
-class RoiPolygonReader:
-    def read(self, filename, shape):
-        if str(filename) == "nan":
-            filepath = ""
-        else:
-            filepath = os.path.join("dataset", filename)
-        label_mask = image_new(shape)
-        if filepath == "":
-            return DataItem([label_mask], shape, 0)
-        polygons = read_polygons_from_roi(filepath)
-        fill_polygons_as_labels(label_mask, polygons)
-        return DataItem([label_mask], shape, len(polygons))
+def read1(filename, shape):
+    if str(filename) == "nan":
+        filepath = ""
+    else:
+        filepath = os.path.join("dataset", filename)
+    label_mask = image_new(shape)
+    if filepath == "":
+        return DataItem([label_mask], shape, 0)
+    polygons = read_polygons_from_roi(filepath)
+    fill_polygons_as_labels(label_mask, polygons)
+    return DataItem([label_mask], shape, len(polygons))
 
 
 class DatasetReader:
@@ -1142,7 +1141,7 @@ class DatasetReader:
         dataframe.reset_index(inplace=True)
         for row in dataframe.itertuples():
             x = read0(row.input, shape=None)
-            y = g.label_reader.read(row.label, shape=x.shape)
+            y = read1(row.label, shape=x.shape)
             y = y.datalist
             dataset.x.append(x.datalist)
             dataset.y.append(y)
@@ -1182,7 +1181,6 @@ g.fit = FitnessAP()
 g.individuals = [None] * (g._lambda + 1)
 g.fitness = np.zeros(g._lambda + 1)
 g.dataset_reader = DatasetReader()
-g.label_reader = RoiPolygonReader()
 g.dataset = g.dataset_reader.read_dataset()
 x = g.dataset.train_set.x
 y = g.dataset.train_set.y
