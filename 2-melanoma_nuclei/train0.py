@@ -1074,7 +1074,7 @@ class MutationAllRandom:
         new_connections[only_one] = new_value
         self.write_connections(genome, idx, new_connections)
 
-    def mutate_parameters(self, genome, idx, only_one):
+    def mutate_parameters(self, genome, idx):
         new_parameters = self.random_parameters
         self.write_parameters(genome, idx, new_parameters)
 
@@ -1086,7 +1086,6 @@ class MutationAllRandom:
             self.mutate_function(genome, i)
             self.mutate_connections(genome, i)
             self.mutate_parameters(genome, i)
-        # mutate outputs
         for i in range(g.outputs):
             self.mutate_output(genome, i)
         return genome
