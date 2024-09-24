@@ -1050,7 +1050,7 @@ class EndpointWatershed(KartezioNode):
                                    markers_distance=21,
                                    markers_area=None)
 
-    def call(self, x, args=None):
+    def call(self, x):
         mask = x[0]
         markers = x[1]
         mask, markers, labels = self.wt.apply(mask,
