@@ -1074,20 +1074,14 @@ class MutationAllRandom:
         new_connections[only_one] = new_value
         self.write_connections(genome, idx, new_connections)
 
-    def mutate_parameters(self, genome, idx, only_one=None):
+    def mutate_parameters(self, genome, idx, only_one):
         new_parameters = self.random_parameters
-        if only_one is not None:
-            assert 0
-            old_parameters = self.read_parameters(genome, idx)
-            old_parameters[only_one] = new_parameters[only_one]
-            new_parameters = old_parameters.copy()
         self.write_parameters(genome, idx, new_parameters)
 
     def mutate_output(self, genome, idx):
         self.write_output_connection(genome, idx, self.random_output)
 
     def mutate(self, genome):
-        # mutate genes
         for i in range(g.n):
             self.mutate_function(genome, i)
             self.mutate_connections(genome, i)
