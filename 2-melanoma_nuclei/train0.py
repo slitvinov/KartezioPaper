@@ -1129,24 +1129,19 @@ class DatasetReader:
         self.label_name = meta["label_name"]
         dataframe = pd.read_csv("dataset/dataset.csv")
         dataframe_training = dataframe[dataframe["set"] == "training"]
-        training = self._read_dataset(dataframe_training)
+        training = SubSet(dataframe_training)
+        dataframe_training.reset_index(inplace=True)
+        for row in dataframe_training.itertuples():
+            x = read0(row.input)
+            y = read1(row.label, shape=x.shape)
+            y = y.datalist
+            training.x.append(x.datalist)
+            training.y.append(y)
         input_sizes = []
         [input_sizes.append(len(xi)) for xi in training.x]
         input_sizes = np.array(input_sizes)
         inputs = int(input_sizes[0])
         return Dataset(training, self.name, self.label_name, inputs)
-
-    def _read_dataset(self, dataframe):
-        dataset = SubSet(dataframe)
-        dataframe.reset_index(inplace=True)
-        for row in dataframe.itertuples():
-            x = read0(row.input)
-            y = read1(row.label, shape=x.shape)
-            y = y.datalist
-            dataset.x.append(x.datalist)
-            dataset.y.append(y)
-        return dataset
-
 
 class G:
     pass
