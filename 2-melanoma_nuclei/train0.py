@@ -1487,10 +1487,6 @@ class DataReader:
             filepath = str(self.directory / filename)
         return self._read(filepath, shape)
 
-    def _read(self, filepath, shape=None):
-        pass
-
-
 @dataclass
 class DataItem:
     datalist: List
