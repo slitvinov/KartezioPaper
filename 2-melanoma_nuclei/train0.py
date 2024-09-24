@@ -1292,9 +1292,6 @@ class PopulationWithElite:
         self.individuals = [None] * (g._lambda + 1)
         self.fitness = np.zeros(g._lambda + 1)
 
-    def __setitem__(self, key, value):
-        self.individuals.__setitem__(key, value)
-
     @property
     def score(self):
         return np.array(self.fitness, dtype=float)
@@ -1349,7 +1346,7 @@ x, y = g.dataset.train_xy
 current_generation = 0
 for i in range(g._lambda + 1):
     zero = np.zeros((g.h, g.w), dtype=np.uint8)
-    g.population[i] = g.instance_method.mutate(zero)
+    g.population.individuals[i] = g.instance_method.mutate(zero)
 y_pred = g.parser.parse_population(g.population, x)
 g.population.fitness = g.fitness.call(y, y_pred)
 print(f"{0:08} {g.population.fitness[0]:.16e}")
@@ -1358,7 +1355,7 @@ while current_generation < g.generations:
     g.population.set_elite(new_elite)
     elite = g.population.get_elite()
     for i in range(1, g._lambda + 1):
-        g.population[i] = elite.copy()
+        g.population.individuals[i] = elite.copy()
     for i in range(1, g._lambda + 1):
         g.population.individuals[i] = g.mutation_method.mutate(g.population.individuals[i])
     y_pred = g.parser.parse_population(g.population, x)
