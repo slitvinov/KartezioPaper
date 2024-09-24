@@ -924,13 +924,6 @@ class EndpointWatershed(Node):
             "labels": labels,
         }
 
-    def _to_json_kwargs(self) -> dict:
-        return {
-            "use_dt": self.wt.use_dt,
-            "markers_distance": self.wt.markers_distance,
-            "markers_area": self.wt.markers_area,
-        }
-
 
 class GoldmanWrapper:
 
@@ -1055,12 +1048,6 @@ class MutationAllRandom:
 
     def read_connections(self, genome, node):
         return genome[g.inputs + node, 1:g.para_idx]
-
-    def read_parameters(self, genome, node):
-        return genome[g.inputs + node, g.para_idx:]
-
-    def read_outputs(self, genome):
-        return genome[g.out_idx:, :]
 
     @property
     def random_parameters(self):
