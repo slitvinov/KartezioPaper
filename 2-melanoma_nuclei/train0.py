@@ -1222,10 +1222,6 @@ class PopulationWithElite:
         self.individuals = [None] * (g._lambda + 1)
         self.fitness = np.zeros(g._lambda + 1)
 
-    @property
-    def score(self):
-        return np.array(self.fitness, dtype=float)
-
     def set_elite(self, individual):
         self.individuals[0] = individual
 
@@ -1233,7 +1229,7 @@ class PopulationWithElite:
         return self.individuals[0]
 
     def get_best_individual(self):
-        bestfitness_idx = np.argsort(self.score)[0]
+        bestfitness_idx = np.argmin(self.fitness)
         best_individual = self.individuals[bestfitness_idx]
         return best_individual, self.fitness[bestfitness_idx]
 
