@@ -44,11 +44,8 @@ class Directory:
     def __truediv__(self, key):
         return self._path / key
 
-    def read(self, filename):
-        filepath = self / filename
-        extension = filepath.suffix
-        filepath = str(filepath)
-        return pd.read_csv(filepath)
+    def read(self):
+        return pd.read_csv("dataset/dataset.csv")
 
 
 class Registry:
@@ -84,8 +81,6 @@ class Registry:
 
 
 registry = Registry()
-JSON_META = "META.json"
-CSV_DATASET = "dataset.csv"
 
 
 class Node:
@@ -106,17 +101,21 @@ class Node:
 def read_function(genome, node):
     return genome[g.inputs + node, 0]
 
+
 def read_active_connections(genome, node, active_connections):
     return genome[
         g.inputs + node,
         1:1 + active_connections,
     ]
 
+
 def read_parameters(genome, node):
     return genome[g.inputs + node, g.para_idx:]
 
+
 def read_outputs(genome):
     return genome[g.out_idx:, :]
+
 
 def _parse_one_graph(genome, graph_source):
     next_indices = graph_source.copy()
@@ -129,17 +128,17 @@ def _parse_one_graph(genome, graph_source):
         active_connections = arity_of(function_index)
         next_connections = set(
             read_active_connections(genome, next_index - g.inputs,
-                                         active_connections))
+                                    active_connections))
         next_indices = next_indices.union(next_connections)
         output_tree = output_tree.union(next_connections)
     return sorted(list(output_tree))
 
+
 def parse_to_graphs(genome):
     outputs = read_outputs(genome)
-    graphs_list = [
-        _parse_one_graph(genome, {output[1]}) for output in outputs
-    ]
+    graphs_list = [_parse_one_graph(genome, {output[1]}) for output in outputs]
     return graphs_list
+
 
 def _x_to_output_map(genome, graphs_list, x):
     output_map = {i: x[i].copy() for i in range(g.inputs)}
@@ -150,20 +149,18 @@ def _x_to_output_map(genome, graphs_list, x):
             node_index = node - g.inputs
             function_index = read_function(genome, node_index)
             arity = arity_of(function_index)
-            connections = read_active_connections(
-                genome, node_index, arity)
+            connections = read_active_connections(genome, node_index, arity)
             inputs = [output_map[c] for c in connections]
             p = read_parameters(genome, node_index)
             value = execute(function_index, inputs, p)
             output_map[node] = value
     return output_map
 
+
 def _parse_one(genome, graphs_list, x):
     output_map = _x_to_output_map(genome, graphs_list, x)
-    return [
-        output_map[output_gene[1]]
-        for output_gene in read_outputs(genome)
-    ]
+    return [output_map[output_gene[1]] for output_gene in read_outputs(genome)]
+
 
 def parse_population(x):
     y_pred = []
@@ -171,6 +168,7 @@ def parse_population(x):
         y = parse(g.individuals[i], x)
         y_pred.append(y)
     return y_pred
+
 
 def parse(genome, x):
     all_y_pred = []
@@ -1087,6 +1085,7 @@ class MutationAllRandom:
             self.mutate_output(genome, i)
         return genome
 
+
 class SubSet:
 
     def __init__(self, dataframe):
@@ -1095,14 +1094,10 @@ class SubSet:
         self.v = []
         self.dataframe = dataframe
 
+
 class Dataset:
 
-    def __init__(self,
-                 train_set,
-                 name,
-                 label_name,
-                 inputs,
-                 indices=None):
+    def __init__(self, train_set, name, label_name, inputs, indices=None):
         self.train_set = train_set
         self.name = name
         self.label_name = label_name
@@ -1155,17 +1150,14 @@ class DatasetReader(Directory):
     def __post_init__(self, path):
         super().__post_init__(path)
 
+    def read_dataset(self):
 
-    def read_dataset(self,
-                     dataset_filename=CSV_DATASET,
-                     meta_filename=JSON_META):
-
-        meta = json_read(self._path / meta_filename)
+        meta = json_read("dataset/META.json")
         self.name = meta["name"]
         self.label_name = meta["label_name"]
         self.input_reader = ImageRGBReader(directory=self)
         self.label_reader = RoiPolygonReader(directory=self)
-        dataframe = self.read(dataset_filename)
+        dataframe = self.read()
         dataframe_training = dataframe[dataframe["set"] == "training"]
         training = self._read_dataset(dataframe_training)
         input_sizes = []
@@ -1184,6 +1176,7 @@ class DatasetReader(Directory):
             dataset.x.append(x.datalist)
             dataset.y.append(y)
         return dataset
+
 
 class G:
     pass
@@ -1219,8 +1212,7 @@ g.fit = FitnessAP()
 g.individuals = [None] * (g._lambda + 1)
 g.fitness = np.zeros(g._lambda + 1)
 g.dataset_reader = DatasetReader(g.path)
-g.dataset = g.dataset_reader.read_dataset(dataset_filename=CSV_DATASET,
-                                          meta_filename=JSON_META)
+g.dataset = g.dataset_reader.read_dataset()
 x = g.dataset.train_set.x
 y = g.dataset.train_set.y
 current_generation = 0
