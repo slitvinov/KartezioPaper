@@ -41,9 +41,6 @@ class Directory:
     def __post_init__(self, path):
         self._path = Path(path)
 
-    def __getattr__(self, attr):
-        return getattr(self._path, attr)
-
     def __truediv__(self, key):
         return self._path / key
 
