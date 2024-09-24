@@ -1094,13 +1094,11 @@ class Event(Enum):
 class CallbackVerbose(KartezioCallback):
 
     def _callback(self, n, e_name, e_content):
-        fitness, time = e_content.get_best_fitness()
+        fitness = g.individuals[0].fitness["fitness"]
         if e_name == Event.END_STEP:
-            verbose = f"[G {n:04}] {fitness:.16f}"
-            print(verbose)
+            print(f"[G {n:04}] {fitness:.16f}")
         elif e_name == Event.END_LOOP:
-            verbose = f"[G {n:04}] {fitness:.16f}, loop done."
-            print(verbose)
+            print(f"[G {n:04}] {fitness:.16f}, loop done.")
 
 
 class CallbackSave(KartezioCallback):
@@ -1482,12 +1480,6 @@ class PopulationHistory:
         for i in range(len(individuals)):
             g.individuals[i].set_values(individuals[i], float(fitness[i]),
                                         float(times[i]))
-
-    def get_best_fitness(self):
-        return (
-            g.individuals[0].fitness["fitness"],
-            g.individuals[0].fitness["time"],
-        )
 
     def get_individuals(self):
         return g.individuals.items()
