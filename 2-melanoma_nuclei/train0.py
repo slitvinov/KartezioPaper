@@ -219,14 +219,8 @@ class Parser:
 
 
 class Callback:
-
-    def __init__(self, frequency=1):
-        self.frequency = frequency
-        self.parser = None
-
     def update(self, event):
-        if event["n"] % self.frequency == 0 or event["force"]:
-            self._callback(event["n"], event["name"], event["content"])
+        self._callback(event["n"], event["name"], event["content"])
 
 
 class FitnessAP(Node):
@@ -1398,7 +1392,7 @@ g.dataset_reader = DatasetReader(g.path)
 g.dataset = g.dataset_reader.read_dataset(dataset_filename=CSV_DATASET,
                                           meta_filename=JSON_META,
                                           indices=None)
-g.callback = CallbackVerbose(frequency=1)
+g.callback = CallbackVerbose()
 x, y = g.dataset.train_xy
 current_generation = 0
 for i in range(g._lambda + 1):
