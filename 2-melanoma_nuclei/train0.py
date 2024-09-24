@@ -33,21 +33,6 @@ import pandas as pd
 import random
 
 
-@dataclass
-class Directory:
-    path: InitVar[str]
-    _path: Path = field(init=False)
-
-    def __post_init__(self, path):
-        self._path = Path(path)
-
-    def __truediv__(self, key):
-        return self._path / key
-
-    def read(self):
-        return pd.read_csv("dataset/dataset.csv")
-
-
 class Registry:
 
     class SubRegistry:
@@ -1122,7 +1107,7 @@ class ImageRGBReader:
         self.directory = directory
 
     def read(self, filename, shape):
-        filepath = str(self.directory / filename)
+        filepath = os.path.join("dataset", filename)
         image = imread_color(filepath, rgb=False)
         return DataItem(image_split(image), image.shape[:2], None)
 
@@ -1136,7 +1121,7 @@ class RoiPolygonReader:
         if str(filename) == "nan":
             filepath = ""
         else:
-            filepath = str(self.directory / filename)
+            filepath = os.path.join("dataset", filename)
         label_mask = image_new(shape)
         if filepath == "":
             return DataItem([label_mask], shape, 0)
@@ -1145,10 +1130,7 @@ class RoiPolygonReader:
         return DataItem([label_mask], shape, len(polygons))
 
 
-class DatasetReader(Directory):
-
-    def __post_init__(self, path):
-        super().__post_init__(path)
+class DatasetReader:
 
     def read_dataset(self):
 
@@ -1157,7 +1139,7 @@ class DatasetReader(Directory):
         self.label_name = meta["label_name"]
         self.input_reader = ImageRGBReader(directory=self)
         self.label_reader = RoiPolygonReader(directory=self)
-        dataframe = self.read()
+        dataframe = pd.read_csv("dataset/dataset.csv")
         dataframe_training = dataframe[dataframe["set"] == "training"]
         training = self._read_dataset(dataframe_training)
         input_sizes = []
@@ -1185,7 +1167,6 @@ class G:
 random.seed(1)
 np.random.seed(1)
 g = G()
-g.path = "dataset"
 g._lambda = 5
 g.generations = 10
 g.endpoint = EndpointWatershed()
@@ -1211,7 +1192,7 @@ g.mutation_method = GoldmanWrapper(mutation)
 g.fit = FitnessAP()
 g.individuals = [None] * (g._lambda + 1)
 g.fitness = np.zeros(g._lambda + 1)
-g.dataset_reader = DatasetReader(g.path)
+g.dataset_reader = DatasetReader()
 g.dataset = g.dataset_reader.read_dataset()
 x = g.dataset.train_set.x
 y = g.dataset.train_set.y
