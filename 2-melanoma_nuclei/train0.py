@@ -1371,8 +1371,7 @@ class DataItem:
 
 class ImageRGBReader:
 
-    def __init__(self, directory, scale=1.0):
-        self.scale = scale
+    def __init__(self, directory):
         self.directory = directory
 
     def read(self, filename, shape):
@@ -1409,10 +1408,9 @@ class DatasetReader(Directory):
     def _read_meta(self, meta_filename):
         meta = json_read(self._path / meta_filename)
         self.name = meta["name"]
-        self.scale = meta["scale"]
         self.mode = meta["mode"]
         self.label_name = meta["label_name"]
-        self.input_reader = ImageRGBReader(directory=self, scale=self.scale)
+        self.input_reader = ImageRGBReader(directory=self)
         self.label_reader = RoiPolygonReader(directory=self)
 
     def read_dataset(self,
