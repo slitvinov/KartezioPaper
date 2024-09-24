@@ -572,9 +572,7 @@ class MetricCellpose(KartezioNode):
 
     def __init__(self, thresholds):
         self.thresholds = thresholds
-        if not isinstance(self.thresholds, list) and not isinstance(
-                self.thresholds, np.ndarray):
-            self.thresholds = [self.thresholds]
+        self.thresholds = [self.thresholds]
         self.n_thresholds = len(self.thresholds)
         name = "Cellpose Average Precision"
         symbol = "CAP"
