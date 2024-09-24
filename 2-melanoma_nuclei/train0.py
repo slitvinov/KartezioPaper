@@ -1537,12 +1537,9 @@ class DatasetReader(Directory):
         self.label_name = meta["label_name"]
         input_reader_name = f"{meta['input']['type']}_{meta['input']['format']}"
         label_reader_name = f"{meta['label']['type']}_{meta['label']['format']}"
-        self.input_reader = registry.readers.instantiate(input_reader_name,
-                                                         directory=self,
-                                                         scale=self.scale)
-        self.label_reader = registry.readers.instantiate(label_reader_name,
-                                                         directory=self,
-                                                         scale=self.scale)
+        print(input_reader_name)
+        self.input_reader = ImageRGBReader(directory=self, scale=self.scale)
+        self.label_reader = RoiPolygonReader(directory=self, scale=self.scale)
 
     def read_dataset(self,
                      dataset_filename=CSV_DATASET,
