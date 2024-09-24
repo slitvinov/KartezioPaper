@@ -1498,15 +1498,11 @@ class ImageRGBReader:
             filepath = ""
         else:
             filepath = str(self.directory / filename)
-        return self._read(filepath, shape)
-
-    def _read(self, filepath, shape=None):
         image = imread_color(filepath, rgb=False)
         return DataItem(image_split(image),
                         image.shape[:2],
                         None,
                         visual=rgb2bgr(image))
-
 
 @registry.readers.add("roi_polygon")
 class RoiPolygonReader:
@@ -1520,9 +1516,6 @@ class RoiPolygonReader:
             filepath = ""
         else:
             filepath = str(self.directory / filename)
-        return self._read(filepath, shape)
-
-    def _read(self, filepath, shape=None):
         label_mask = image_new(shape)
         if filepath == "":
             return DataItem([label_mask], shape, 0)
