@@ -1057,16 +1057,6 @@ class MutationAllRandom:
             self.mutate_output(genome, i)
         return genome
 
-
-class SubSet:
-
-    def __init__(self, dataframe):
-        self.x = []
-        self.y = []
-        self.v = []
-        self.dataframe = dataframe
-
-
 class Dataset:
 
     def __init__(self, train_set, name, label_name, inputs, indices=None):
@@ -1141,22 +1131,23 @@ name = meta["name"]
 label_name = meta["label_name"]
 dataframe = pd.read_csv("dataset/dataset.csv")
 dataframe_training = dataframe[dataframe["set"] == "training"]
-training = SubSet(dataframe_training)
 dataframe_training.reset_index(inplace=True)
+x0 = [ ]
+y0 = [ ]
 for row in dataframe_training.itertuples():
     x = read0(row.input)
     y = read1(row.label, shape=x.shape)
     y = y.datalist
-    training.x.append(x.datalist)
-    training.y.append(y)
+    x0.append(x.datalist)
+    y0.append(y)
 for i in range(g._lambda + 1):
     zero = np.zeros((g.h, g.w), dtype=np.uint8)
     g.individuals[i] = g.instance_method.mutate(zero)
 y_pred = []
 for i in range(len(g.individuals)):
-    y = parse(g.individuals[i], training.x)
+    y = parse(g.individuals[i], x0)
     y_pred.append(y)
-g.fitness = g.fit.call(training.y, y_pred)
+g.fitness = g.fit.call(y0, y_pred)
 print(f"{0:08} {g.fitness[0]:.16e}")
 current_generation = 0
 while current_generation < g.generations:
@@ -1169,8 +1160,8 @@ while current_generation < g.generations:
         g.individuals[i] = g.mutation_method.mutate(g.individuals[i])
     y_pred = []
     for i in range(len(g.individuals)):
-        y = parse(g.individuals[i], training.x)
+        y = parse(g.individuals[i], x0)
         y_pred.append(y)
-    g.fitness = g.fit.call(training.y, y_pred)
+    g.fitness = g.fit.call(y0, y_pred)
     current_generation += 1
     print(f"{current_generation:08} {g.fitness[0]:.16e}")
