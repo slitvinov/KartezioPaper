@@ -1744,14 +1744,6 @@ class PopulationWithElite(KartezioPopulation):
 
 
 class OnePlusLambda:
-
-    def __init__(self):
-        g.population = PopulationWithElite()
-
-    @property
-    def elite(self):
-        return g.population.get_elite()
-
     def initialization(self):
         for i in range(g._lambda + 1):
             zero = np.zeros((g.h, g.w), dtype=np.uint8)
@@ -1806,6 +1798,8 @@ mutation = MutationClassic(len(g.nodes), node_mutation_rate,
 g.mutation_method = GoldmanWrapper(mutation)
 g.fitness = FitnessAP()
 g.strategy = OnePlusLambda()
+g.population = PopulationWithElite()
+
 g.dataset_reader = DatasetReader(g.path, counting=False)
 g.dataset = g.dataset_reader.read_dataset(dataset_filename=CSV_DATASET,
                                           meta_filename=JSON_META,
@@ -1837,5 +1831,5 @@ notify(current_generation,
              Event.END_LOOP,
              force=True)
 history = g.population.history()
-elite = g.strategy.elite
+elite = g.population.get_elite()
 pack_one_directory(g.workdir)
