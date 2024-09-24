@@ -218,11 +218,6 @@ class Parser:
         return all_y_pred
 
 
-class Callback:
-    def update(self, event):
-        self._callback(event["n"], event["name"], event["content"])
-
-
 class FitnessAP(Node):
 
     def __init__(self):
@@ -985,23 +980,6 @@ class EndpointWatershed(Node):
         }
 
 
-class Event(Enum):
-    START_STEP = "on_step_start"
-    END_STEP = "on_step_end"
-    START_LOOP = "on_loop_start"
-    END_LOOP = "on_loop_end"
-
-
-class CallbackVerbose(Callback):
-
-    def _callback(self, n, e_name, e_content):
-        fitness = g.individuals[0].fitness
-        if e_name == Event.END_STEP:
-            print(f"[G {n:04}] {fitness:.16f}")
-        elif e_name == Event.END_LOOP:
-            print(f"[G {n:04}] {fitness:.16f}, loop done.")
-
-
 class GoldmanWrapper:
 
     def __init__(self, mutation):
@@ -1181,15 +1159,10 @@ class MutationAllRandom:
         return genome
 
 
-def notify(n, name, force=False):
-    event = {
-        "n": n,
-        "name": name,
-        "content": g.population.history(),
-        "force": force,
-    }
-    g.callback.update(event)
-
+def notify(n):
+    g.population.history()
+    fitness = g.individuals[0].fitness
+    print(f"[G {n:04}] {fitness:.16f}")
 
 class Dataset:
 
@@ -1392,7 +1365,6 @@ g.dataset_reader = DatasetReader(g.path)
 g.dataset = g.dataset_reader.read_dataset(dataset_filename=CSV_DATASET,
                                           meta_filename=JSON_META,
                                           indices=None)
-g.callback = CallbackVerbose()
 x, y = g.dataset.train_xy
 current_generation = 0
 for i in range(g._lambda + 1):
@@ -1400,9 +1372,8 @@ for i in range(g._lambda + 1):
     g.population[i] = g.instance_method.mutate(zero)
 y_pred = g.parser.parse_population(g.population, x)
 g.population.fitness = g.fitness.call(y, y_pred)
-notify(0, Event.START_LOOP, force=True)
+notify(0)
 while current_generation < g.generations:
-    notify(current_generation, Event.START_STEP)
     new_elite, fitness = g.population.get_best_individual()
     g.population.set_elite(new_elite)
     elite = g.population.get_elite()
@@ -1413,5 +1384,4 @@ while current_generation < g.generations:
     y_pred = g.parser.parse_population(g.population, x)
     g.population.fitness = g.fitness.call(y, y_pred)
     current_generation += 1
-    notify(current_generation, Event.END_STEP)
-notify(current_generation, Event.END_LOOP, force=True)
+    notify(current_generation)
