@@ -1314,7 +1314,6 @@ class CallbackSave(KartezioCallback):
 
 class GoldmanWrapper:
     def __init__(self, n_functions):
-        self.parameter_max_value = 256
         self.mutation = mutation
 
     def mutate(self, genome):
