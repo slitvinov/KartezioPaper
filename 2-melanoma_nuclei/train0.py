@@ -95,7 +95,6 @@ class Registry:
 
 registry = Registry()
 JSON_ELITE = "elite.json"
-JSON_HISTORY = "history.json"
 JSON_META = "META.json"
 CSV_DATASET = "dataset.csv"
 
