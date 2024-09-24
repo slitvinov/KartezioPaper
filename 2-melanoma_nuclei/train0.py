@@ -1448,39 +1448,15 @@ class MutationAllRandom(KartezioMutation):
             self.mutate_output(genome, i)
         return genome
 
-class ModelCGP:
-    def fit(self, x, y):
-        current_generation = 0
-        g.strategy.initialization()
-        y_pred = g.parser.parse_population(g.strategy.population, x)
-        g.strategy.evaluation(y, y_pred)
-        self.notify(0, Event.START_LOOP, force=True)
-        while not (current_generation >= g.generations or g.strategy.population.fitness[0] == 0.0):
-            self.notify(current_generation,
-                         Event.START_STEP)
-            g.strategy.selection()
-            g.strategy.reproduction()
-            g.strategy.mutation()
-            y_pred = g.parser.parse_population(g.strategy.population, x)
-            g.strategy.evaluation(y, y_pred)
-            current_generation += 1
-            self.notify(current_generation, Event.END_STEP)
-        self.notify(current_generation,
-                     Event.END_LOOP,
-                     force=True)
-        history = g.strategy.population.history()
-        elite = g.strategy.elite
-        return elite, history
-
-    def notify(self, n, name, force=False):
-        event = {
-            "n": n,
-            "name": name,
-            "content": g.strategy.population.history(),
-            "force": force,
-        }
-        for observer in g.callbacks:
-            observer.update(event)
+def notify(n, name, force=False):
+    event = {
+        "n": n,
+        "name": name,
+        "content": g.strategy.population.history(),
+        "force": force,
+    }
+    for observer in g.callbacks:
+        observer.update(event)
 
 
 class Dataset:
@@ -1837,7 +1813,6 @@ mutation = MutationClassic(len(g.nodes), node_mutation_rate,
 g.mutation_method = GoldmanWrapper(mutation)
 g.fitness = FitnessAP()
 g.strategy = OnePlusLambda()
-model = ModelCGP()
 g.dataset_reader = DatasetReader(g.path, counting=False)
 g.dataset = g.dataset_reader.read_dataset(dataset_filename=CSV_DATASET,
                                           meta_filename=JSON_META,
@@ -1849,5 +1824,25 @@ g.callbacks = [
 g.workdir = str(g.callbacks[1].workdir._path)
 for callback in g.callbacks:
     callback.set_parser(g.parser)
-model.fit(*g.dataset.train_xy)
+x, y = g.dataset.train_xy
+current_generation = 0
+g.strategy.initialization()
+y_pred = g.parser.parse_population(g.strategy.population, x)
+g.strategy.evaluation(y, y_pred)
+notify(0, Event.START_LOOP, force=True)
+while not (current_generation >= g.generations or g.strategy.population.fitness[0] == 0.0):
+    notify(current_generation,
+                 Event.START_STEP)
+    g.strategy.selection()
+    g.strategy.reproduction()
+    g.strategy.mutation()
+    y_pred = g.parser.parse_population(g.strategy.population, x)
+    g.strategy.evaluation(y, y_pred)
+    current_generation += 1
+    notify(current_generation, Event.END_STEP)
+notify(current_generation,
+             Event.END_LOOP,
+             force=True)
+history = g.strategy.population.history()
+elite = g.strategy.elite
 pack_one_directory(g.workdir)
