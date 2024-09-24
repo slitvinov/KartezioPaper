@@ -1386,8 +1386,7 @@ class ImageRGBReader:
 
 class RoiPolygonReader:
 
-    def __init__(self, directory, scale=1.0):
-        self.scale = scale
+    def __init__(self, directory):
         self.directory = directory
 
     def read(self, filename, shape):
@@ -1418,7 +1417,7 @@ class DatasetReader(Directory):
         self.mode = meta["mode"]
         self.label_name = meta["label_name"]
         self.input_reader = ImageRGBReader(directory=self, scale=self.scale)
-        self.label_reader = RoiPolygonReader(directory=self, scale=self.scale)
+        self.label_reader = RoiPolygonReader(directory=self)
 
     def read_dataset(self,
                      dataset_filename=CSV_DATASET,
