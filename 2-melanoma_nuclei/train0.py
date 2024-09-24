@@ -119,20 +119,6 @@ class Parser:
     def read_outputs(self, genome):
         return genome[g.out_idx:, :]
 
-    def dumps(self) -> dict:
-        return {
-            "metadata": {
-                "rows": 1,
-                "columns": g.n,
-                "n_in": g.inputs,
-                "n_out": g.outputs,
-                "n_para": g.parameters,
-                "n_conn": g.arity,
-            },
-            "functions": [node.name for node in g.nodes],
-            "endpoint": g.endpoint.dumps(),
-            "mode": "default",
-        }
 
     def _parse_one_graph(self, genome, graph_source):
         next_indices = graph_source.copy()
