@@ -1525,7 +1525,9 @@ class PopulationWithElite:
         g.individuals = {}
         for i in range(g._lambda + 1):
             g.individuals[i] = IndividualHistory()
-        fill(self.individuals, self.fitness, self.time)
+        for i in range(len(g.individuals)):
+            g.individuals[i].set_values(self.individuals[i], float(self.fitness[i]),
+                                        float(self.time[i]))
 
 class G:
     pass
