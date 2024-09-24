@@ -1750,11 +1750,6 @@ def reproduction():
         g.population[i] = elite.copy()
 
 
-def mutation0():
-    for i in range(1, g._lambda + 1):
-        g.population[i] = g.mutation_method.mutate(g.population[i])
-
-
 def evaluation(y_true, y_pred):
     fitness = g.fitness.call(y_true, y_pred)
     g.population.set_fitness(fitness)
@@ -1815,7 +1810,8 @@ while not (current_generation >= g.generations
     new_elite, fitness = g.population.get_best_individual()
     g.population.set_elite(new_elite)
     reproduction()
-    mutation0()
+    for i in range(1, g._lambda + 1):
+        g.population[i] = g.mutation_method.mutate(g.population[i])
     y_pred = g.parser.parse_population(g.population, x)
     evaluation(y, y_pred)
     current_generation += 1
