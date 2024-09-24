@@ -301,19 +301,6 @@ class KartezioEndpoint(KartezioNode):
         self.outputs_keys = outputs_keys
 
 
-class GenomeFactory:
-
-    def set_prototype(self, prototype):
-        self._prototype = prototype
-
-    def create(self):
-        return np.copy(self._prototype)
-
-    def __init__(self, prototype):
-        self._prototype = None
-        self.set_prototype(prototype)
-
-
 class KartezioParser:
 
     def read_function(self, genome, node):
