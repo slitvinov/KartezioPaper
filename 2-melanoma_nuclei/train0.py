@@ -1057,6 +1057,7 @@ class MutationAllRandom:
             self.mutate_output(genome, i)
         return genome
 
+
 class Dataset:
 
     def __init__(self, train_set, name, label_name, inputs, indices=None):
@@ -1081,7 +1082,7 @@ class DataItem:
 def read0(filename):
     filepath = os.path.join("dataset", filename)
     image = imread_color(filepath, rgb=False)
-    return DataItem(image_split(image), image.shape[:2], None)
+    return image_split(image), image.shape[:2]
 
 
 def read1(filename, shape):
@@ -1132,13 +1133,13 @@ label_name = meta["label_name"]
 dataframe = pd.read_csv("dataset/dataset.csv")
 dataframe_training = dataframe[dataframe["set"] == "training"]
 dataframe_training.reset_index(inplace=True)
-x0 = [ ]
-y0 = [ ]
+x0 = []
+y0 = []
 for row in dataframe_training.itertuples():
-    x = read0(row.input)
-    y = read1(row.label, shape=x.shape)
+    x, shape = read0(row.input)
+    y = read1(row.label, shape=shape)
     y = y.datalist
-    x0.append(x.datalist)
+    x0.append(x)
     y0.append(y)
 for i in range(g._lambda + 1):
     zero = np.zeros((g.h, g.w), dtype=np.uint8)
