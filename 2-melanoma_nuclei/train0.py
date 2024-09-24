@@ -17,7 +17,6 @@ from numena.image.threshold import threshold_tozero
 from numena.io.image import imread_color
 from numena.io.imagej import read_polygons_from_roi
 from numena.io.json import json_read
-from numena.io.json import json_write
 from numena.time import eventid
 from pathlib import Path
 from scipy.optimize import linear_sum_assignment
@@ -32,7 +31,6 @@ import numpy as np
 import os
 import pandas as pd
 import random
-import simplejson
 
 @dataclass
 class Directory:
@@ -134,7 +132,6 @@ def pack_one_directory(directory_path):
 
 def from_individual(individual):
     return {
-        "sequence": simplejson.dumps(individual.sequence.tolist()),
         "fitness": individual.fitness,
     }
 
@@ -152,29 +149,6 @@ def from_dataset(dataset):
         "label_name": dataset.label_name,
         "indices": dataset.indices,
     }
-
-
-class JsonSaver:
-
-    def __init__(self, dataset, parser):
-        self.dataset_json = from_dataset(dataset)
-        self.parser_as_json = parser.dumps()
-
-    def save_population(self, filepath, population):
-        json_data = {
-            "dataset": self.dataset_json,
-            "population": from_population(population),
-            "decoding": self.parser_as_json,
-        }
-        json_write(filepath, json_data)
-
-    def save_individual(self, filepath, individual):
-        json_data = {
-            "dataset": self.dataset_json,
-            "individual": from_individual(individual),
-            "decoding": self.parser_as_json,
-        }
-        json_write(filepath, json_data)
 
 
 class Node:
@@ -1083,38 +1057,11 @@ class Event(Enum):
 class CallbackVerbose(Callback):
 
     def _callback(self, n, e_name, e_content):
-        fitness = g.individuals[0].fitness["fitness"]
+        fitness = g.individuals[0].fitness
         if e_name == Event.END_STEP:
             print(f"[G {n:04}] {fitness:.16f}")
         elif e_name == Event.END_LOOP:
             print(f"[G {n:04}] {fitness:.16f}, loop done.")
-
-
-class CallbackSave(Callback):
-
-    def __init__(self, workdir, dataset, frequency=1):
-        super().__init__(frequency)
-        self.workdir = Directory(workdir).next(eventid())
-        self.dataset = dataset
-        self.json_saver = None
-
-    def set_parser(self, parser):
-        super().set_parser(parser)
-        self.json_saver = JsonSaver(self.dataset, self.parser)
-
-    def save_population(self, population, n):
-        filename = f"G{n}.json"
-        filepath = self.workdir / filename
-        self.json_saver.save_population(filepath, population)
-
-    def save_elite(self, elite):
-        filepath = self.workdir / JSON_ELITE
-        self.json_saver.save_individual(filepath, elite)
-
-    def _callback(self, n, e_name, e_content):
-        if e_name == Event.END_STEP or e_name == Event.END_LOOP:
-            self.save_population(g.individuals.items(), n)
-            self.save_elite(g.individuals[0])
 
 
 class GoldmanWrapper:
@@ -1435,12 +1382,7 @@ class DatasetReader(Directory):
 class IndividualHistory:
 
     def __init__(self):
-        self.fitness = {"fitness": 0.0}
-
-    def set_values(self, sequence, fitness):
-        self.sequence = sequence
-        self.fitness["fitness"] = fitness
-
+        self.fitness = 0.0
 
 class PopulationWithElite:
 
@@ -1476,7 +1418,8 @@ class PopulationWithElite:
         for i in range(len(g.individuals)):
             sequence = self.individuals[i]
             fitness = self.fitness[i]
-            g.individuals[i].set_values(sequence, fitness)
+            # g.individuals[i].sequence = sequence
+            g.individuals[i].fitness = fitness
 
 class G:
     pass
@@ -1514,9 +1457,7 @@ g.dataset = g.dataset_reader.read_dataset(dataset_filename=CSV_DATASET,
                                           indices=None)
 g.callbacks = [
     CallbackVerbose(frequency=1),
-    CallbackSave(".", g.dataset, frequency=1)
 ]
-g.workdir = str(g.callbacks[1].workdir._path)
 for callback in g.callbacks:
     callback.set_parser(g.parser)
 x, y = g.dataset.train_xy
