@@ -913,8 +913,7 @@ class GoldmanWrapper:
 
 class MutationClassic:
 
-    def __init__(self, n_functions, mutation_rate, output_mutation_rate):
-        self.n_functions = n_functions
+    def __init__(self, mutation_rate, output_mutation_rate):
         self.parameter_max_value = 256
         self.mutation_rate = mutation_rate
         self.output_mutation_rate = output_mutation_rate
@@ -952,7 +951,7 @@ class MutationClassic:
 
     @property
     def random_functions(self):
-        return np.random.randint(self.n_functions)
+        return np.random.randint(len(g.nodes))
 
     def random_connections(self, idx: int):
         return np.random.randint(g.inputs + idx, size=g.arity)
@@ -1135,8 +1134,7 @@ g.w = 1 + g.arity + g.parameters
 g.h = g.inputs + g.n + g.outputs
 g.metric = MetricCellpose(thresholds=0.5)
 g.instance_method = MutationAllRandom()
-mutation = MutationClassic(len(g.nodes), node_mutation_rate,
-                           output_mutation_rate)
+mutation = MutationClassic(node_mutation_rate, output_mutation_rate)
 g.mutation_method = GoldmanWrapper(mutation)
 g.fit = FitnessAP()
 g.individuals = [None] * (g._lambda + 1)
