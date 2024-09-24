@@ -447,15 +447,14 @@ class KartezioMetric(KartezioNode):
         super().__init__(name, symbol, arity, 0)
 
 
-class KartezioFitness(KartezioNode):
-
-    def __init__(
-        self,
-        name: str,
-        symbol: str,
-        arity: int,
-        default_metric: KartezioMetric = None,
-    ):
+class FitnessAP(KartezioNode):
+    def __init__(self):
+        thresholds=0.5
+        name=f"Average Precision ({thresholds})"
+        symbol = "AP"
+        arity = 1
+        default_metric = registry.metrics.instantiate("CAP",
+                                                        thresholds=thresholds)
         super().__init__(name, symbol, arity, 0)
         self.metrics = []
         self.add_metric(default_metric)
@@ -1325,18 +1324,6 @@ class CallbackSave(KartezioCallback):
         if e_name == Event.END_STEP or e_name == Event.END_LOOP:
             self.save_population(e_content.get_individuals(), n)
             self.save_elite(g.individuals[0])
-
-
-class FitnessAP(KartezioFitness):
-
-    def __init__(self, thresholds=0.5):
-        super().__init__(
-            name=f"Average Precision ({thresholds})",
-            symbol="AP",
-            arity=1,
-            default_metric=registry.metrics.instantiate("CAP",
-                                                        thresholds=thresholds),
-        )
 
 
 class GoldmanWrapper(KartezioMutation):
