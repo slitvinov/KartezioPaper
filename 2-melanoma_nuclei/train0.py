@@ -1446,12 +1446,11 @@ class DatasetReader(Directory):
 class IndividualHistory:
 
     def __init__(self):
-        self.fitness = {"fitness": 0.0, "time": 0.0}
+        self.fitness = {"fitness": 0.0}
 
-    def set_values(self, sequence, fitness, time):
+    def set_values(self, sequence, fitness):
         self.sequence = sequence
         self.fitness["fitness"] = fitness
-        self.fitness["time"] = time
 
 
 class PopulationWithElite:
@@ -1480,14 +1479,8 @@ class PopulationWithElite:
         return self._fitness["fitness"]
 
     @property
-    def time(self):
-        return self._fitness["time"]
-
-    @property
     def score(self):
-        score_list = list(zip(self.fitness, self.time))
-        return np.array(score_list,
-                        dtype=[("fitness", float), ("time", float)])
+        return np.array(self.fitness, dtype=float)
 
     def set_elite(self, individual):
         self[0] = individual
@@ -1505,8 +1498,7 @@ class PopulationWithElite:
         for i in range(g._lambda + 1):
             g.individuals[i] = IndividualHistory()
         for i in range(len(g.individuals)):
-            g.individuals[i].set_values(self.individuals[i], float(self.fitness[i]),
-                                        float(self.time[i]))
+            g.individuals[i].set_values(self.individuals[i], float(self.fitness[i]))
 
 class G:
     pass
