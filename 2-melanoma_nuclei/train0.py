@@ -1449,21 +1449,14 @@ class MutationAllRandom(KartezioMutation):
         return genome
 
 class ModelCGP:
-
-    def __init__(self):
-        self.observers = []
-
-    def attach(self, observer):
-        self.observers.append(observer)
-
     def fit(self, x, y):
         current_generation = 0
         g.strategy.initialization()
         y_pred = g.parser.parse_population(g.strategy.population, x)
         g.strategy.evaluation(y, y_pred)
-        self._notify(0, Event.START_LOOP, force=True)
+        self.notify(0, Event.START_LOOP, force=True)
         while not (current_generation >= g.generations or g.strategy.population.fitness[0] == 0.0):
-            self._notify(current_generation,
+            self.notify(current_generation,
                          Event.START_STEP)
             g.strategy.selection()
             g.strategy.reproduction()
@@ -1471,22 +1464,22 @@ class ModelCGP:
             y_pred = g.parser.parse_population(g.strategy.population, x)
             g.strategy.evaluation(y, y_pred)
             current_generation += 1
-            self._notify(current_generation, Event.END_STEP)
-        self._notify(current_generation,
+            self.notify(current_generation, Event.END_STEP)
+        self.notify(current_generation,
                      Event.END_LOOP,
                      force=True)
         history = g.strategy.population.history()
         elite = g.strategy.elite
         return elite, history
 
-    def _notify(self, n, name, force=False):
+    def notify(self, n, name, force=False):
         event = {
             "n": n,
             "name": name,
             "content": g.strategy.population.history(),
             "force": force,
         }
-        for observer in self.observers:
+        for observer in g.callbacks:
             observer.update(event)
 
 
@@ -1856,6 +1849,5 @@ g.callbacks = [
 g.workdir = str(g.callbacks[1].workdir._path)
 for callback in g.callbacks:
     callback.set_parser(g.parser)
-    model.attach(callback)
 model.fit(*g.dataset.train_xy)
 pack_one_directory(g.workdir)
