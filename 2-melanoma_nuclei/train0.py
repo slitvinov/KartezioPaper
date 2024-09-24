@@ -101,15 +101,6 @@ class Node:
         self.args = args
         self.sources = sources
 
-    def dumps(self) -> dict:
-        return {
-            "name": self.name,
-            "abbv": self.symbol,
-            "arity": self.arity,
-            "args": self.args,
-            "kwargs": self._to_json_kwargs(),
-        }
-
 
 class Parser:
 
