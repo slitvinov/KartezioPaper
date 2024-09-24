@@ -1124,7 +1124,7 @@ class CallbackSave(KartezioCallback):
 
     def _callback(self, n, e_name, e_content):
         if e_name == Event.END_STEP or e_name == Event.END_LOOP:
-            self.save_population(e_content.get_individuals(), n)
+            self.save_population(g.individuals.items(), n)
             self.save_elite(g.individuals[0])
 
 
@@ -1480,9 +1480,6 @@ class PopulationHistory:
         for i in range(len(individuals)):
             g.individuals[i].set_values(individuals[i], float(fitness[i]),
                                         float(times[i]))
-
-    def get_individuals(self):
-        return g.individuals.items()
 
 
 class PopulationWithElite:
