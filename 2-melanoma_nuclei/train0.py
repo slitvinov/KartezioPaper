@@ -1102,11 +1102,6 @@ class SubSet:
         self.x.append(x)
         self.y.append(y)
 
-    @property
-    def xy(self):
-        return self.x, self.y
-
-
 class Dataset:
 
     def __init__(self,
@@ -1125,7 +1120,7 @@ class Dataset:
 
     @property
     def train_xy(self):
-        return self.train_set.xy
+        return self.train_set.x, self.train_set.y
 
 
 @dataclass
