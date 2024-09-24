@@ -1743,29 +1743,28 @@ class PopulationWithElite(KartezioPopulation):
         return population_history
 
 
-class OnePlusLambda:
-    def initialization(self):
-        for i in range(g._lambda + 1):
-            zero = np.zeros((g.h, g.w), dtype=np.uint8)
-            individual = g.instance_method.mutate(zero)
-            g.population[i] = individual
+def initialization():
+    for i in range(g._lambda + 1):
+        zero = np.zeros((g.h, g.w), dtype=np.uint8)
+        individual = g.instance_method.mutate(zero)
+        g.population[i] = individual
 
-    def selection(self):
-        new_elite, fitness = g.population.get_best_individual()
-        g.population.set_elite(new_elite)
+def selection():
+    new_elite, fitness = g.population.get_best_individual()
+    g.population.set_elite(new_elite)
 
-    def reproduction(self):
-        elite = g.population.get_elite()
-        for i in range(1, g._lambda + 1):
-            g.population[i] = elite.copy()
+def reproduction():
+    elite = g.population.get_elite()
+    for i in range(1, g._lambda + 1):
+        g.population[i] = elite.copy()
 
-    def mutation(self):
-        for i in range(1, g._lambda + 1):
-            g.population[i] = g.mutation_method.mutate(g.population[i])
+def mutation0():
+    for i in range(1, g._lambda + 1):
+        g.population[i] = g.mutation_method.mutate(g.population[i])
 
-    def evaluation(self, y_true, y_pred):
-        fitness = g.fitness.call(y_true, y_pred)
-        g.population.set_fitness(fitness)
+def evaluation(y_true, y_pred):
+    fitness = g.fitness.call(y_true, y_pred)
+    g.population.set_fitness(fitness)
 
 
 class G:
@@ -1797,9 +1796,7 @@ mutation = MutationClassic(len(g.nodes), node_mutation_rate,
                            output_mutation_rate)
 g.mutation_method = GoldmanWrapper(mutation)
 g.fitness = FitnessAP()
-g.strategy = OnePlusLambda()
 g.population = PopulationWithElite()
-
 g.dataset_reader = DatasetReader(g.path, counting=False)
 g.dataset = g.dataset_reader.read_dataset(dataset_filename=CSV_DATASET,
                                           meta_filename=JSON_META,
@@ -1813,18 +1810,18 @@ for callback in g.callbacks:
     callback.set_parser(g.parser)
 x, y = g.dataset.train_xy
 current_generation = 0
-g.strategy.initialization()
+initialization()
 y_pred = g.parser.parse_population(g.population, x)
-g.strategy.evaluation(y, y_pred)
+evaluation(y, y_pred)
 notify(0, Event.START_LOOP, force=True)
 while not (current_generation >= g.generations or g.population.fitness[0] == 0.0):
     notify(current_generation,
                  Event.START_STEP)
-    g.strategy.selection()
-    g.strategy.reproduction()
-    g.strategy.mutation()
+    selection()
+    reproduction()
+    mutation0()
     y_pred = g.parser.parse_population(g.population, x)
-    g.strategy.evaluation(y, y_pred)
+    evaluation(y, y_pred)
     current_generation += 1
     notify(current_generation, Event.END_STEP)
 notify(current_generation,
