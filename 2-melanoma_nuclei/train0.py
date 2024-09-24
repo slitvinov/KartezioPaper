@@ -1452,7 +1452,6 @@ class ModelCGP:
 
     def __init__(self):
         self.observers = []
-        self.callbacks = []
 
     def attach(self, observer):
         self.observers.append(observer)
