@@ -1323,7 +1323,7 @@ class CallbackSave(KartezioCallback):
     def _callback(self, n, e_name, e_content):
         if e_name == Event.END_STEP or e_name == Event.END_LOOP:
             self.save_population(e_content.get_individuals(), n)
-            self.save_elite(e_content.individuals[0])
+            self.save_elite(g.individuals[0])
 
 
 class FitnessAP(KartezioFitness):
@@ -1626,23 +1626,23 @@ class IndividualHistory:
 class PopulationHistory:
 
     def __init__(self, n_individuals):
-        self.individuals = {}
+        g.individuals = {}
         for i in range(n_individuals):
-            self.individuals[i] = IndividualHistory()
+            g.individuals[i] = IndividualHistory()
 
     def fill(self, individuals, fitness, times):
         for i in range(len(individuals)):
-            self.individuals[i].set_values(individuals[i], float(fitness[i]),
+            g.individuals[i].set_values(individuals[i], float(fitness[i]),
                                            float(times[i]))
 
     def get_best_fitness(self):
         return (
-            self.individuals[0].fitness["fitness"],
-            self.individuals[0].fitness["time"],
+            g.individuals[0].fitness["fitness"],
+            g.individuals[0].fitness["time"],
         )
 
     def get_individuals(self):
-        return self.individuals.items()
+        return g.individuals.items()
 
 
 class PopulationWithElite:
