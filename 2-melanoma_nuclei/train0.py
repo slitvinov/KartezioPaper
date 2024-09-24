@@ -1162,7 +1162,7 @@ class MutationAllRandom:
 def notify(n):
     g.population.history()
     fitness = g.individuals[0].fitness
-    print(f"[G {n:04}] {fitness:.16f}")
+    print(f"{n:08} {fitness:.16f}")
 
 class Dataset:
 
