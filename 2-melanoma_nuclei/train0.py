@@ -1165,8 +1165,6 @@ for row in dataframe_training.itertuples():
     y = y.datalist
     training.x.append(x.datalist)
     training.y.append(y)
-input_sizes = []
-[input_sizes.append(len(xi)) for xi in training.x]
 x = training.x
 y = training.y
 current_generation = 0
