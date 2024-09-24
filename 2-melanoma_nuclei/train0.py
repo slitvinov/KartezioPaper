@@ -1493,7 +1493,7 @@ class ImageRGBReader:
         self.scale = scale
         self.directory = directory
 
-    def read(self, filename, shape=None):
+    def read(self, filename, shape):
         filepath = str(self.directory / filename)
         image = imread_color(filepath, rgb=False)
         return DataItem(image_split(image),
@@ -1508,7 +1508,7 @@ class RoiPolygonReader:
         self.scale = scale
         self.directory = directory
 
-    def read(self, filename, shape=None):
+    def read(self, filename, shape):
         if str(filename) == "nan":
             filepath = ""
         else:
