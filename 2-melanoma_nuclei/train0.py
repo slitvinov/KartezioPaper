@@ -1101,7 +1101,7 @@ class DataItem:
         return len(self.datalist)
 
 
-def read0(filename, shape):
+def read0(filename):
     filepath = os.path.join("dataset", filename)
     image = imread_color(filepath, rgb=False)
     return DataItem(image_split(image), image.shape[:2], None)
@@ -1140,7 +1140,7 @@ class DatasetReader:
         dataset = SubSet(dataframe)
         dataframe.reset_index(inplace=True)
         for row in dataframe.itertuples():
-            x = read0(row.input, shape=None)
+            x = read0(row.input)
             y = read1(row.label, shape=x.shape)
             y = y.datalist
             dataset.x.append(x.datalist)
