@@ -1292,9 +1292,6 @@ class PopulationWithElite:
         self.individuals = [None] * (g._lambda + 1)
         self.fitness = np.zeros(g._lambda + 1)
 
-    def __getitem__(self, item):
-        return self.individuals.__getitem__(item)
-
     def __setitem__(self, key, value):
         self.individuals.__setitem__(key, value)
 
@@ -1310,7 +1307,7 @@ class PopulationWithElite:
 
     def get_best_individual(self):
         bestfitness_idx = np.argsort(self.score)[0]
-        best_individual = self[bestfitness_idx]
+        best_individual = self.individuals[bestfitness_idx]
         return best_individual, self.fitness[bestfitness_idx]
 
 
@@ -1363,7 +1360,7 @@ while current_generation < g.generations:
     for i in range(1, g._lambda + 1):
         g.population[i] = elite.copy()
     for i in range(1, g._lambda + 1):
-        g.population[i] = g.mutation_method.mutate(g.population[i])
+        g.population.individuals[i] = g.mutation_method.mutate(g.population.individuals[i])
     y_pred = g.parser.parse_population(g.population, x)
     g.population.fitness = g.fitness.call(y, y_pred)
     current_generation += 1
