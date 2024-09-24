@@ -1474,19 +1474,6 @@ class Dataset:
         return self.train_x, self.train_y, self.test_x, self.test_y
 
 
-class DataReader:
-
-    def __init__(self, directory, scale=1.0):
-        self.scale = scale
-        self.directory = directory
-
-    def read(self, filename, shape=None):
-        if str(filename) == "nan":
-            filepath = ""
-        else:
-            filepath = str(self.directory / filename)
-        return self._read(filepath, shape)
-
 @dataclass
 class DataItem:
     datalist: List
@@ -1500,7 +1487,18 @@ class DataItem:
 
 
 @registry.readers.add("image_rgb")
-class ImageRGBReader(DataReader):
+class ImageRGBReader:
+
+    def __init__(self, directory, scale=1.0):
+        self.scale = scale
+        self.directory = directory
+
+    def read(self, filename, shape=None):
+        if str(filename) == "nan":
+            filepath = ""
+        else:
+            filepath = str(self.directory / filename)
+        return self._read(filepath, shape)
 
     def _read(self, filepath, shape=None):
         image = imread_color(filepath, rgb=False)
@@ -1511,7 +1509,18 @@ class ImageRGBReader(DataReader):
 
 
 @registry.readers.add("roi_polygon")
-class RoiPolygonReader(DataReader):
+class RoiPolygonReader:
+
+    def __init__(self, directory, scale=1.0):
+        self.scale = scale
+        self.directory = directory
+
+    def read(self, filename, shape=None):
+        if str(filename) == "nan":
+            filepath = ""
+        else:
+            filepath = str(self.directory / filename)
+        return self._read(filepath, shape)
 
     def _read(self, filepath, shape=None):
         label_mask = image_new(shape)
