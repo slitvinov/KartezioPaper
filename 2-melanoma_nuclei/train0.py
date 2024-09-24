@@ -1158,8 +1158,7 @@ class DatasetReader(Directory):
 
     def read_dataset(self,
                      dataset_filename=CSV_DATASET,
-                     meta_filename=JSON_META,
-                     indices=None):
+                     meta_filename=JSON_META):
 
         meta = json_read(self._path / meta_filename)
         self.name = meta["name"]
@@ -1168,15 +1167,14 @@ class DatasetReader(Directory):
         self.label_reader = RoiPolygonReader(directory=self)
         dataframe = self.read(dataset_filename)
         dataframe_training = dataframe[dataframe["set"] == "training"]
-        training = self._read_dataset(dataframe_training, indices)
+        training = self._read_dataset(dataframe_training)
         input_sizes = []
         [input_sizes.append(len(xi)) for xi in training.x]
         input_sizes = np.array(input_sizes)
         inputs = int(input_sizes[0])
-        return Dataset(training, self.name, self.label_name, inputs,
-                       indices)
+        return Dataset(training, self.name, self.label_name, inputs)
 
-    def _read_dataset(self, dataframe, indices=None):
+    def _read_dataset(self, dataframe):
         dataset = SubSet(dataframe)
         dataframe.reset_index(inplace=True)
         for row in dataframe.itertuples():
@@ -1212,7 +1210,6 @@ g.out_idx = g.inputs + g.n
 g.para_idx = 1 + g.arity
 g.w = 1 + g.arity + g.parameters
 g.h = g.inputs + g.n + g.outputs
-# g.parser = Parser()
 g.metric = MetricCellpose(thresholds=0.5)
 g.instance_method = MutationAllRandom(len(g.nodes))
 mutation = MutationClassic(len(g.nodes), node_mutation_rate,
@@ -1223,8 +1220,7 @@ g.individuals = [None] * (g._lambda + 1)
 g.fitness = np.zeros(g._lambda + 1)
 g.dataset_reader = DatasetReader(g.path)
 g.dataset = g.dataset_reader.read_dataset(dataset_filename=CSV_DATASET,
-                                          meta_filename=JSON_META,
-                                          indices=None)
+                                          meta_filename=JSON_META)
 x = g.dataset.train_set.x
 y = g.dataset.train_set.y
 current_generation = 0
