@@ -1158,19 +1158,18 @@ class DatasetReader(Directory):
     def __post_init__(self, path):
         super().__post_init__(path)
 
-    def _read_meta(self, meta_filename):
+
+    def read_dataset(self,
+                     dataset_filename=CSV_DATASET,
+                     meta_filename=JSON_META,
+                     indices=None):
+
         meta = json_read(self._path / meta_filename)
         self.name = meta["name"]
         self.mode = meta["mode"]
         self.label_name = meta["label_name"]
         self.input_reader = ImageRGBReader(directory=self)
         self.label_reader = RoiPolygonReader(directory=self)
-
-    def read_dataset(self,
-                     dataset_filename=CSV_DATASET,
-                     meta_filename=JSON_META,
-                     indices=None):
-        self._read_meta(meta_filename)
         if self.mode == "dataframe":
             return self._read_from_dataframe(dataset_filename, indices)
         raise AttributeError(f"{self.mode} is not handled yet")
