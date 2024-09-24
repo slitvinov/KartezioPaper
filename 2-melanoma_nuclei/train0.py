@@ -1313,6 +1313,7 @@ class CallbackSave(KartezioCallback):
 
 
 class GoldmanWrapper:
+
     def __init__(self, mutation):
         self.mutation = mutation
 
@@ -1326,10 +1327,11 @@ class GoldmanWrapper:
         return genome
 
 
-class MutationClassic(KartezioMutation):
+class MutationClassic:
 
     def __init__(self, n_functions, mutation_rate, output_mutation_rate):
-        super().__init__(n_functions)
+        self.n_functions = n_functions
+        self.parameter_max_value = 256
         self.mutation_rate = mutation_rate
         self.output_mutation_rate = output_mutation_rate
         self.n_mutations = int(np.floor(g.n * g.w * self.mutation_rate))
@@ -1337,6 +1339,72 @@ class MutationClassic(KartezioMutation):
         self.all_indices = np.vstack(
             (self.all_indices[0].ravel(), self.all_indices[1].ravel())).T
         self.sampling_range = range(len(self.all_indices))
+
+    def write_function(self, genome, node, function_id):
+        genome[g.inputs + node, 0] = function_id
+
+    def write_connections(self, genome, node, connections):
+        genome[g.inputs + node, 1:g.para_idx] = connections
+
+    def write_parameters(self, genome, node, parameters):
+        genome[g.inputs + node, g.para_idx:] = parameters
+
+    def write_output_connection(self, genome, output_index, connection):
+        genome[g.out_idx + output_index, 1] = connection
+
+    def read_function(self, genome, node):
+        return genome[g.inputs + node, 0]
+
+    def read_connections(self, genome, node):
+        return genome[g.inputs + node, 1:g.para_idx]
+
+    def read_active_connections(self, genome, node, active_connections):
+        return genome[
+            g.inputs + node,
+            1:1 + active_connections,
+        ]
+
+    def read_parameters(self, genome, node):
+        return genome[g.inputs + node, g.para_idx:]
+
+    def read_outputs(self, genome):
+        return genome[g.out_idx:, :]
+
+    @property
+    def random_parameters(self):
+        return np.random.randint(self.parameter_max_value, size=g.parameters)
+
+    @property
+    def random_functions(self):
+        return np.random.randint(self.n_functions)
+
+    @property
+    def random_output(self):
+        return np.random.randint(g.out_idx, size=1)
+
+    def random_connections(self, idx: int):
+        return np.random.randint(g.inputs + idx, size=g.arity)
+
+    def mutate_function(self, genome, idx: int):
+        self.write_function(genome, idx, self.random_functions)
+
+    def mutate_connections(self, genome, idx, only_one=None):
+        new_connections = self.random_connections(idx)
+        new_value = new_connections[only_one]
+        new_connections = self.read_connections(genome, idx)
+        new_connections[only_one] = new_value
+        self.write_connections(genome, idx, new_connections)
+
+    def mutate_parameters(self, genome, idx, only_one=None):
+        new_parameters = self.random_parameters
+        if only_one is not None:
+            old_parameters = self.read_parameters(genome, idx)
+            old_parameters[only_one] = new_parameters[only_one]
+            new_parameters = old_parameters.copy()
+        self.write_parameters(genome, idx, new_parameters)
+
+    def mutate_output(self, genome, idx):
+        self.write_output_connection(genome, idx, self.random_output)
 
     def mutate(self, genome):
         sampling_indices = np.random.choice(self.sampling_range,
@@ -1495,6 +1563,7 @@ class ImageRGBReader:
                         image.shape[:2],
                         None,
                         visual=rgb2bgr(image))
+
 
 class RoiPolygonReader:
 
