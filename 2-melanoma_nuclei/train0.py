@@ -1167,11 +1167,8 @@ for row in dataframe_training.itertuples():
     training.y.append(y)
 input_sizes = []
 [input_sizes.append(len(xi)) for xi in training.x]
-input_sizes = np.array(input_sizes)
-inputs = int(input_sizes[0])
-g.dataset = Dataset(training, name, label_name, inputs)
-x = g.dataset.train_set.x
-y = g.dataset.train_set.y
+x = training.x
+y = training.y
 current_generation = 0
 for i in range(g._lambda + 1):
     zero = np.zeros((g.h, g.w), dtype=np.uint8)
