@@ -1202,7 +1202,6 @@ class DatasetReader(Directory):
             x = self.input_reader.read(row.input, shape=None)
             y = self.label_reader.read(row.label, shape=x.shape)
             y = y.datalist
-            dataset.n_inputs = x.size
             dataset.x.append(x.datalist)
             dataset.y.append(y)
         return dataset
