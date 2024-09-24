@@ -1303,10 +1303,10 @@ class PopulationWithElite:
         return np.array(self.fitness, dtype=float)
 
     def set_elite(self, individual):
-        self[0] = individual
+        self.individuals[0] = individual
 
     def get_elite(self):
-        return self[0]
+        return self.individuals[0]
 
     def get_best_individual(self):
         bestfitness_idx = np.argsort(self.score)[0]
