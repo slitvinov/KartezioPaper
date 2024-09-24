@@ -223,17 +223,10 @@ class Parser:
 class FitnessAP(Node):
 
     def __init__(self):
-        thresholds = 0.5
-        name = f"Average Precision ({thresholds})"
+        name = f"Average Precision"
         symbol = "AP"
         arity = 1
-        default_metric = MetricCellpose(thresholds=thresholds)
         super().__init__(name, symbol, arity, 0)
-        self.metrics = []
-        self.add_metric(default_metric)
-
-    def add_metric(self, metric):
-        self.metrics.append(metric)
 
     def call(self, y_true, y_pred):
         scores = []
@@ -245,16 +238,8 @@ class FitnessAP(Node):
         score = 0.0
         y_size = len(y_true)
         for i in range(y_size):
-            _y_true = y_true[i].copy()
-            _y_pred = y_pred[i]
-            score += self.__fitness_sum(_y_true, _y_pred)
+            score += g.metric.call(y_true[i].copy(), y_pred[i])
         return score / y_size
-
-    def __fitness_sum(self, y_true, y_pred):
-        score = 0.0
-        for metric in self.metrics:
-            score += metric.call(y_true, y_pred)
-        return score
 
 
 @jit(nopython=True)
@@ -1332,6 +1317,7 @@ g.para_idx = 1 + g.arity
 g.w = 1 + g.arity + g.parameters
 g.h = g.inputs + g.n + g.outputs
 g.parser = Parser()
+g.metric = MetricCellpose(thresholds=0.5)
 g.instance_method = MutationAllRandom(len(g.nodes))
 mutation = MutationClassic(len(g.nodes), node_mutation_rate,
                            output_mutation_rate)
@@ -1357,7 +1343,8 @@ while current_generation < g.generations:
     for i in range(1, g._lambda + 1):
         g.population.individuals[i] = elite.copy()
     for i in range(1, g._lambda + 1):
-        g.population.individuals[i] = g.mutation_method.mutate(g.population.individuals[i])
+        g.population.individuals[i] = g.mutation_method.mutate(
+            g.population.individuals[i])
     y_pred = g.parser.parse_population(g.population, x)
     g.population.fitness = g.fitness.call(y, y_pred)
     current_generation += 1
