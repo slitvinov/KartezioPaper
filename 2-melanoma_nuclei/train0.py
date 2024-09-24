@@ -177,7 +177,7 @@ class JsonSaver:
         json_write(filepath, json_data)
 
 
-class KartezioNode:
+class Node:
 
     def __init__(self,
                  name: str,
@@ -200,7 +200,7 @@ class KartezioNode:
             "kwargs": self._to_json_kwargs(),
         }
 
-class KartezioParser:
+class Parser:
 
     def read_function(self, genome, node):
         return genome[g.inputs + node, 0]
@@ -297,7 +297,7 @@ class KartezioParser:
         return all_y_pred
 
 
-class KartezioCallback:
+class Callback:
 
     def __init__(self, frequency=1):
         self.frequency = frequency
@@ -311,7 +311,7 @@ class KartezioCallback:
             self._callback(event["n"], event["name"], event["content"])
 
 
-class FitnessAP(KartezioNode):
+class FitnessAP(Node):
 
     def __init__(self):
         thresholds = 0.5
@@ -367,7 +367,7 @@ def _intersection_over_union(masks_true, masks_pred):
     return iou
 
 
-class MetricCellpose(KartezioNode):
+class MetricCellpose(Node):
 
     def __init__(self, thresholds):
         self.thresholds = thresholds
@@ -509,7 +509,7 @@ def kernel_from_parameters(p):
 
 
 @registry.nodes.add("max")
-class Max(KartezioNode):
+class Max(Node):
 
     def __init__(self):
         super().__init__("max", "MAX", 2, 0, sources="OpenCV")
@@ -519,7 +519,7 @@ class Max(KartezioNode):
 
 
 @registry.nodes.add("min")
-class Min(KartezioNode):
+class Min(Node):
 
     def __init__(self):
         super().__init__("min", "MIN", 2, 0, sources="OpenCV")
@@ -529,7 +529,7 @@ class Min(KartezioNode):
 
 
 @registry.nodes.add("mean")
-class Mean(KartezioNode):
+class Mean(Node):
 
     def __init__(self):
         super().__init__("mean", "MEAN", 2, 0, sources="OpenCV")
@@ -539,7 +539,7 @@ class Mean(KartezioNode):
 
 
 @registry.nodes.add("add")
-class Add(KartezioNode):
+class Add(Node):
 
     def __init__(self):
         super().__init__("add", "ADD", 2, 0, sources="OpenCV")
@@ -549,7 +549,7 @@ class Add(KartezioNode):
 
 
 @registry.nodes.add("subtract")
-class Subtract(KartezioNode):
+class Subtract(Node):
 
     def __init__(self):
         super().__init__("subtract", "SUB", 2, 0, sources="OpenCV")
@@ -559,7 +559,7 @@ class Subtract(KartezioNode):
 
 
 @registry.nodes.add("bitwise_not")
-class BitwiseNot(KartezioNode):
+class BitwiseNot(Node):
 
     def __init__(self):
         super().__init__("bitwise_not", "NOT", 1, 0, sources="OpenCV")
@@ -569,7 +569,7 @@ class BitwiseNot(KartezioNode):
 
 
 @registry.nodes.add("bitwise_or")
-class BitwiseOr(KartezioNode):
+class BitwiseOr(Node):
 
     def __init__(self):
         super().__init__("bitwise_or", "BOR", 2, 0, sources="OpenCV")
@@ -579,7 +579,7 @@ class BitwiseOr(KartezioNode):
 
 
 @registry.nodes.add("bitwise_and")
-class BitwiseAnd(KartezioNode):
+class BitwiseAnd(Node):
 
     def __init__(self):
         super().__init__("bitwise_and", "BAND", 2, 0, sources="OpenCV")
@@ -589,7 +589,7 @@ class BitwiseAnd(KartezioNode):
 
 
 @registry.nodes.add("bitwise_and_mask")
-class BitwiseAndMask(KartezioNode):
+class BitwiseAndMask(Node):
 
     def __init__(self):
         super().__init__("bitwise_and_mask", "ANDM", 2, 0, sources="OpenCV")
@@ -599,7 +599,7 @@ class BitwiseAndMask(KartezioNode):
 
 
 @registry.nodes.add("bitwise_xor")
-class BitwiseXor(KartezioNode):
+class BitwiseXor(Node):
 
     def __init__(self):
         super().__init__("bitwise_xor", "BXOR", 2, 0, sources="OpenCV")
@@ -609,7 +609,7 @@ class BitwiseXor(KartezioNode):
 
 
 @registry.nodes.add("sqrt")
-class SquareRoot(KartezioNode):
+class SquareRoot(Node):
 
     def __init__(self):
         super().__init__("sqrt", "SQRT", 1, 0, sources="OpenCV")
@@ -620,7 +620,7 @@ class SquareRoot(KartezioNode):
 
 
 @registry.nodes.add("pow2")
-class Square(KartezioNode):
+class Square(Node):
 
     def __init__(self):
         super().__init__("pow2", "POW", 1, 0, sources="OpenCV")
@@ -631,7 +631,7 @@ class Square(KartezioNode):
 
 
 @registry.nodes.add("exp")
-class Exp(KartezioNode):
+class Exp(Node):
 
     def __init__(self):
         super().__init__("exp", "EXP", 1, 0, sources="OpenCV")
@@ -642,7 +642,7 @@ class Exp(KartezioNode):
 
 
 @registry.nodes.add("log")
-class Log(KartezioNode):
+class Log(Node):
 
     def __init__(self):
         super().__init__("log", "LOG", 1, 0, sources="Numpy")
@@ -652,7 +652,7 @@ class Log(KartezioNode):
 
 
 @registry.nodes.add("median_blur")
-class MedianBlur(KartezioNode):
+class MedianBlur(Node):
 
     def __init__(self):
         super().__init__("median_blur", "BLRM", 1, 1, sources="OpenCV")
@@ -663,7 +663,7 @@ class MedianBlur(KartezioNode):
 
 
 @registry.nodes.add("gaussian_blur")
-class GaussianBlur(KartezioNode):
+class GaussianBlur(Node):
 
     def __init__(self):
         super().__init__("gaussian_blur", "BLRG", 1, 1, sources="OpenCV")
@@ -674,7 +674,7 @@ class GaussianBlur(KartezioNode):
 
 
 @registry.nodes.add("laplacian")
-class Laplacian(KartezioNode):
+class Laplacian(Node):
 
     def __init__(self):
         super().__init__("laplacian", "LPLC", 1, 0, sources="OpenCV")
@@ -684,7 +684,7 @@ class Laplacian(KartezioNode):
 
 
 @registry.nodes.add("sobel")
-class Sobel(KartezioNode):
+class Sobel(Node):
 
     def __init__(self):
         super().__init__("sobel", "SOBL", 1, 2, sources="OpenCV")
@@ -698,7 +698,7 @@ class Sobel(KartezioNode):
 
 
 @registry.nodes.add("robert_cross")
-class RobertCross(KartezioNode):
+class RobertCross(Node):
 
     def __init__(self):
         super().__init__("robert_cross", "RBRT", 1, 1, sources="OpenCV")
@@ -711,7 +711,7 @@ class RobertCross(KartezioNode):
 
 
 @registry.nodes.add("canny")
-class Canny(KartezioNode):
+class Canny(Node):
 
     def __init__(self):
         super().__init__("canny", "CANY", 1, 2, sources="OpenCV")
@@ -721,7 +721,7 @@ class Canny(KartezioNode):
 
 
 @registry.nodes.add("sharpen")
-class Sharpen(KartezioNode):
+class Sharpen(Node):
 
     def __init__(self):
         super().__init__("sharpen", "SHRP", 1, 0, sources="OpenCV")
@@ -731,7 +731,7 @@ class Sharpen(KartezioNode):
 
 
 @registry.nodes.add("gabor")
-class GaborFilter(KartezioNode):
+class GaborFilter(Node):
 
     def __init__(self, ksize=11):
         super().__init__("gabor", "GABR", 1, 2, sources="OpenCV")
@@ -743,7 +743,7 @@ class GaborFilter(KartezioNode):
 
 
 @registry.nodes.add("abs_diff")
-class AbsoluteDifference(KartezioNode):
+class AbsoluteDifference(Node):
     """from https://github.com/cytosmart-bv/tomni"""
 
     def __init__(self):
@@ -756,7 +756,7 @@ class AbsoluteDifference(KartezioNode):
 
 
 @registry.nodes.add("abs_diff2")
-class AbsoluteDifference2(KartezioNode):
+class AbsoluteDifference2(Node):
 
     def __init__(self):
         super().__init__("abs_diff2", "ABS2", 2, 0, sources="OpenCV")
@@ -766,7 +766,7 @@ class AbsoluteDifference2(KartezioNode):
 
 
 @registry.nodes.add("fluo_tophat")
-class FluoTopHat(KartezioNode):
+class FluoTopHat(Node):
     """from https://github.com/cytosmart-bv/tomni"""
 
     def __init__(self):
@@ -792,7 +792,7 @@ class FluoTopHat(KartezioNode):
 
 
 @registry.nodes.add("rel_diff")
-class RelativeDifference(KartezioNode):
+class RelativeDifference(Node):
     """from https://github.com/cytosmart-bv/tomni"""
 
     def __init__(self):
@@ -811,7 +811,7 @@ class RelativeDifference(KartezioNode):
 
 
 @registry.nodes.add("erode")
-class Erode(KartezioNode):
+class Erode(Node):
 
     def __init__(self):
         super().__init__("erode", "EROD", 1, 2, sources="OpenCV")
@@ -822,7 +822,7 @@ class Erode(KartezioNode):
 
 
 @registry.nodes.add("dilate")
-class Dilate(KartezioNode):
+class Dilate(Node):
 
     def __init__(self):
         super().__init__("dilate", "DILT", 1, 2, sources="OpenCV")
@@ -833,7 +833,7 @@ class Dilate(KartezioNode):
 
 
 @registry.nodes.add("open")
-class Open(KartezioNode):
+class Open(Node):
 
     def __init__(self):
         super().__init__("open", "OPEN", 1, 2, sources="OpenCV")
@@ -844,7 +844,7 @@ class Open(KartezioNode):
 
 
 @registry.nodes.add("close")
-class Close(KartezioNode):
+class Close(Node):
 
     def __init__(self):
         super().__init__("close", "CLSE", 1, 2, sources="OpenCV")
@@ -855,7 +855,7 @@ class Close(KartezioNode):
 
 
 @registry.nodes.add("morph_gradient")
-class MorphGradient(KartezioNode):
+class MorphGradient(Node):
 
     def __init__(self):
         super().__init__("morph_gradient", "MGRD", 1, 2, sources="OpenCV")
@@ -866,7 +866,7 @@ class MorphGradient(KartezioNode):
 
 
 @registry.nodes.add("morph_tophat")
-class MorphTopHat(KartezioNode):
+class MorphTopHat(Node):
 
     def __init__(self):
         super().__init__("morph_tophat", "MTHT", 1, 2, sources="OpenCV")
@@ -877,7 +877,7 @@ class MorphTopHat(KartezioNode):
 
 
 @registry.nodes.add("morph_blackhat")
-class MorphBlackHat(KartezioNode):
+class MorphBlackHat(Node):
 
     def __init__(self):
         super().__init__("morph_blackhat", "MBHT", 1, 2, sources="OpenCV")
@@ -888,7 +888,7 @@ class MorphBlackHat(KartezioNode):
 
 
 @registry.nodes.add("fill_holes")
-class FillHoles(KartezioNode):
+class FillHoles(Node):
 
     def __init__(self):
         super().__init__("fill_holes", "FILL", 1, 0, sources="Handmade")
@@ -898,7 +898,7 @@ class FillHoles(KartezioNode):
 
 
 @registry.nodes.add("remove_small_objects")
-class RemoveSmallObjects(KartezioNode):
+class RemoveSmallObjects(Node):
 
     def __init__(self):
         super().__init__("remove_small_objects",
@@ -912,7 +912,7 @@ class RemoveSmallObjects(KartezioNode):
 
 
 @registry.nodes.add("remove_small_holes")
-class RemoveSmallHoles(KartezioNode):
+class RemoveSmallHoles(Node):
 
     def __init__(self):
         super().__init__("remove_small_holes", "RMSH", 1, 1, sources="Skimage")
@@ -922,7 +922,7 @@ class RemoveSmallHoles(KartezioNode):
 
 
 @registry.nodes.add("threshold")
-class Threshold(KartezioNode):
+class Threshold(Node):
 
     def __init__(self):
         super().__init__("threshold", "TRH", 1, 2, sources="OpenCV")
@@ -934,7 +934,7 @@ class Threshold(KartezioNode):
 
 
 @registry.nodes.add("threshold_at_1")
-class ThresholdAt1(KartezioNode):
+class ThresholdAt1(Node):
 
     def __init__(self):
         super().__init__("threshold_at_1", "TRH1", 1, 1, sources="OpenCV")
@@ -946,7 +946,7 @@ class ThresholdAt1(KartezioNode):
 
 
 # @registry.nodes.add("TRHA")
-class ThresholdAdaptive(KartezioNode):
+class ThresholdAdaptive(Node):
 
     def __init__(self):
         super().__init__("adaptive_threshold", "TRHA", 1, 2, sources="OpenCV")
@@ -965,7 +965,7 @@ class ThresholdAdaptive(KartezioNode):
 
 
 @registry.nodes.add("distance_transform")
-class DistanceTransform(KartezioNode):
+class DistanceTransform(Node):
 
     def __init__(self):
         super().__init__("distance_transform", "DTRF", 1, 1, sources="OpenCV")
@@ -982,7 +982,7 @@ class DistanceTransform(KartezioNode):
 
 
 @registry.nodes.add("distance_transform_and_thresh")
-class DistanceTransformAndThresh(KartezioNode):
+class DistanceTransformAndThresh(Node):
 
     def __init__(self):
         super().__init__("distance_transform_and_thresh",
@@ -1004,7 +1004,7 @@ class DistanceTransformAndThresh(KartezioNode):
 
 
 @registry.nodes.add("inrange_bin")
-class BinaryInRange(KartezioNode):
+class BinaryInRange(Node):
 
     def __init__(self):
         super().__init__("inrange_bin", "BRNG", 1, 2, sources="OpenCV")
@@ -1016,7 +1016,7 @@ class BinaryInRange(KartezioNode):
 
 
 @registry.nodes.add("inrange")
-class InRange(KartezioNode):
+class InRange(Node):
 
     def __init__(self):
         super().__init__("inrange", "RNG", 1, 2, sources="OpenCV")
@@ -1039,7 +1039,7 @@ def execute(name, x, args):
     return g.nodes[name].call(x, args)
 
 
-class EndpointWatershed(KartezioNode):
+class EndpointWatershed(Node):
 
     def __init__(self):
         super().__init__("Marker-Based Watershed", "WSHD", 2, [])
@@ -1080,7 +1080,7 @@ class Event(Enum):
     END_LOOP = "on_loop_end"
 
 
-class CallbackVerbose(KartezioCallback):
+class CallbackVerbose(Callback):
 
     def _callback(self, n, e_name, e_content):
         fitness = g.individuals[0].fitness["fitness"]
@@ -1090,7 +1090,7 @@ class CallbackVerbose(KartezioCallback):
             print(f"[G {n:04}] {fitness:.16f}, loop done.")
 
 
-class CallbackSave(KartezioCallback):
+class CallbackSave(Callback):
 
     def __init__(self, workdir, dataset, frequency=1):
         super().__init__(frequency)
@@ -1508,7 +1508,7 @@ g.out_idx = g.inputs + g.n
 g.para_idx = 1 + g.arity
 g.w = 1 + g.arity + g.parameters
 g.h = g.inputs + g.n + g.outputs
-g.parser = KartezioParser()
+g.parser = Parser()
 g.instance_method = MutationAllRandom(len(g.nodes))
 mutation = MutationClassic(len(g.nodes), node_mutation_rate,
                            output_mutation_rate)
