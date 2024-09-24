@@ -1469,12 +1469,6 @@ class IndividualHistory:
         self.fitness["time"] = time
 
 
-def fill(individuals, fitness, times):
-    for i in range(len(individuals)):
-        g.individuals[i].set_values(individuals[i], float(fitness[i]),
-                                    float(times[i]))
-
-
 class PopulationWithElite:
 
     def __init__(self):
