@@ -1313,7 +1313,7 @@ class CallbackSave(KartezioCallback):
 
 
 class GoldmanWrapper:
-    def __init__(self, n_functions):
+    def __init__(self, mutation):
         self.mutation = mutation
 
     def mutate(self, genome):
