@@ -1169,9 +1169,6 @@ class DatasetReader(Directory):
         self.label_name = meta["label_name"]
         self.input_reader = ImageRGBReader(directory=self)
         self.label_reader = RoiPolygonReader(directory=self)
-        return self._read_from_dataframe(dataset_filename, indices)
-
-    def _read_from_dataframe(self, dataset_filename, indices):
         dataframe = self.read(dataset_filename)
         dataframe_training = dataframe[dataframe["set"] == "training"]
         training = self._read_dataset(dataframe_training, indices)
