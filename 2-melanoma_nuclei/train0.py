@@ -1090,24 +1090,24 @@ class MutationAllRandom:
             self.mutate_output(genome, i)
         return genome
 
+class SubSet:
+
+    def __init__(self, dataframe):
+        self.x = []
+        self.y = []
+        self.v = []
+        self.dataframe = dataframe
+
+    def add_item(self, x, y):
+        self.x.append(x)
+        self.y.append(y)
+
+    @property
+    def xy(self):
+        return self.x, self.y
+
 
 class Dataset:
-
-    class SubSet:
-
-        def __init__(self, dataframe):
-            self.x = []
-            self.y = []
-            self.v = []
-            self.dataframe = dataframe
-
-        def add_item(self, x, y):
-            self.x.append(x)
-            self.y.append(y)
-
-        @property
-        def xy(self):
-            return self.x, self.y
 
     def __init__(self,
                  train_set,
@@ -1205,7 +1205,7 @@ class DatasetReader(Directory):
                        indices)
 
     def _read_dataset(self, dataframe, indices=None):
-        dataset = Dataset.SubSet(dataframe)
+        dataset = SubSet(dataframe)
         dataframe.reset_index(inplace=True)
         for row in dataframe.itertuples():
             x = self.input_reader.read(row.input, shape=None)
