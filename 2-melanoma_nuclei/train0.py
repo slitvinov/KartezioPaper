@@ -758,14 +758,8 @@ def kernel_from_parameters(p):
     return rect_kernel(p[0])
 
 
-class NodeImageProcessing(KartezioNode):
-
-    def _to_json_kwargs(self) -> dict:
-        return {}
-
-
 @registry.nodes.add("max")
-class Max(NodeImageProcessing):
+class Max(KartezioNode):
 
     def __init__(self):
         super().__init__("max", "MAX", 2, 0, sources="OpenCV")
@@ -775,7 +769,7 @@ class Max(NodeImageProcessing):
 
 
 @registry.nodes.add("min")
-class Min(NodeImageProcessing):
+class Min(KartezioNode):
 
     def __init__(self):
         super().__init__("min", "MIN", 2, 0, sources="OpenCV")
@@ -785,7 +779,7 @@ class Min(NodeImageProcessing):
 
 
 @registry.nodes.add("mean")
-class Mean(NodeImageProcessing):
+class Mean(KartezioNode):
 
     def __init__(self):
         super().__init__("mean", "MEAN", 2, 0, sources="OpenCV")
@@ -865,7 +859,7 @@ class BitwiseXor(KartezioNode):
 
 
 @registry.nodes.add("sqrt")
-class SquareRoot(NodeImageProcessing):
+class SquareRoot(KartezioNode):
 
     def __init__(self):
         super().__init__("sqrt", "SQRT", 1, 0, sources="OpenCV")
@@ -876,7 +870,7 @@ class SquareRoot(NodeImageProcessing):
 
 
 @registry.nodes.add("pow2")
-class Square(NodeImageProcessing):
+class Square(KartezioNode):
 
     def __init__(self):
         super().__init__("pow2", "POW", 1, 0, sources="OpenCV")
@@ -887,7 +881,7 @@ class Square(NodeImageProcessing):
 
 
 @registry.nodes.add("exp")
-class Exp(NodeImageProcessing):
+class Exp(KartezioNode):
 
     def __init__(self):
         super().__init__("exp", "EXP", 1, 0, sources="OpenCV")
@@ -898,7 +892,7 @@ class Exp(NodeImageProcessing):
 
 
 @registry.nodes.add("log")
-class Log(NodeImageProcessing):
+class Log(KartezioNode):
 
     def __init__(self):
         super().__init__("log", "LOG", 1, 0, sources="Numpy")
@@ -908,7 +902,7 @@ class Log(NodeImageProcessing):
 
 
 @registry.nodes.add("median_blur")
-class MedianBlur(NodeImageProcessing):
+class MedianBlur(KartezioNode):
 
     def __init__(self):
         super().__init__("median_blur", "BLRM", 1, 1, sources="OpenCV")
@@ -919,7 +913,7 @@ class MedianBlur(NodeImageProcessing):
 
 
 @registry.nodes.add("gaussian_blur")
-class GaussianBlur(NodeImageProcessing):
+class GaussianBlur(KartezioNode):
 
     def __init__(self):
         super().__init__("gaussian_blur", "BLRG", 1, 1, sources="OpenCV")
@@ -930,7 +924,7 @@ class GaussianBlur(NodeImageProcessing):
 
 
 @registry.nodes.add("laplacian")
-class Laplacian(NodeImageProcessing):
+class Laplacian(KartezioNode):
 
     def __init__(self):
         super().__init__("laplacian", "LPLC", 1, 0, sources="OpenCV")
@@ -940,7 +934,7 @@ class Laplacian(NodeImageProcessing):
 
 
 @registry.nodes.add("sobel")
-class Sobel(NodeImageProcessing):
+class Sobel(KartezioNode):
 
     def __init__(self):
         super().__init__("sobel", "SOBL", 1, 2, sources="OpenCV")
@@ -954,7 +948,7 @@ class Sobel(NodeImageProcessing):
 
 
 @registry.nodes.add("robert_cross")
-class RobertCross(NodeImageProcessing):
+class RobertCross(KartezioNode):
 
     def __init__(self):
         super().__init__("robert_cross", "RBRT", 1, 1, sources="OpenCV")
@@ -967,7 +961,7 @@ class RobertCross(NodeImageProcessing):
 
 
 @registry.nodes.add("canny")
-class Canny(NodeImageProcessing):
+class Canny(KartezioNode):
 
     def __init__(self):
         super().__init__("canny", "CANY", 1, 2, sources="OpenCV")
@@ -977,7 +971,7 @@ class Canny(NodeImageProcessing):
 
 
 @registry.nodes.add("sharpen")
-class Sharpen(NodeImageProcessing):
+class Sharpen(KartezioNode):
 
     def __init__(self):
         super().__init__("sharpen", "SHRP", 1, 0, sources="OpenCV")
@@ -987,7 +981,7 @@ class Sharpen(NodeImageProcessing):
 
 
 @registry.nodes.add("gabor")
-class GaborFilter(NodeImageProcessing):
+class GaborFilter(KartezioNode):
 
     def __init__(self, ksize=11):
         super().__init__("gabor", "GABR", 1, 2, sources="OpenCV")
@@ -999,7 +993,7 @@ class GaborFilter(NodeImageProcessing):
 
 
 @registry.nodes.add("abs_diff")
-class AbsoluteDifference(NodeImageProcessing):
+class AbsoluteDifference(KartezioNode):
     """from https://github.com/cytosmart-bv/tomni"""
 
     def __init__(self):
@@ -1012,7 +1006,7 @@ class AbsoluteDifference(NodeImageProcessing):
 
 
 @registry.nodes.add("abs_diff2")
-class AbsoluteDifference2(NodeImageProcessing):
+class AbsoluteDifference2(KartezioNode):
 
     def __init__(self):
         super().__init__("abs_diff2", "ABS2", 2, 0, sources="OpenCV")
@@ -1022,7 +1016,7 @@ class AbsoluteDifference2(NodeImageProcessing):
 
 
 @registry.nodes.add("fluo_tophat")
-class FluoTopHat(NodeImageProcessing):
+class FluoTopHat(KartezioNode):
     """from https://github.com/cytosmart-bv/tomni"""
 
     def __init__(self):
@@ -1048,7 +1042,7 @@ class FluoTopHat(NodeImageProcessing):
 
 
 @registry.nodes.add("rel_diff")
-class RelativeDifference(NodeImageProcessing):
+class RelativeDifference(KartezioNode):
     """from https://github.com/cytosmart-bv/tomni"""
 
     def __init__(self):
@@ -1154,7 +1148,7 @@ class FillHoles(KartezioNode):
 
 
 @registry.nodes.add("remove_small_objects")
-class RemoveSmallObjects(NodeImageProcessing):
+class RemoveSmallObjects(KartezioNode):
 
     def __init__(self):
         super().__init__("remove_small_objects",
@@ -1168,7 +1162,7 @@ class RemoveSmallObjects(NodeImageProcessing):
 
 
 @registry.nodes.add("remove_small_holes")
-class RemoveSmallHoles(NodeImageProcessing):
+class RemoveSmallHoles(KartezioNode):
 
     def __init__(self):
         super().__init__("remove_small_holes", "RMSH", 1, 1, sources="Skimage")
@@ -1178,7 +1172,7 @@ class RemoveSmallHoles(NodeImageProcessing):
 
 
 @registry.nodes.add("threshold")
-class Threshold(NodeImageProcessing):
+class Threshold(KartezioNode):
 
     def __init__(self):
         super().__init__("threshold", "TRH", 1, 2, sources="OpenCV")
@@ -1190,7 +1184,7 @@ class Threshold(NodeImageProcessing):
 
 
 @registry.nodes.add("threshold_at_1")
-class ThresholdAt1(NodeImageProcessing):
+class ThresholdAt1(KartezioNode):
 
     def __init__(self):
         super().__init__("threshold_at_1", "TRH1", 1, 1, sources="OpenCV")
@@ -1202,7 +1196,7 @@ class ThresholdAt1(NodeImageProcessing):
 
 
 # @registry.nodes.add("TRHA")
-class ThresholdAdaptive(NodeImageProcessing):
+class ThresholdAdaptive(KartezioNode):
 
     def __init__(self):
         super().__init__("adaptive_threshold", "TRHA", 1, 2, sources="OpenCV")
@@ -1221,7 +1215,7 @@ class ThresholdAdaptive(NodeImageProcessing):
 
 
 @registry.nodes.add("distance_transform")
-class DistanceTransform(NodeImageProcessing):
+class DistanceTransform(KartezioNode):
 
     def __init__(self):
         super().__init__("distance_transform", "DTRF", 1, 1, sources="OpenCV")
@@ -1238,7 +1232,7 @@ class DistanceTransform(NodeImageProcessing):
 
 
 @registry.nodes.add("distance_transform_and_thresh")
-class DistanceTransformAndThresh(NodeImageProcessing):
+class DistanceTransformAndThresh(KartezioNode):
 
     def __init__(self):
         super().__init__("distance_transform_and_thresh",
@@ -1260,7 +1254,7 @@ class DistanceTransformAndThresh(NodeImageProcessing):
 
 
 @registry.nodes.add("inrange_bin")
-class BinaryInRange(NodeImageProcessing):
+class BinaryInRange(KartezioNode):
 
     def __init__(self):
         super().__init__("inrange_bin", "BRNG", 1, 2, sources="OpenCV")
@@ -1272,7 +1266,7 @@ class BinaryInRange(NodeImageProcessing):
 
 
 @registry.nodes.add("inrange")
-class InRange(NodeImageProcessing):
+class InRange(KartezioNode):
 
     def __init__(self):
         super().__init__("inrange", "RNG", 1, 2, sources="OpenCV")
