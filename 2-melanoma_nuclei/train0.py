@@ -1743,13 +1743,6 @@ class PopulationWithElite(KartezioPopulation):
         population_history.fill(self.individuals, self.fitness, self.time)
         return population_history
 
-
-def reproduction():
-    elite = g.population.get_elite()
-    for i in range(1, g._lambda + 1):
-        g.population[i] = elite.copy()
-
-
 def evaluation(y_true, y_pred):
     fitness = g.fitness.call(y_true, y_pred)
     g.population.set_fitness(fitness)
@@ -1809,7 +1802,9 @@ while not (current_generation >= g.generations
     notify(current_generation, Event.START_STEP)
     new_elite, fitness = g.population.get_best_individual()
     g.population.set_elite(new_elite)
-    reproduction()
+    elite = g.population.get_elite()
+    for i in range(1, g._lambda + 1):
+        g.population[i] = elite.copy()
     for i in range(1, g._lambda + 1):
         g.population[i] = g.mutation_method.mutate(g.population[i])
     y_pred = g.parser.parse_population(g.population, x)
