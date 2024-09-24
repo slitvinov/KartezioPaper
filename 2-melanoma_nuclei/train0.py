@@ -1499,38 +1499,8 @@ class Dataset:
 
 
 class DatasetMeta:
-
     @staticmethod
-    def write(
-        filepath,
-        name,
-        input_type,
-        input_format,
-        label_type,
-        label_format,
-        label_name,
-        scale=1.0,
-        mode="dataframe",
-        meta_filename=JSON_META,
-    ):
-        json_data = {
-            "name": name,
-            "scale": scale,
-            "label_name": label_name,
-            "mode": mode,
-            "input": {
-                "type": input_type,
-                "format": input_format
-            },
-            "label": {
-                "type": label_type,
-                "format": label_format
-            },
-        }
-        json_write(filepath + "/" + meta_filename, json_data)
-
-    @staticmethod
-    def read(filepath, meta_filename):
+    def read0(filepath, meta_filename):
         return json_read(filepath / meta_filename)
 
 
@@ -1595,7 +1565,7 @@ class DatasetReader(Directory):
         super().__post_init__(path)
 
     def _read_meta(self, meta_filename):
-        meta = DatasetMeta.read(self._path, meta_filename=meta_filename)
+        meta = DatasetMeta.read0(self._path, meta_filename=meta_filename)
         self.name = meta["name"]
         self.scale = meta["scale"]
         self.mode = meta["mode"]
