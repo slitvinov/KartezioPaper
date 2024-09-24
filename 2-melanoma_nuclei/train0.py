@@ -1098,10 +1098,6 @@ class SubSet:
         self.v = []
         self.dataframe = dataframe
 
-    def add_item(self, x, y):
-        self.x.append(x)
-        self.y.append(y)
-
 class Dataset:
 
     def __init__(self,
@@ -1207,7 +1203,8 @@ class DatasetReader(Directory):
             y = self.label_reader.read(row.label, shape=x.shape)
             y = y.datalist
             dataset.n_inputs = x.size
-            dataset.add_item(x.datalist, y)
+            dataset.x.append(x.datalist)
+            dataset.y.append(y)
         return dataset
 
 class G:
