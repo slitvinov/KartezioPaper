@@ -558,6 +558,7 @@ class KartezioMutation:
     def mutate_output(self, genome, idx):
         self.write_output_connection(genome, idx, self.random_output)
 
+
 @jit(nopython=True)
 def _label_overlap(x, y):
     x = x.ravel()
@@ -1625,15 +1626,15 @@ class IndividualHistory:
 
 class PopulationHistory:
 
-    def __init__(self, n_individuals):
+    def __init__(self):
         g.individuals = {}
-        for i in range(n_individuals):
+        for i in range(g._lambda + 1):
             g.individuals[i] = IndividualHistory()
 
     def fill(self, individuals, fitness, times):
         for i in range(len(individuals)):
             g.individuals[i].set_values(individuals[i], float(fitness[i]),
-                                           float(times[i]))
+                                        float(times[i]))
 
     def get_best_fitness(self):
         return (
@@ -1646,6 +1647,7 @@ class PopulationHistory:
 
 
 class PopulationWithElite:
+
     def __init__(self):
         self.individuals = [None] * (g._lambda + 1)
         self._fitness = {
@@ -1679,7 +1681,6 @@ class PopulationWithElite:
         return np.array(score_list,
                         dtype=[("fitness", float), ("time", float)])
 
-
     def set_elite(self, individual):
         self[0] = individual
 
@@ -1692,9 +1693,10 @@ class PopulationWithElite:
         return best_individual, self.fitness[best_fitness_idx]
 
     def history(self):
-        population_history = PopulationHistory(g._lambda + 1)
+        population_history = PopulationHistory()
         population_history.fill(self.individuals, self.fitness, self.time)
         return population_history
+
 
 class G:
     pass
