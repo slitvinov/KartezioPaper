@@ -1341,10 +1341,6 @@ class Dataset:
         def xy(self):
             return self.x, self.y
 
-        @property
-        def xyv(self):
-            return self.x, self.y, self.v
-
     def __init__(self,
                  train_set,
                  test_set,
@@ -1360,49 +1356,12 @@ class Dataset:
         self.indices = indices
 
     @property
-    def train_x(self):
-        return self.train_set.x
-
-    @property
-    def train_y(self):
-        return self.train_set.y
-
-    @property
-    def train_v(self):
-        return self.train_set.v
-
-    @property
-    def test_x(self):
-        return self.test_set.x
-
-    @property
-    def test_y(self):
-        return self.test_set.y
-
-    @property
-    def test_v(self):
-        return self.test_set.v
-
-    @property
     def train_xy(self):
         return self.train_set.xy
 
     @property
     def test_xy(self):
         return self.test_set.xy
-
-    @property
-    def train_xyv(self):
-        return self.train_set.xyv
-
-    @property
-    def test_xyv(self):
-        return self.test_set.xyv
-
-    @property
-    def split(self):
-        return self.train_x, self.train_y, self.test_x, self.test_y
-
 
 @dataclass
 class DataItem:
