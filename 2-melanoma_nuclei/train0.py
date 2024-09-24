@@ -1446,22 +1446,13 @@ class PopulationWithElite:
 
     def __init__(self):
         self.individuals = [None] * (g._lambda + 1)
-        self._fitness = {
-            "fitness": np.zeros(g._lambda + 1),
-        }
+        self.fitness = np.zeros(g._lambda + 1)
 
     def __getitem__(self, item):
         return self.individuals.__getitem__(item)
 
     def __setitem__(self, key, value):
         self.individuals.__setitem__(key, value)
-
-    def set_fitness(self, fitness):
-        self._fitness["fitness"] = fitness
-
-    @property
-    def fitness(self):
-        return self._fitness["fitness"]
 
     @property
     def score(self):
@@ -1474,16 +1465,18 @@ class PopulationWithElite:
         return self[0]
 
     def get_best_individual(self):
-        best_fitness_idx = np.argsort(self.score)[0]
-        best_individual = self[best_fitness_idx]
-        return best_individual, self.fitness[best_fitness_idx]
+        bestfitness_idx = np.argsort(self.score)[0]
+        best_individual = self[bestfitness_idx]
+        return best_individual, self.fitness[bestfitness_idx]
 
     def history(self):
         g.individuals = {}
         for i in range(g._lambda + 1):
             g.individuals[i] = IndividualHistory()
         for i in range(len(g.individuals)):
-            g.individuals[i].set_values(self.individuals[i], float(self.fitness[i]))
+            sequence = self.individuals[i]
+            fitness = self.fitness[i]
+            g.individuals[i].set_values(sequence, fitness)
 
 class G:
     pass
@@ -1532,7 +1525,7 @@ for i in range(g._lambda + 1):
     zero = np.zeros((g.h, g.w), dtype=np.uint8)
     g.population[i] = g.instance_method.mutate(zero)
 y_pred = g.parser.parse_population(g.population, x)
-g.population.set_fitness(g.fitness.call(y, y_pred))
+g.population.fitness = g.fitness.call(y, y_pred)
 notify(0, Event.START_LOOP, force=True)
 while not (current_generation >= g.generations
            or g.population.fitness[0] == 0.0):
@@ -1545,7 +1538,7 @@ while not (current_generation >= g.generations
     for i in range(1, g._lambda + 1):
         g.population[i] = g.mutation_method.mutate(g.population[i])
     y_pred = g.parser.parse_population(g.population, x)
-    g.population.set_fitness(g.fitness.call(y, y_pred))
+    g.population.fitness = g.fitness.call(y, y_pred)
     current_generation += 1
     notify(current_generation, Event.END_STEP)
 notify(current_generation, Event.END_LOOP, force=True)
