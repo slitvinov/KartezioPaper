@@ -1222,9 +1222,6 @@ class PopulationWithElite:
         self.individuals = [None] * (g._lambda + 1)
         self.fitness = np.zeros(g._lambda + 1)
 
-    def set_elite(self, individual):
-        self.individuals[0] = individual
-
     def get_elite(self):
         return self.individuals[0]
 
@@ -1279,7 +1276,7 @@ g.population.fitness = g.fit.call(y, y_pred)
 print(f"{0:08} {g.population.fitness[0]:.16e}")
 while current_generation < g.generations:
     new_elite, fitness = g.population.get_best_individual()
-    g.population.set_elite(new_elite)
+    g.population.individuals[0] = new_elite
     elite = g.population.get_elite()
     for i in range(1, g._lambda + 1):
         g.population.individuals[i] = elite.copy()
