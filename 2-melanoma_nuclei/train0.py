@@ -1451,33 +1451,29 @@ class MutationAllRandom(KartezioMutation):
 class ModelCGP:
 
     def __init__(self):
-        self._observers = []
+        self.observers = []
         self.callbacks = []
 
     def attach(self, observer):
-        self._observers.append(observer)
-
-    def notify(self, event):
-        for observer in self._observers:
-            observer.update(event)
+        self.observers.append(observer)
 
     def fit(self, x, y):
-        g.current_generation = 0
+        current_generation = 0
         g.strategy.initialization()
         y_pred = g.parser.parse_population(g.strategy.population, x)
         g.strategy.evaluation(y, y_pred)
         self._notify(0, Event.START_LOOP, force=True)
-        while not (g.current_generation >= g.generations or g.strategy.population.fitness[0] == 0.0):
-            self._notify(g.current_generation,
+        while not (current_generation >= g.generations or g.strategy.population.fitness[0] == 0.0):
+            self._notify(current_generation,
                          Event.START_STEP)
             g.strategy.selection()
             g.strategy.reproduction()
             g.strategy.mutation()
             y_pred = g.parser.parse_population(g.strategy.population, x)
             g.strategy.evaluation(y, y_pred)
-            g.current_generation += 1
-            self._notify(g.current_generation, Event.END_STEP)
-        self._notify(a.current_generation,
+            current_generation += 1
+            self._notify(current_generation, Event.END_STEP)
+        self._notify(current_generation,
                      Event.END_LOOP,
                      force=True)
         history = g.strategy.population.history()
@@ -1491,7 +1487,8 @@ class ModelCGP:
             "content": g.strategy.population.history(),
             "force": force,
         }
-        self.notify(event)
+        for observer in self.observers:
+            observer.update(event)
 
 
 class Dataset:
