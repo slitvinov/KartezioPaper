@@ -1120,29 +1120,6 @@ def read1(filename, shape):
     return DataItem([label_mask], shape, len(polygons))
 
 
-class DatasetReader:
-
-    def read_dataset(self):
-
-        meta = json_read("dataset/META.json")
-        self.name = meta["name"]
-        self.label_name = meta["label_name"]
-        dataframe = pd.read_csv("dataset/dataset.csv")
-        dataframe_training = dataframe[dataframe["set"] == "training"]
-        training = SubSet(dataframe_training)
-        dataframe_training.reset_index(inplace=True)
-        for row in dataframe_training.itertuples():
-            x = read0(row.input)
-            y = read1(row.label, shape=x.shape)
-            y = y.datalist
-            training.x.append(x.datalist)
-            training.y.append(y)
-        input_sizes = []
-        [input_sizes.append(len(xi)) for xi in training.x]
-        input_sizes = np.array(input_sizes)
-        inputs = int(input_sizes[0])
-        return Dataset(training, self.name, self.label_name, inputs)
-
 class G:
     pass
 
@@ -1175,8 +1152,24 @@ g.mutation_method = GoldmanWrapper(mutation)
 g.fit = FitnessAP()
 g.individuals = [None] * (g._lambda + 1)
 g.fitness = np.zeros(g._lambda + 1)
-g.dataset_reader = DatasetReader()
-g.dataset = g.dataset_reader.read_dataset()
+meta = json_read("dataset/META.json")
+name = meta["name"]
+label_name = meta["label_name"]
+dataframe = pd.read_csv("dataset/dataset.csv")
+dataframe_training = dataframe[dataframe["set"] == "training"]
+training = SubSet(dataframe_training)
+dataframe_training.reset_index(inplace=True)
+for row in dataframe_training.itertuples():
+    x = read0(row.input)
+    y = read1(row.label, shape=x.shape)
+    y = y.datalist
+    training.x.append(x.datalist)
+    training.y.append(y)
+input_sizes = []
+[input_sizes.append(len(xi)) for xi in training.x]
+input_sizes = np.array(input_sizes)
+inputs = int(input_sizes[0])
+g.dataset = Dataset(training, name, label_name, inputs)
 x = g.dataset.train_set.x
 y = g.dataset.train_set.y
 current_generation = 0
