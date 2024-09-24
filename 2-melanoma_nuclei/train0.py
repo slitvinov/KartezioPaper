@@ -146,15 +146,6 @@ def _parse_one(genome, graphs_list, x):
     output_map = _x_to_output_map(genome, graphs_list, x)
     return [output_map[output_gene[1]] for output_gene in read_outputs(genome)]
 
-
-def parse_population(x):
-    y_pred = []
-    for i in range(len(g.individuals)):
-        y = parse(g.individuals[i], x)
-        y_pred.append(y)
-    return y_pred
-
-
 def parse(genome, x):
     all_y_pred = []
     graphs = parse_to_graphs(genome)
@@ -1165,15 +1156,16 @@ for row in dataframe_training.itertuples():
     y = y.datalist
     training.x.append(x.datalist)
     training.y.append(y)
-x = training.x
-y = training.y
-current_generation = 0
 for i in range(g._lambda + 1):
     zero = np.zeros((g.h, g.w), dtype=np.uint8)
     g.individuals[i] = g.instance_method.mutate(zero)
-y_pred = parse_population(x)
-g.fitness = g.fit.call(y, y_pred)
+y_pred = []
+for i in range(len(g.individuals)):
+    y = parse(g.individuals[i], training.x)
+    y_pred.append(y)
+g.fitness = g.fit.call(training.y, y_pred)
 print(f"{0:08} {g.fitness[0]:.16e}")
+current_generation = 0
 while current_generation < g.generations:
     i = np.argmin(g.fitness)
     elite = g.individuals[i]
@@ -1182,7 +1174,10 @@ while current_generation < g.generations:
         g.individuals[i] = elite.copy()
     for i in range(1, g._lambda + 1):
         g.individuals[i] = g.mutation_method.mutate(g.individuals[i])
-    y_pred = parse_population(x)
-    g.fitness = g.fit.call(y, y_pred)
+    y_pred = []
+    for i in range(len(g.individuals)):
+        y = parse(g.individuals[i], training.x)
+        y_pred.append(y)
+    g.fitness = g.fit.call(training.y, y_pred)
     current_generation += 1
     print(f"{current_generation:08} {g.fitness[0]:.16e}")
