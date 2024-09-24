@@ -1000,9 +1000,7 @@ class MutationClassic:
 
 class MutationAllRandom:
 
-    def __init__(self, n_functions):
-        super().__init__()
-        self.n_functions = n_functions
+    def __init__(self):
         self.parameter_max_value = 256
 
     def write_function(self, genome, node, function_id):
@@ -1026,7 +1024,7 @@ class MutationAllRandom:
 
     @property
     def random_functions(self):
-        return np.random.randint(self.n_functions)
+        return np.random.randint(len(g.nodes))
 
     @property
     def random_output(self):
@@ -1136,7 +1134,7 @@ g.para_idx = 1 + g.arity
 g.w = 1 + g.arity + g.parameters
 g.h = g.inputs + g.n + g.outputs
 g.metric = MetricCellpose(thresholds=0.5)
-g.instance_method = MutationAllRandom(len(g.nodes))
+g.instance_method = MutationAllRandom()
 mutation = MutationClassic(len(g.nodes), node_mutation_rate,
                            output_mutation_rate)
 g.mutation_method = GoldmanWrapper(mutation)
