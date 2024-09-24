@@ -32,6 +32,7 @@ import os
 import pandas as pd
 import random
 
+
 @dataclass
 class Directory:
     path: InitVar[str]
@@ -121,6 +122,7 @@ class Node:
             "kwargs": self._to_json_kwargs(),
         }
 
+
 class Parser:
 
     def read_function(self, genome, node):
@@ -203,7 +205,7 @@ class Parser:
     def parse_population(self, population, x):
         y_pred = []
         for i in range(len(population.individuals)):
-            y  = self.parse(population.individuals[i], x)
+            y = self.parse(population.individuals[i], x)
             y_pred.append(y)
         return y_pred
 
@@ -1160,9 +1162,8 @@ class MutationAllRandom:
 
 
 def notify(n):
-    g.population.history()
-    fitness = g.individuals[0].fitness
-    print(f"{n:08} {fitness:.16f}")
+    print(f"{n:08} {g.population.fitness[0]:.16e}")
+
 
 class Dataset:
 
@@ -1200,6 +1201,7 @@ class Dataset:
     def train_xy(self):
         return self.train_set.xy
 
+
 @dataclass
 class DataItem:
     datalist: List
@@ -1219,9 +1221,7 @@ class ImageRGBReader:
     def read(self, filename, shape):
         filepath = str(self.directory / filename)
         image = imread_color(filepath, rgb=False)
-        return DataItem(image_split(image),
-                        image.shape[:2],
-                        None)
+        return DataItem(image_split(image), image.shape[:2], None)
 
 
 class RoiPolygonReader:
@@ -1243,6 +1243,7 @@ class RoiPolygonReader:
 
 
 class DatasetReader(Directory):
+
     def __post_init__(self, path):
         super().__post_init__(path)
 
@@ -1289,11 +1290,6 @@ class DatasetReader(Directory):
         return dataset
 
 
-class IndividualHistory:
-
-    def __init__(self):
-        self.fitness = 0.0
-
 class PopulationWithElite:
 
     def __init__(self):
@@ -1321,15 +1317,6 @@ class PopulationWithElite:
         best_individual = self[bestfitness_idx]
         return best_individual, self.fitness[bestfitness_idx]
 
-    def history(self):
-        g.individuals = {}
-        for i in range(g._lambda + 1):
-            g.individuals[i] = IndividualHistory()
-        for i in range(len(g.individuals)):
-            sequence = self.individuals[i]
-            fitness = self.fitness[i]
-            # g.individuals[i].sequence = sequence
-            g.individuals[i].fitness = fitness
 
 class G:
     pass
