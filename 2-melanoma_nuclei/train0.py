@@ -103,86 +103,83 @@ class Node:
         self.sources = sources
 
 
-class Parser:
+def read_function(genome, node):
+    return genome[g.inputs + node, 0]
 
-    def read_function(self, genome, node):
-        return genome[g.inputs + node, 0]
+def read_active_connections(genome, node, active_connections):
+    return genome[
+        g.inputs + node,
+        1:1 + active_connections,
+    ]
 
-    def read_active_connections(self, genome, node, active_connections):
-        return genome[
-            g.inputs + node,
-            1:1 + active_connections,
-        ]
+def read_parameters(genome, node):
+    return genome[g.inputs + node, g.para_idx:]
 
-    def read_parameters(self, genome, node):
-        return genome[g.inputs + node, g.para_idx:]
+def read_outputs(genome):
+    return genome[g.out_idx:, :]
 
-    def read_outputs(self, genome):
-        return genome[g.out_idx:, :]
+def _parse_one_graph(genome, graph_source):
+    next_indices = graph_source.copy()
+    output_tree = graph_source.copy()
+    while next_indices:
+        next_index = next_indices.pop()
+        if next_index < g.inputs:
+            continue
+        function_index = read_function(genome, next_index - g.inputs)
+        active_connections = arity_of(function_index)
+        next_connections = set(
+            read_active_connections(genome, next_index - g.inputs,
+                                         active_connections))
+        next_indices = next_indices.union(next_connections)
+        output_tree = output_tree.union(next_connections)
+    return sorted(list(output_tree))
 
-    def _parse_one_graph(self, genome, graph_source):
-        next_indices = graph_source.copy()
-        output_tree = graph_source.copy()
-        while next_indices:
-            next_index = next_indices.pop()
-            if next_index < g.inputs:
+def parse_to_graphs(genome):
+    outputs = read_outputs(genome)
+    graphs_list = [
+        _parse_one_graph(genome, {output[1]}) for output in outputs
+    ]
+    return graphs_list
+
+def _x_to_output_map(genome, graphs_list, x):
+    output_map = {i: x[i].copy() for i in range(g.inputs)}
+    for graph in graphs_list:
+        for node in graph:
+            if node < g.inputs:
                 continue
-            function_index = self.read_function(genome, next_index - g.inputs)
-            active_connections = arity_of(function_index)
-            next_connections = set(
-                self.read_active_connections(genome, next_index - g.inputs,
-                                             active_connections))
-            next_indices = next_indices.union(next_connections)
-            output_tree = output_tree.union(next_connections)
-        return sorted(list(output_tree))
+            node_index = node - g.inputs
+            function_index = read_function(genome, node_index)
+            arity = arity_of(function_index)
+            connections = read_active_connections(
+                genome, node_index, arity)
+            inputs = [output_map[c] for c in connections]
+            p = read_parameters(genome, node_index)
+            value = execute(function_index, inputs, p)
+            output_map[node] = value
+    return output_map
 
-    def parse_to_graphs(self, genome):
-        outputs = self.read_outputs(genome)
-        graphs_list = [
-            self._parse_one_graph(genome, {output[1]}) for output in outputs
-        ]
-        return graphs_list
+def _parse_one(genome, graphs_list, x):
+    output_map = _x_to_output_map(genome, graphs_list, x)
+    return [
+        output_map[output_gene[1]]
+        for output_gene in read_outputs(genome)
+    ]
 
-    def _x_to_output_map(self, genome, graphs_list, x):
-        output_map = {i: x[i].copy() for i in range(g.inputs)}
-        for graph in graphs_list:
-            for node in graph:
-                if node < g.inputs:
-                    continue
-                node_index = node - g.inputs
-                function_index = self.read_function(genome, node_index)
-                arity = arity_of(function_index)
-                connections = self.read_active_connections(
-                    genome, node_index, arity)
-                inputs = [output_map[c] for c in connections]
-                p = self.read_parameters(genome, node_index)
-                value = execute(function_index, inputs, p)
-                output_map[node] = value
-        return output_map
+def parse_population(x):
+    y_pred = []
+    for i in range(len(g.individuals)):
+        y = parse(g.individuals[i], x)
+        y_pred.append(y)
+    return y_pred
 
-    def _parse_one(self, genome, graphs_list, x):
-        output_map = self._x_to_output_map(genome, graphs_list, x)
-        return [
-            output_map[output_gene[1]]
-            for output_gene in self.read_outputs(genome)
-        ]
-
-    def parse_population(self, x):
-        y_pred = []
-        for i in range(len(g.individuals)):
-            y = self.parse(g.individuals[i], x)
-            y_pred.append(y)
-        return y_pred
-
-    def parse(self, genome, x):
-        all_y_pred = []
-        graphs = self.parse_to_graphs(genome)
-        # for each image
-        for xi in x:
-            y_pred = self._parse_one(genome, graphs, xi)
-            y_pred = g.endpoint.call(y_pred)
-            all_y_pred.append(y_pred)
-        return all_y_pred
+def parse(genome, x):
+    all_y_pred = []
+    graphs = parse_to_graphs(genome)
+    for xi in x:
+        y_pred = _parse_one(genome, graphs, xi)
+        y_pred = g.endpoint.call(y_pred)
+        all_y_pred.append(y_pred)
+    return all_y_pred
 
 
 class FitnessAP(Node):
@@ -932,10 +929,10 @@ class GoldmanWrapper:
 
     def mutate(self, genome):
         changed = False
-        active_nodes = g.parser.parse_to_graphs(genome)
+        active_nodes = parse_to_graphs(genome)
         while not changed:
             genome = self.mutation.mutate(genome)
-            new_active_nodes = g.parser.parse_to_graphs(genome)
+            new_active_nodes = parse_to_graphs(genome)
             changed = active_nodes != new_active_nodes
         return genome
 
@@ -1213,7 +1210,7 @@ g.out_idx = g.inputs + g.n
 g.para_idx = 1 + g.arity
 g.w = 1 + g.arity + g.parameters
 g.h = g.inputs + g.n + g.outputs
-g.parser = Parser()
+# g.parser = Parser()
 g.metric = MetricCellpose(thresholds=0.5)
 g.instance_method = MutationAllRandom(len(g.nodes))
 mutation = MutationClassic(len(g.nodes), node_mutation_rate,
@@ -1232,7 +1229,7 @@ current_generation = 0
 for i in range(g._lambda + 1):
     zero = np.zeros((g.h, g.w), dtype=np.uint8)
     g.individuals[i] = g.instance_method.mutate(zero)
-y_pred = g.parser.parse_population(x)
+y_pred = parse_population(x)
 g.fitness = g.fit.call(y, y_pred)
 print(f"{0:08} {g.fitness[0]:.16e}")
 while current_generation < g.generations:
@@ -1243,7 +1240,7 @@ while current_generation < g.generations:
         g.individuals[i] = elite.copy()
     for i in range(1, g._lambda + 1):
         g.individuals[i] = g.mutation_method.mutate(g.individuals[i])
-    y_pred = g.parser.parse_population(x)
+    y_pred = parse_population(x)
     g.fitness = g.fit.call(y, y_pred)
     current_generation += 1
     print(f"{current_generation:08} {g.fitness[0]:.16e}")
