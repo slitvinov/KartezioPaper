@@ -1452,7 +1452,6 @@ class PopulationWithElite:
         self.individuals = [None] * (g._lambda + 1)
         self._fitness = {
             "fitness": np.zeros(g._lambda + 1),
-            "time": np.zeros(g._lambda + 1)
         }
 
     def __getitem__(self, item):
