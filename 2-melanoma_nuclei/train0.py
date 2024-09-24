@@ -96,7 +96,6 @@ class Registry:
     def __init__(self):
         self.nodes = self.SubRegistry()
         self.stackers = self.SubRegistry()
-        self.readers = self.SubRegistry()
 
 
 registry = Registry()
@@ -1486,7 +1485,6 @@ class DataItem:
         return len(self.datalist)
 
 
-@registry.readers.add("image_rgb")
 class ImageRGBReader:
 
     def __init__(self, directory, scale=1.0):
@@ -1501,7 +1499,6 @@ class ImageRGBReader:
                         None,
                         visual=rgb2bgr(image))
 
-@registry.readers.add("roi_polygon")
 class RoiPolygonReader:
 
     def __init__(self, directory, scale=1.0):
@@ -1537,7 +1534,6 @@ class DatasetReader(Directory):
         self.label_name = meta["label_name"]
         input_reader_name = f"{meta['input']['type']}_{meta['input']['format']}"
         label_reader_name = f"{meta['label']['type']}_{meta['label']['format']}"
-        print(input_reader_name)
         self.input_reader = ImageRGBReader(directory=self, scale=self.scale)
         self.label_reader = RoiPolygonReader(directory=self, scale=self.scale)
 
