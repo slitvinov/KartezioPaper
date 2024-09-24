@@ -897,19 +897,14 @@ class EndpointWatershed(Node):
         }
 
 
-class GoldmanWrapper:
-
-    def __init__(self, mutation):
-        self.mutation = mutation
-
-    def mutate(self, genome):
-        changed = False
-        active_nodes = parse_to_graphs(genome)
-        while not changed:
-            genome = self.mutation.mutate(genome)
-            new_active_nodes = parse_to_graphs(genome)
-            changed = active_nodes != new_active_nodes
-        return genome
+def mutate0(genome):
+    changed = False
+    active_nodes = parse_to_graphs(genome)
+    while not changed:
+        genome = g.mutation.mutate(genome)
+        new_active_nodes = parse_to_graphs(genome)
+        changed = active_nodes != new_active_nodes
+    return genome
 
 
 class MutationClassic:
@@ -1122,8 +1117,7 @@ g.w = 1 + g.arity + g.parameters
 g.h = g.inputs + g.n + g.outputs
 g.metric = MetricCellpose(thresholds=0.5)
 g.instance_method = MutationAllRandom()
-mutation = MutationClassic()
-g.mutation_method = GoldmanWrapper(mutation)
+g.mutation = MutationClassic()
 g.fit = FitnessAP()
 g.individuals = [None] * (g._lambda + 1)
 g.fitness = np.zeros(g._lambda + 1)
@@ -1158,7 +1152,7 @@ while current_generation < g.generations:
     for i in range(1, g._lambda + 1):
         g.individuals[i] = elite.copy()
     for i in range(1, g._lambda + 1):
-        g.individuals[i] = g.mutation_method.mutate(g.individuals[i])
+        g.individuals[i] = mutate0(g.individuals[i])
     y_pred = []
     for i in range(len(g.individuals)):
         y = parse(g.individuals[i], x0)
