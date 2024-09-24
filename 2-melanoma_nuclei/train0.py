@@ -306,9 +306,6 @@ class KartezioParser:
     def read_function(self, genome, node):
         return genome[g.inputs + node, 0]
 
-    def read_connections(self, genome, node):
-        return genome[g.inputs + node, 1:g.para_idx]
-
     def read_active_connections(self, genome, node, active_connections):
         return genome[
             g.inputs + node,
