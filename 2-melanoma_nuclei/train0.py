@@ -1402,11 +1402,7 @@ class RoiPolygonReader:
         return DataItem([label_mask], shape, len(polygons))
 
 
-@dataclass
 class DatasetReader(Directory):
-    counting: bool = False
-    preview_dir: Directory = field(init=False)
-
     def __post_init__(self, path):
         super().__post_init__(path)
 
@@ -1552,7 +1548,7 @@ mutation = MutationClassic(len(g.nodes), node_mutation_rate,
 g.mutation_method = GoldmanWrapper(mutation)
 g.fitness = FitnessAP()
 g.population = PopulationWithElite()
-g.dataset_reader = DatasetReader(g.path, counting=False)
+g.dataset_reader = DatasetReader(g.path)
 g.dataset = g.dataset_reader.read_dataset(dataset_filename=CSV_DATASET,
                                           meta_filename=JSON_META,
                                           indices=None)
