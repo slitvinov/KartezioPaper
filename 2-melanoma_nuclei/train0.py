@@ -1469,17 +1469,10 @@ class IndividualHistory:
         self.fitness["time"] = time
 
 
-class PopulationHistory:
-
-    def __init__(self):
-        g.individuals = {}
-        for i in range(g._lambda + 1):
-            g.individuals[i] = IndividualHistory()
-
-    def fill(self, individuals, fitness, times):
-        for i in range(len(individuals)):
-            g.individuals[i].set_values(individuals[i], float(fitness[i]),
-                                        float(times[i]))
+def fill(individuals, fitness, times):
+    for i in range(len(individuals)):
+        g.individuals[i].set_values(individuals[i], float(fitness[i]),
+                                    float(times[i]))
 
 
 class PopulationWithElite:
@@ -1529,10 +1522,10 @@ class PopulationWithElite:
         return best_individual, self.fitness[best_fitness_idx]
 
     def history(self):
-        population_history = PopulationHistory()
-        population_history.fill(self.individuals, self.fitness, self.time)
-        return population_history
-
+        g.individuals = {}
+        for i in range(g._lambda + 1):
+            g.individuals[i] = IndividualHistory()
+        fill(self.individuals, self.fitness, self.time)
 
 class G:
     pass
