@@ -1448,33 +1448,6 @@ class MutationAllRandom(KartezioMutation):
             self.mutate_output(genome, i)
         return genome
 
-
-class ModelGA:
-
-    def __init__(self):
-        self.current_generation = 0
-
-    def initialization(self):
-        g.strategy.initialization()
-
-    def is_satisfying(self):
-        end_of_generations = self.current_generation >= g.generations
-        best_fitness_reached = g.strategy.population.fitness[0] == 0.0
-        return end_of_generations or best_fitness_reached
-
-    def selection(self):
-        g.strategy.selection()
-
-    def reproduction(self):
-        g.strategy.reproduction()
-
-    def mutation(self):
-        g.strategy.mutation()
-
-    def evaluation(self, y_true, y_pred):
-        g.strategy.evaluation(y_true, y_pred)
-
-
 class ModelCGP:
 
     def __init__(self):
@@ -1489,21 +1462,21 @@ class ModelCGP:
             observer.update(event)
 
     def fit(self, x, y):
-        a = ModelGA()
-        a.initialization()
+        g.current_generation = 0
+        g.strategy.initialization()
         y_pred = g.parser.parse_population(g.strategy.population, x)
-        a.evaluation(y, y_pred)
+        g.strategy.evaluation(y, y_pred)
         self._notify(0, Event.START_LOOP, force=True)
-        while not a.is_satisfying():
-            self._notify(a.current_generation,
+        while not (g.current_generation >= g.generations or g.strategy.population.fitness[0] == 0.0):
+            self._notify(g.current_generation,
                          Event.START_STEP)
-            a.selection()
-            a.reproduction()
-            a.mutation()
+            g.strategy.selection()
+            g.strategy.reproduction()
+            g.strategy.mutation()
             y_pred = g.parser.parse_population(g.strategy.population, x)
-            a.evaluation(y, y_pred)
-            a.current_generation += 1
-            self._notify(a.current_generation, Event.END_STEP)
+            g.strategy.evaluation(y, y_pred)
+            g.current_generation += 1
+            self._notify(g.current_generation, Event.END_STEP)
         self._notify(a.current_generation,
                      Event.END_LOOP,
                      force=True)
