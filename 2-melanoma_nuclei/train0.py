@@ -1179,11 +1179,8 @@ class DatasetReader(Directory):
         dataframe = self.read(dataset_filename)
         dataframe_training = dataframe[dataframe["set"] == "training"]
         training = self._read_dataset(dataframe_training, indices)
-        dataframe_testing = dataframe[dataframe["set"] == "testing"]
-        testing = self._read_dataset(dataframe_testing)
         input_sizes = []
         [input_sizes.append(len(xi)) for xi in training.x]
-        [input_sizes.append(len(xi)) for xi in testing.x]
         input_sizes = np.array(input_sizes)
         inputs = int(input_sizes[0])
         return Dataset(training, self.name, self.label_name, inputs,
