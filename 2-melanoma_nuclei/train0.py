@@ -33,8 +33,6 @@ import os
 import pandas as pd
 import random
 import simplejson
-import time
-
 
 @dataclass
 class Directory:
@@ -291,24 +289,19 @@ class KartezioParser:
     def parse_population(self, population, x):
         y_pred = []
         for i in range(len(population.individuals)):
-            y, t = self.parse(population.individuals[i], x)
-            population.set_time(i, t)
+            y  = self.parse(population.individuals[i], x)
             y_pred.append(y)
         return y_pred
 
     def parse(self, genome, x):
         all_y_pred = []
-        all_times = []
         graphs = self.parse_to_graphs(genome)
         # for each image
         for xi in x:
-            start_time = time.time()
             y_pred = self._parse_one(genome, graphs, xi)
             y_pred = g.endpoint.call(y_pred)
-            all_times.append(time.time() - start_time)
             all_y_pred.append(y_pred)
-        whole_time = np.mean(np.array(all_times))
-        return all_y_pred, whole_time
+        return all_y_pred
 
 
 class KartezioCallback:
@@ -1467,9 +1460,6 @@ class PopulationWithElite:
 
     def __setitem__(self, key, value):
         self.individuals.__setitem__(key, value)
-
-    def set_time(self, individual, value):
-        self._fitness["time"][individual] = value
 
     def set_fitness(self, fitness):
         self._fitness["fitness"] = fitness
