@@ -200,13 +200,6 @@ class KartezioNode:
             "kwargs": self._to_json_kwargs(),
         }
 
-class KartezioEndpoint(KartezioNode):
-
-    def __init__(self, name: str, symbol: str, arity: int, outputs_keys: list):
-        super().__init__(name, symbol, arity, 0)
-        self.outputs_keys = outputs_keys
-
-
 class KartezioParser:
 
     def read_function(self, genome, node):
@@ -1046,10 +1039,14 @@ def execute(name, x, args):
     return g.nodes[name].call(x, args)
 
 
-class EndpointWatershed(KartezioEndpoint):
+class EndpointWatershed(KartezioNode):
 
     def __init__(self, use_dt=False, markers_distance=21, markers_area=None):
         super().__init__("Marker-Based Watershed", "WSHD", 2, [])
+        self.name = "Marker-Based Watershed"
+        self.symbol = "WSHD"
+        self.arity = 2
+        self.outputs_keys = []
         self.wt = WatershedSkimage(use_dt=use_dt,
                                    markers_distance=markers_distance,
                                    markers_area=markers_area)
