@@ -1494,10 +1494,7 @@ class ImageRGBReader:
         self.directory = directory
 
     def read(self, filename, shape=None):
-        if str(filename) == "nan":
-            filepath = ""
-        else:
-            filepath = str(self.directory / filename)
+        filepath = str(self.directory / filename)
         image = imread_color(filepath, rgb=False)
         return DataItem(image_split(image),
                         image.shape[:2],
