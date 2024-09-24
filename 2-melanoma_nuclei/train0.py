@@ -96,7 +96,6 @@ class Registry:
     def __init__(self):
         self.nodes = self.SubRegistry()
         self.stackers = self.SubRegistry()
-        self.metrics = self.SubRegistry()
         self.readers = self.SubRegistry()
 
 
@@ -443,8 +442,7 @@ class FitnessAP(KartezioNode):
         name = f"Average Precision ({thresholds})"
         symbol = "AP"
         arity = 1
-        default_metric = registry.metrics.instantiate("CAP",
-                                                      thresholds=thresholds)
+        default_metric = MetricCellpose(thresholds=thresholds)
         super().__init__(name, symbol, arity, 0)
         self.metrics = []
         self.add_metric(default_metric)
@@ -567,7 +565,6 @@ def _intersection_over_union(masks_true, masks_pred):
     return iou
 
 
-@registry.metrics.add("CAP")
 class MetricCellpose(KartezioNode):
 
     def __init__(self, thresholds):
