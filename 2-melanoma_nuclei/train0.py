@@ -1267,7 +1267,7 @@ g.instance_method = MutationAllRandom(len(g.nodes))
 mutation = MutationClassic(len(g.nodes), node_mutation_rate,
                            output_mutation_rate)
 g.mutation_method = GoldmanWrapper(mutation)
-g.fitness = FitnessAP()
+g.fit = FitnessAP()
 g.population = PopulationWithElite()
 g.dataset_reader = DatasetReader(g.path)
 g.dataset = g.dataset_reader.read_dataset(dataset_filename=CSV_DATASET,
@@ -1279,7 +1279,7 @@ for i in range(g._lambda + 1):
     zero = np.zeros((g.h, g.w), dtype=np.uint8)
     g.population.individuals[i] = g.instance_method.mutate(zero)
 y_pred = g.parser.parse_population(g.population, x)
-g.population.fitness = g.fitness.call(y, y_pred)
+g.population.fitness = g.fit.call(y, y_pred)
 print(f"{0:08} {g.population.fitness[0]:.16e}")
 while current_generation < g.generations:
     new_elite, fitness = g.population.get_best_individual()
@@ -1291,6 +1291,6 @@ while current_generation < g.generations:
         g.population.individuals[i] = g.mutation_method.mutate(
             g.population.individuals[i])
     y_pred = g.parser.parse_population(g.population, x)
-    g.population.fitness = g.fitness.call(y, y_pred)
+    g.population.fitness = g.fit.call(y, y_pred)
     current_generation += 1
     print(f"{current_generation:08} {g.population.fitness[0]:.16e}")
