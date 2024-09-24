@@ -1262,23 +1262,15 @@ class MutationClassic:
     def write_output_connection(self, genome, output_index, connection):
         genome[g.out_idx + output_index, 1] = connection
 
-    def read_function(self, genome, node):
-        return genome[g.inputs + node, 0]
-
     def read_connections(self, genome, node):
         return genome[g.inputs + node, 1:g.para_idx]
-
-    def read_active_connections(self, genome, node, active_connections):
-        return genome[
-            g.inputs + node,
-            1:1 + active_connections,
-        ]
 
     def read_parameters(self, genome, node):
         return genome[g.inputs + node, g.para_idx:]
 
-    def read_outputs(self, genome):
-        return genome[g.out_idx:, :]
+    @property
+    def random_output(self):
+        return np.random.randint(g.out_idx, size=1)
 
     @property
     def random_parameters(self):
@@ -1287,10 +1279,6 @@ class MutationClassic:
     @property
     def random_functions(self):
         return np.random.randint(self.n_functions)
-
-    @property
-    def random_output(self):
-        return np.random.randint(g.out_idx, size=1)
 
     def random_connections(self, idx: int):
         return np.random.randint(g.inputs + idx, size=g.arity)
@@ -1355,17 +1343,8 @@ class MutationAllRandom:
     def write_output_connection(self, genome, output_index, connection):
         genome[g.out_idx + output_index, 1] = connection
 
-    def read_function(self, genome, node):
-        return genome[g.inputs + node, 0]
-
     def read_connections(self, genome, node):
         return genome[g.inputs + node, 1:g.para_idx]
-
-    def read_active_connections(self, genome, node, active_connections):
-        return genome[
-            g.inputs + node,
-            1:1 + active_connections,
-        ]
 
     def read_parameters(self, genome, node):
         return genome[g.inputs + node, g.para_idx:]
@@ -1401,6 +1380,7 @@ class MutationAllRandom:
     def mutate_parameters(self, genome, idx, only_one=None):
         new_parameters = self.random_parameters
         if only_one is not None:
+            assert 0
             old_parameters = self.read_parameters(genome, idx)
             old_parameters[only_one] = new_parameters[only_one]
             new_parameters = old_parameters.copy()
