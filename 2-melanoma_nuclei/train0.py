@@ -1723,7 +1723,6 @@ class PopulationWithElite:
         return self[0]
 
     def get_best_individual(self):
-        # get the first element to minimize
         best_fitness_idx = np.argsort(self.score)[0]
         best_individual = self[best_fitness_idx]
         return best_individual, self.fitness[best_fitness_idx]
