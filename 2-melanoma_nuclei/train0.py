@@ -95,7 +95,6 @@ class Registry:
 
     def __init__(self):
         self.nodes = self.SubRegistry()
-        self.stackers = self.SubRegistry()
 
 
 registry = Registry()
@@ -202,97 +201,6 @@ class KartezioNode:
             "args": self.args,
             "kwargs": self._to_json_kwargs(),
         }
-
-
-class KartezioStacker(KartezioNode):
-
-    def __init__(self, name: str, symbol: str, arity: int):
-        super().__init__(name, symbol, arity, 0)
-
-
-@registry.stackers.add("MEAN")
-class StackerMean(KartezioStacker):
-
-    def __init__(self,
-                 name="mean_stacker",
-                 symbol="MEAN",
-                 arity=1,
-                 threshold=4):
-        super().__init__(name, symbol, arity)
-        self.threshold = threshold
-
-    def stack(self, Y):
-        return np.mean(np.array(Y), axis=0).astype(np.uint8)
-
-    def post_stack(self, x, index):
-        yi = x.copy()
-        return threshold_tozero(yi, self.threshold)
-
-
-@registry.stackers.add("SUM")
-class StackerSum(KartezioStacker):
-
-    def _to_json_kwargs(self) -> dict:
-        return {}
-
-    def __init__(self,
-                 name="Sum KartezioStacker",
-                 symbol="SUM",
-                 arity=1,
-                 threshold=4):
-        super().__init__(name, symbol, arity)
-        self.threshold = threshold
-
-    def stack(self, Y):
-        stack_array = np.array(Y).astype(np.float32)
-        stack_array /= 255.0
-        stack_sum = np.sum(stack_array, axis=0)
-        return stack_sum.astype(np.uint8)
-
-    def post_stack(self, x, index):
-        yi = x.copy()
-        if index == 0:
-            return cv2.GaussianBlur(yi, (7, 7), 1)
-        return yi
-
-
-@registry.stackers.add("MIN")
-class StackerMin(KartezioStacker):
-
-    def _to_json_kwargs(self) -> dict:
-        return {}
-
-    def __init__(self, name="min_stacker", symbol="MIN", arity=1, threshold=4):
-        super().__init__(name, symbol, arity)
-        self.threshold = threshold
-
-    def stack(self, Y):
-        return np.min(np.array(Y), axis=0).astype(np.uint8)
-
-    def post_stack(self, x, index):
-        yi = x.copy()
-        return threshold_tozero(yi, self.threshold)
-
-
-@registry.stackers.add("MAX")
-class StackerMax(KartezioStacker):
-
-    def _to_json_kwargs(self) -> dict:
-        return {}
-
-    def __init__(self, name="max_stacker", symbol="MAX", arity=1, threshold=1):
-        super().__init__(name, symbol, arity)
-        self.threshold = threshold
-
-    def stack(self, Y):
-        return np.max(np.array(Y), axis=0).astype(np.uint8)
-
-    def post_stack(self, x, index):
-        yi = x.copy()
-        if index == 0:
-            return cv2.GaussianBlur(yi, (7, 7), 1)
-        return yi
-
 
 class KartezioEndpoint(KartezioNode):
 
