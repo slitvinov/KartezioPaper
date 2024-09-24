@@ -1532,8 +1532,6 @@ class DatasetReader(Directory):
         self.scale = meta["scale"]
         self.mode = meta["mode"]
         self.label_name = meta["label_name"]
-        input_reader_name = f"{meta['input']['type']}_{meta['input']['format']}"
-        label_reader_name = f"{meta['label']['type']}_{meta['label']['format']}"
         self.input_reader = ImageRGBReader(directory=self, scale=self.scale)
         self.label_reader = RoiPolygonReader(directory=self, scale=self.scale)
 
