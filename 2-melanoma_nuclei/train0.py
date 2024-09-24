@@ -1446,7 +1446,7 @@ def notify(n, name, force=False):
     event = {
         "n": n,
         "name": name,
-        "content": g.strategy.population.history(),
+        "content": g.population.history(),
         "force": force,
     }
     for observer in g.callbacks:
@@ -1746,34 +1746,34 @@ class PopulationWithElite(KartezioPopulation):
 class OnePlusLambda:
 
     def __init__(self):
-        self.population = PopulationWithElite()
+        g.population = PopulationWithElite()
 
     @property
     def elite(self):
-        return self.population.get_elite()
+        return g.population.get_elite()
 
     def initialization(self):
         for i in range(g._lambda + 1):
             zero = np.zeros((g.h, g.w), dtype=np.uint8)
             individual = g.instance_method.mutate(zero)
-            self.population[i] = individual
+            g.population[i] = individual
 
     def selection(self):
-        new_elite, fitness = self.population.get_best_individual()
-        self.population.set_elite(new_elite)
+        new_elite, fitness = g.population.get_best_individual()
+        g.population.set_elite(new_elite)
 
     def reproduction(self):
-        elite = self.population.get_elite()
+        elite = g.population.get_elite()
         for i in range(1, g._lambda + 1):
-            self.population[i] = elite.copy()
+            g.population[i] = elite.copy()
 
     def mutation(self):
         for i in range(1, g._lambda + 1):
-            self.population[i] = g.mutation_method.mutate(self.population[i])
+            g.population[i] = g.mutation_method.mutate(g.population[i])
 
     def evaluation(self, y_true, y_pred):
         fitness = g.fitness.call(y_true, y_pred)
-        self.population.set_fitness(fitness)
+        g.population.set_fitness(fitness)
 
 
 class G:
@@ -1820,22 +1820,22 @@ for callback in g.callbacks:
 x, y = g.dataset.train_xy
 current_generation = 0
 g.strategy.initialization()
-y_pred = g.parser.parse_population(g.strategy.population, x)
+y_pred = g.parser.parse_population(g.population, x)
 g.strategy.evaluation(y, y_pred)
 notify(0, Event.START_LOOP, force=True)
-while not (current_generation >= g.generations or g.strategy.population.fitness[0] == 0.0):
+while not (current_generation >= g.generations or g.population.fitness[0] == 0.0):
     notify(current_generation,
                  Event.START_STEP)
     g.strategy.selection()
     g.strategy.reproduction()
     g.strategy.mutation()
-    y_pred = g.parser.parse_population(g.strategy.population, x)
+    y_pred = g.parser.parse_population(g.population, x)
     g.strategy.evaluation(y, y_pred)
     current_generation += 1
     notify(current_generation, Event.END_STEP)
 notify(current_generation,
              Event.END_LOOP,
              force=True)
-history = g.strategy.population.history()
+history = g.population.history()
 elite = g.strategy.elite
 pack_one_directory(g.workdir)
