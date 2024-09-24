@@ -1464,7 +1464,6 @@ class IndividualHistory:
 
     def __init__(self):
         self.fitness = {"fitness": 0.0, "time": 0.0}
-        self.sequence = None
 
     def set_values(self, sequence, fitness, time):
         self.sequence = sequence
