@@ -459,7 +459,7 @@ class FitnessAP(KartezioNode):
         self.metrics = []
         self.add_metric(default_metric)
 
-    def add_metric(self, metric: KartezioMetric):
+    def add_metric(self, metric):
         self.metrics.append(metric)
 
     def call(self, y_true, y_pred):
