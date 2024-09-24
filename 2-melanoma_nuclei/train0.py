@@ -1102,13 +1102,11 @@ class Dataset:
 
     def __init__(self,
                  train_set,
-                 test_set,
                  name,
                  label_name,
                  inputs,
                  indices=None):
         self.train_set = train_set
-        self.test_set = test_set
         self.name = name
         self.label_name = label_name
         self.inputs = inputs
@@ -1188,7 +1186,7 @@ class DatasetReader(Directory):
         [input_sizes.append(len(xi)) for xi in testing.x]
         input_sizes = np.array(input_sizes)
         inputs = int(input_sizes[0])
-        return Dataset(training, testing, self.name, self.label_name, inputs,
+        return Dataset(training, self.name, self.label_name, inputs,
                        indices)
 
     def _read_dataset(self, dataframe, indices=None):
