@@ -1746,7 +1746,6 @@ class PopulationWithElite(KartezioPopulation):
 class OnePlusLambda:
 
     def __init__(self):
-        self._mu = 1
         self.population = PopulationWithElite()
 
     @property
@@ -1765,11 +1764,11 @@ class OnePlusLambda:
 
     def reproduction(self):
         elite = self.population.get_elite()
-        for i in range(self._mu, g._lambda + 1):
+        for i in range(1, g._lambda + 1):
             self.population[i] = elite.copy()
 
     def mutation(self):
-        for i in range(self._mu, g._lambda + 1):
+        for i in range(1, g._lambda + 1):
             self.population[i] = g.mutation_method.mutate(self.population[i])
 
     def evaluation(self, y_true, y_pred):
