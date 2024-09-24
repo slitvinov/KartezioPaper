@@ -1442,6 +1442,7 @@ class MutationAllRandom(KartezioMutation):
             self.mutate_output(genome, i)
         return genome
 
+
 def notify(n, name, force=False):
     event = {
         "n": n,
@@ -1743,18 +1744,16 @@ class PopulationWithElite(KartezioPopulation):
         return population_history
 
 
-def selection():
-    new_elite, fitness = g.population.get_best_individual()
-    g.population.set_elite(new_elite)
-
 def reproduction():
     elite = g.population.get_elite()
     for i in range(1, g._lambda + 1):
         g.population[i] = elite.copy()
 
+
 def mutation0():
     for i in range(1, g._lambda + 1):
         g.population[i] = g.mutation_method.mutate(g.population[i])
+
 
 def evaluation(y_true, y_pred):
     fitness = g.fitness.call(y_true, y_pred)
@@ -1810,19 +1809,18 @@ for i in range(g._lambda + 1):
 y_pred = g.parser.parse_population(g.population, x)
 evaluation(y, y_pred)
 notify(0, Event.START_LOOP, force=True)
-while not (current_generation >= g.generations or g.population.fitness[0] == 0.0):
-    notify(current_generation,
-                 Event.START_STEP)
-    selection()
+while not (current_generation >= g.generations
+           or g.population.fitness[0] == 0.0):
+    notify(current_generation, Event.START_STEP)
+    new_elite, fitness = g.population.get_best_individual()
+    g.population.set_elite(new_elite)
     reproduction()
     mutation0()
     y_pred = g.parser.parse_population(g.population, x)
     evaluation(y, y_pred)
     current_generation += 1
     notify(current_generation, Event.END_STEP)
-notify(current_generation,
-             Event.END_LOOP,
-             force=True)
+notify(current_generation, Event.END_LOOP, force=True)
 history = g.population.history()
 elite = g.population.get_elite()
 pack_one_directory(g.workdir)
