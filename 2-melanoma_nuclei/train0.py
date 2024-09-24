@@ -470,80 +470,6 @@ class FitnessAP(KartezioNode):
         return score
 
 
-class KartezioMutation:
-
-    def __init__(self, n_functions):
-        super().__init__()
-        self.n_functions = n_functions
-        self.parameter_max_value = 256
-
-    def write_function(self, genome, node, function_id):
-        genome[g.inputs + node, 0] = function_id
-
-    def write_connections(self, genome, node, connections):
-        genome[g.inputs + node, 1:g.para_idx] = connections
-
-    def write_parameters(self, genome, node, parameters):
-        genome[g.inputs + node, g.para_idx:] = parameters
-
-    def write_output_connection(self, genome, output_index, connection):
-        genome[g.out_idx + output_index, 1] = connection
-
-    def read_function(self, genome, node):
-        return genome[g.inputs + node, 0]
-
-    def read_connections(self, genome, node):
-        return genome[g.inputs + node, 1:g.para_idx]
-
-    def read_active_connections(self, genome, node, active_connections):
-        return genome[
-            g.inputs + node,
-            1:1 + active_connections,
-        ]
-
-    def read_parameters(self, genome, node):
-        return genome[g.inputs + node, g.para_idx:]
-
-    def read_outputs(self, genome):
-        return genome[g.out_idx:, :]
-
-    @property
-    def random_parameters(self):
-        return np.random.randint(self.parameter_max_value, size=g.parameters)
-
-    @property
-    def random_functions(self):
-        return np.random.randint(self.n_functions)
-
-    @property
-    def random_output(self):
-        return np.random.randint(g.out_idx, size=1)
-
-    def random_connections(self, idx: int):
-        return np.random.randint(g.inputs + idx, size=g.arity)
-
-    def mutate_function(self, genome, idx: int):
-        self.write_function(genome, idx, self.random_functions)
-
-    def mutate_connections(self, genome, idx, only_one=None):
-        new_connections = self.random_connections(idx)
-        new_value = new_connections[only_one]
-        new_connections = self.read_connections(genome, idx)
-        new_connections[only_one] = new_value
-        self.write_connections(genome, idx, new_connections)
-
-    def mutate_parameters(self, genome, idx, only_one=None):
-        new_parameters = self.random_parameters
-        if only_one is not None:
-            old_parameters = self.read_parameters(genome, idx)
-            old_parameters[only_one] = new_parameters[only_one]
-            new_parameters = old_parameters.copy()
-        self.write_parameters(genome, idx, new_parameters)
-
-    def mutate_output(self, genome, idx):
-        self.write_output_connection(genome, idx, self.random_output)
-
-
 @jit(nopython=True)
 def _label_overlap(x, y):
     x = x.ravel()
@@ -1403,6 +1329,9 @@ class MutationClassic:
             new_parameters = old_parameters.copy()
         self.write_parameters(genome, idx, new_parameters)
 
+    def mutate_output(self, genome, idx):
+        self.write_output_connection(genome, idx, self.random_output)
+
     def mutate(self, genome):
         sampling_indices = np.random.choice(self.sampling_range,
                                             self.n_mutations,
@@ -1423,10 +1352,78 @@ class MutationClassic:
         return genome
 
 
-class MutationAllRandom(KartezioMutation):
+class MutationAllRandom:
 
-    def __init__(self, n_functions: int):
-        super().__init__(n_functions)
+    def __init__(self, n_functions):
+        super().__init__()
+        self.n_functions = n_functions
+        self.parameter_max_value = 256
+
+    def write_function(self, genome, node, function_id):
+        genome[g.inputs + node, 0] = function_id
+
+    def write_connections(self, genome, node, connections):
+        genome[g.inputs + node, 1:g.para_idx] = connections
+
+    def write_parameters(self, genome, node, parameters):
+        genome[g.inputs + node, g.para_idx:] = parameters
+
+    def write_output_connection(self, genome, output_index, connection):
+        genome[g.out_idx + output_index, 1] = connection
+
+    def read_function(self, genome, node):
+        return genome[g.inputs + node, 0]
+
+    def read_connections(self, genome, node):
+        return genome[g.inputs + node, 1:g.para_idx]
+
+    def read_active_connections(self, genome, node, active_connections):
+        return genome[
+            g.inputs + node,
+            1:1 + active_connections,
+        ]
+
+    def read_parameters(self, genome, node):
+        return genome[g.inputs + node, g.para_idx:]
+
+    def read_outputs(self, genome):
+        return genome[g.out_idx:, :]
+
+    @property
+    def random_parameters(self):
+        return np.random.randint(self.parameter_max_value, size=g.parameters)
+
+    @property
+    def random_functions(self):
+        return np.random.randint(self.n_functions)
+
+    @property
+    def random_output(self):
+        return np.random.randint(g.out_idx, size=1)
+
+    def random_connections(self, idx: int):
+        return np.random.randint(g.inputs + idx, size=g.arity)
+
+    def mutate_function(self, genome, idx: int):
+        self.write_function(genome, idx, self.random_functions)
+
+    def mutate_connections(self, genome, idx, only_one=None):
+        new_connections = self.random_connections(idx)
+        new_value = new_connections[only_one]
+        new_connections = self.read_connections(genome, idx)
+        new_connections[only_one] = new_value
+        self.write_connections(genome, idx, new_connections)
+
+    def mutate_parameters(self, genome, idx, only_one=None):
+        new_parameters = self.random_parameters
+        if only_one is not None:
+            old_parameters = self.read_parameters(genome, idx)
+            old_parameters[only_one] = new_parameters[only_one]
+            new_parameters = old_parameters.copy()
+        self.write_parameters(genome, idx, new_parameters)
+
+    def mutate_output(self, genome, idx):
+        self.write_output_connection(genome, idx, self.random_output)
 
     def mutate(self, genome):
         # mutate genes
