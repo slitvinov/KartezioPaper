@@ -1743,12 +1743,6 @@ class PopulationWithElite(KartezioPopulation):
         return population_history
 
 
-def initialization():
-    for i in range(g._lambda + 1):
-        zero = np.zeros((g.h, g.w), dtype=np.uint8)
-        individual = g.instance_method.mutate(zero)
-        g.population[i] = individual
-
 def selection():
     new_elite, fitness = g.population.get_best_individual()
     g.population.set_elite(new_elite)
@@ -1810,7 +1804,9 @@ for callback in g.callbacks:
     callback.set_parser(g.parser)
 x, y = g.dataset.train_xy
 current_generation = 0
-initialization()
+for i in range(g._lambda + 1):
+    zero = np.zeros((g.h, g.w), dtype=np.uint8)
+    g.population[i] = g.instance_method.mutate(zero)
 y_pred = g.parser.parse_population(g.population, x)
 evaluation(y, y_pred)
 notify(0, Event.START_LOOP, force=True)
