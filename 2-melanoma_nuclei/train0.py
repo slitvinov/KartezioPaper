@@ -1102,10 +1102,6 @@ class DataItem:
 
 
 class ImageRGBReader:
-
-    def __init__(self, directory):
-        self.directory = directory
-
     def read(self, filename, shape):
         filepath = os.path.join("dataset", filename)
         image = imread_color(filepath, rgb=False)
@@ -1113,10 +1109,6 @@ class ImageRGBReader:
 
 
 class RoiPolygonReader:
-
-    def __init__(self, directory):
-        self.directory = directory
-
     def read(self, filename, shape):
         if str(filename) == "nan":
             filepath = ""
@@ -1137,8 +1129,6 @@ class DatasetReader:
         meta = json_read("dataset/META.json")
         self.name = meta["name"]
         self.label_name = meta["label_name"]
-        self.input_reader = ImageRGBReader(directory=self)
-        self.label_reader = RoiPolygonReader(directory=self)
         dataframe = pd.read_csv("dataset/dataset.csv")
         dataframe_training = dataframe[dataframe["set"] == "training"]
         training = self._read_dataset(dataframe_training)
@@ -1152,8 +1142,8 @@ class DatasetReader:
         dataset = SubSet(dataframe)
         dataframe.reset_index(inplace=True)
         for row in dataframe.itertuples():
-            x = self.input_reader.read(row.input, shape=None)
-            y = self.label_reader.read(row.label, shape=x.shape)
+            x = g.input_reader.read(row.input, shape=None)
+            y = g.label_reader.read(row.label, shape=x.shape)
             y = y.datalist
             dataset.x.append(x.datalist)
             dataset.y.append(y)
@@ -1193,6 +1183,8 @@ g.fit = FitnessAP()
 g.individuals = [None] * (g._lambda + 1)
 g.fitness = np.zeros(g._lambda + 1)
 g.dataset_reader = DatasetReader()
+g.input_reader = ImageRGBReader()
+g.label_reader = RoiPolygonReader()
 g.dataset = g.dataset_reader.read_dataset()
 x = g.dataset.train_set.x
 y = g.dataset.train_set.y
