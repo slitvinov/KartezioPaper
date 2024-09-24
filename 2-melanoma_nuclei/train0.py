@@ -224,9 +224,6 @@ class Callback:
         self.frequency = frequency
         self.parser = None
 
-    def set_parser(self, parser):
-        self.parser = parser
-
     def update(self, event):
         if event["n"] % self.frequency == 0 or event["force"]:
             self._callback(event["n"], event["name"], event["content"])
@@ -1197,8 +1194,7 @@ def notify(n, name, force=False):
         "content": g.population.history(),
         "force": force,
     }
-    for observer in g.callbacks:
-        observer.update(event)
+    g.callback.update(event)
 
 
 class Dataset:
@@ -1402,11 +1398,7 @@ g.dataset_reader = DatasetReader(g.path)
 g.dataset = g.dataset_reader.read_dataset(dataset_filename=CSV_DATASET,
                                           meta_filename=JSON_META,
                                           indices=None)
-g.callbacks = [
-    CallbackVerbose(frequency=1),
-]
-for callback in g.callbacks:
-    callback.set_parser(g.parser)
+g.callback = CallbackVerbose(frequency=1)
 x, y = g.dataset.train_xy
 current_generation = 0
 for i in range(g._lambda + 1):
