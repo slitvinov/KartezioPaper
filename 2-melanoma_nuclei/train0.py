@@ -1743,11 +1743,6 @@ class PopulationWithElite(KartezioPopulation):
         population_history.fill(self.individuals, self.fitness, self.time)
         return population_history
 
-def evaluation(y_true, y_pred):
-    fitness = g.fitness.call(y_true, y_pred)
-    g.population.set_fitness(fitness)
-
-
 class G:
     pass
 
@@ -1795,7 +1790,7 @@ for i in range(g._lambda + 1):
     zero = np.zeros((g.h, g.w), dtype=np.uint8)
     g.population[i] = g.instance_method.mutate(zero)
 y_pred = g.parser.parse_population(g.population, x)
-evaluation(y, y_pred)
+g.population.set_fitness(g.fitness.call(y, y_pred))
 notify(0, Event.START_LOOP, force=True)
 while not (current_generation >= g.generations
            or g.population.fitness[0] == 0.0):
@@ -1808,7 +1803,7 @@ while not (current_generation >= g.generations
     for i in range(1, g._lambda + 1):
         g.population[i] = g.mutation_method.mutate(g.population[i])
     y_pred = g.parser.parse_population(g.population, x)
-    evaluation(y, y_pred)
+    g.population.set_fitness(g.fitness.call(y, y_pred))
     current_generation += 1
     notify(current_generation, Event.END_STEP)
 notify(current_generation, Event.END_LOOP, force=True)
