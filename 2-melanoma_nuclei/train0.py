@@ -1489,22 +1489,22 @@ class ModelCGP:
             observer.update(event)
 
     def fit(self, x, y):
-        genetic_algorithm = ModelGA()
-        genetic_algorithm.initialization()
+        a = ModelGA()
+        a.initialization()
         y_pred = g.parser.parse_population(g.strategy.population, x)
-        genetic_algorithm.evaluation(y, y_pred)
+        a.evaluation(y, y_pred)
         self._notify(0, Event.START_LOOP, force=True)
-        while not genetic_algorithm.is_satisfying():
-            self._notify(genetic_algorithm.current_generation,
+        while not a.is_satisfying():
+            self._notify(a.current_generation,
                          Event.START_STEP)
-            genetic_algorithm.selection()
-            genetic_algorithm.reproduction()
-            genetic_algorithm.mutation()
+            a.selection()
+            a.reproduction()
+            a.mutation()
             y_pred = g.parser.parse_population(g.strategy.population, x)
-            genetic_algorithm.evaluation(y, y_pred)
-            genetic_algorithm.current_generation += 1
-            self._notify(genetic_algorithm.current_generation, Event.END_STEP)
-        self._notify(genetic_algorithm.current_generation,
+            a.evaluation(y, y_pred)
+            a.current_generation += 1
+            self._notify(a.current_generation, Event.END_STEP)
+        self._notify(a.current_generation,
                      Event.END_LOOP,
                      force=True)
         history = g.strategy.population.history()
