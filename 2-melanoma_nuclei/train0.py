@@ -1161,10 +1161,6 @@ class MutationAllRandom:
         return genome
 
 
-def notify(n):
-    print(f"{n:08} {g.population.fitness[0]:.16e}")
-
-
 class Dataset:
 
     class SubSet:
@@ -1359,7 +1355,7 @@ for i in range(g._lambda + 1):
     g.population[i] = g.instance_method.mutate(zero)
 y_pred = g.parser.parse_population(g.population, x)
 g.population.fitness = g.fitness.call(y, y_pred)
-notify(0)
+print(f"{0:08} {g.population.fitness[0]:.16e}")
 while current_generation < g.generations:
     new_elite, fitness = g.population.get_best_individual()
     g.population.set_elite(new_elite)
@@ -1371,4 +1367,4 @@ while current_generation < g.generations:
     y_pred = g.parser.parse_population(g.population, x)
     g.population.fitness = g.fitness.call(y, y_pred)
     current_generation += 1
-    notify(current_generation)
+    print(f"{current_generation:08} {g.population.fitness[0]:.16e}")
