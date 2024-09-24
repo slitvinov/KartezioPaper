@@ -1215,14 +1215,6 @@ class DatasetReader(Directory):
             dataset.add_item(x.datalist, y)
         return dataset
 
-
-class PopulationWithElite:
-
-    def __init__(self):
-        self.individuals = [None] * (g._lambda + 1)
-        self.fitness = np.zeros(g._lambda + 1)
-
-
 class G:
     pass
 
