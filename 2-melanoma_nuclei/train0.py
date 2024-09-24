@@ -53,15 +53,6 @@ class Directory:
         filepath = str(filepath)
         return pd.read_csv(filepath)
 
-    def next(self, next_location):
-        filepath = self / next_location
-        filepath.mkdir(parents=True, exist_ok=True)
-        return Directory(filepath)
-
-    def ls(self, regex="*", ordered=False):
-        return sorted(self.glob(regex))
-
-
 class Registry:
 
     class SubRegistry:
