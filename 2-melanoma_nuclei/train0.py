@@ -1166,13 +1166,10 @@ class DatasetReader(Directory):
 
         meta = json_read(self._path / meta_filename)
         self.name = meta["name"]
-        self.mode = meta["mode"]
         self.label_name = meta["label_name"]
         self.input_reader = ImageRGBReader(directory=self)
         self.label_reader = RoiPolygonReader(directory=self)
-        if self.mode == "dataframe":
-            return self._read_from_dataframe(dataset_filename, indices)
-        raise AttributeError(f"{self.mode} is not handled yet")
+        return self._read_from_dataframe(dataset_filename, indices)
 
     def _read_from_dataframe(self, dataset_filename, indices):
         dataframe = self.read(dataset_filename)
