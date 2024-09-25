@@ -883,14 +883,7 @@ class EndpointWatershed(Node):
         mask, markers, labels = self.wt.apply(mask,
                                               markers=markers,
                                               mask=mask > 0)
-        return {
-            "mask_raw": x[0],
-            "markers_raw": x[1],
-            "mask": mask,
-            "markers": markers,
-            "count": len(np.unique(labels)) - 1,
-            "labels": labels,
-        }
+        return {"labels": labels}
 
 
 def write_function(genome, node, function_id):
