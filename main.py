@@ -118,12 +118,12 @@ def _x_to_output_map(genome, graphs_list, x):
         for node in graph:
             if node < g.inputs:
                 continue
-            node_index = node - g.inputs
-            function_index = read_function(genome, node_index)
+            idx = node - g.inputs
+            function_index = read_function(genome, idx)
             arity = g.nodes[function_index].arity
-            connections = read_active_connections(genome, node_index, arity)
+            connections = read_active_connections(genome, idx, arity)
             inputs = [output_map[c] for c in connections]
-            p = read_parameters(genome, node_index)
+            p = read_parameters(genome, idx)
             output_map[node] = g.nodes[function_index].call(inputs, p)
     return output_map
 
