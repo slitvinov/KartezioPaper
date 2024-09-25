@@ -813,13 +813,9 @@ def execute(function_index, inputs, p):
     return g.nodes[function_index].call(inputs, p)
 
 
-class EndpointWatershed(Node):
+class EndpointWatershed:
 
     def __init__(self):
-        super().__init__("Marker-Based Watershed", "WSHD", 2, [], None)
-        self.name = "Marker-Based Watershed"
-        self.symbol = "WSHD"
-        self.arity = 2
         self.wt = WatershedSkimage(use_dt=False,
                                    markers_distance=21,
                                    markers_area=None)
