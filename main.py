@@ -66,7 +66,7 @@ registry = Registry()
 
 class Node:
 
-    def __init__(self, name, symbol, arity, args, sources=None):
+    def __init__(self, name, symbol, arity, args, sources):
         self.name = name
         self.symbol = symbol
         self.arity = arity
@@ -816,7 +816,7 @@ def execute(function_index, inputs, p):
 class EndpointWatershed(Node):
 
     def __init__(self):
-        super().__init__("Marker-Based Watershed", "WSHD", 2, [])
+        super().__init__("Marker-Based Watershed", "WSHD", 2, [], None)
         self.name = "Marker-Based Watershed"
         self.symbol = "WSHD"
         self.arity = 2
