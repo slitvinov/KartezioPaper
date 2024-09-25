@@ -85,10 +85,6 @@ def read_active_connections(genome, node, active_connections):
     ]
 
 
-def read_parameters(genome, node):
-    return genome[g.inputs + node, g.para_idx:]
-
-
 def read_outputs(genome):
     return genome[g.out_idx:, :]
 
