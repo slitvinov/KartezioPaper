@@ -13,6 +13,7 @@ import os
 import pandas as pd
 import random
 
+
 def _parse_one_graph(genome, graph_source):
     next_indices = graph_source.copy()
     output_tree = graph_source.copy()
@@ -26,7 +27,7 @@ def _parse_one_graph(genome, graph_source):
         next_connections = set(genome[g.inputs + idx, 1:1 + arity])
         next_indices = next_indices.union(next_connections)
         output_tree = output_tree.union(next_connections)
-    return sorted(list(output_tree))
+    return sorted(output_tree)
 
 
 def parse_to_graphs(genome):
