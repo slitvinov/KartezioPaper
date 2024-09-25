@@ -196,8 +196,7 @@ def _intersection_over_union(masks_true, masks_pred):
 
 class MetricCellpose(Node):
 
-    def __init__(self, thresholds):
-        self.thresholds = thresholds
+    def __init__(self):
         name = "Cellpose Average Precision"
         symbol = "CAP"
         arity = 1
@@ -212,7 +211,7 @@ class MetricCellpose(Node):
         tp = 0
         if n_pred > 0:
             iou = _intersection_over_union(masks_true, masks_pred)[1:, 1:]
-            tp = self._true_positive(iou, self.thresholds)
+            tp = true_positive0(iou)
         fp = n_pred - tp
         fn = n_true - tp
         if tp == 0:
@@ -224,13 +223,12 @@ class MetricCellpose(Node):
             ap = tp / (tp + fp + fn)
         return ap
 
-    def _true_positive(self, iou, th):
-        n_min = min(iou.shape[0], iou.shape[1])
-        costs = -(iou >= th).astype(float) - iou / (2 * n_min)
-        true_ind, pred_ind = linear_sum_assignment(costs)
-        match_ok = iou[true_ind, pred_ind] >= th
-        tp = match_ok.sum()
-        return tp
+def true_positive0(iou):
+    n_min = min(iou.shape[0], iou.shape[1])
+    costs = -(iou >= g.th).astype(float) - iou / (2 * n_min)
+    true_ind, pred_ind = linear_sum_assignment(costs)
+    match_ok = iou[true_ind, pred_ind] >= g.th
+    return match_ok.sum()
 
 
 SHARPEN_KERNEL = np.array(([0, -1, 0], [-1, 5, -1], [0, -1, 0]), dtype="int")
@@ -963,7 +961,8 @@ g.out_idx = g.inputs + g.n
 g.para_idx = 1 + g.arity
 g.w = 1 + g.arity + g.parameters
 g.h = g.inputs + g.n + g.outputs
-g.metric = MetricCellpose(thresholds=0.5)
+g.metric = MetricCellpose()
+g.th = 0.5
 g.n_mutations = int(np.floor(0.15 * g.n * g.w))
 g.all_indices = np.indices((g.n, g.w))
 g.all_indices = np.vstack(
