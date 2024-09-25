@@ -893,15 +893,6 @@ class EndpointWatershed(Node):
         }
 
 
-def mutate0(genome):
-    changed = False
-    active_nodes = parse_to_graphs(genome)
-    while not changed:
-        genome = g.mutation.mutate(genome)
-        new_active_nodes = parse_to_graphs(genome)
-        changed = active_nodes != new_active_nodes
-    return genome
-
 
 def write_function(genome, node, function_id):
     genome[g.inputs + node, 0] = function_id
@@ -1071,7 +1062,12 @@ while current_generation < g.generations:
     for i in range(1, g._lambda + 1):
         g.individuals[i] = elite.copy()
     for i in range(1, g._lambda + 1):
-        g.individuals[i] = mutate0(g.individuals[i])
+        changed = False
+        active_nodes = parse_to_graphs(g.individuals[i])
+        while not changed:
+            g.individuals[i] = g.mutation.mutate(g.individuals[i])
+            new_active_nodes = parse_to_graphs(g.individuals[i])
+            changed = active_nodes != new_active_nodes
     y_pred = []
     for i in range(len(g.individuals)):
         y = parse(g.individuals[i], x0)
