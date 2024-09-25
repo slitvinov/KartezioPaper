@@ -967,10 +967,10 @@ def mutate1(genome):
     return genome
 
 
-def mutate_parameters0(genome, idx):
+def mutate_parameters0(genome, j):
     new_parameters = np.random.randint(g.parameter_max_value,
                                        size=g.parameters)
-    write_parameters(genome, idx, new_parameters)
+    write_parameters(genome, j, new_parameters)
 
 
 def mutate_output0(genome, idx):
