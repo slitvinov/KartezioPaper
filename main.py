@@ -977,16 +977,6 @@ def mutate_output0(genome, idx):
     write_output_connection(genome, idx, np.random.randint(g.out_idx, size=1))
 
 
-def mutate0(genome):
-    for j in range(g.n):
-        mutate_function(genome, j)
-        mutate_connections(genome, j)
-        mutate_parameters0(genome, j)
-    for j in range(g.outputs):
-        mutate_output0(genome, j)
-    return genome
-
-
 class G:
     pass
 
@@ -1039,8 +1029,13 @@ for row in dataframe_training.itertuples():
         fill_polygons_as_labels(label_mask, polygons)
     y0.append([label_mask])
 for i in range(g._lambda + 1):
-    zero = np.zeros((g.h, g.w), dtype=np.uint8)
-    g.individuals[i] = mutate0(zero)
+    g.individuals[i] = np.zeros((g.h, g.w), dtype=np.uint8)
+    for j in range(g.n):
+        mutate_function(g.individuals[i], j)
+        mutate_connections(g.individuals[i], j)
+        mutate_parameters0(g.individuals[i], j)
+    for j in range(g.outputs):
+        mutate_output0(g.individuals[i], j)
 y_pred = []
 for i in range(len(g.individuals)):
     y = parse(g.individuals[i], x0)
