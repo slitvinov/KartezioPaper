@@ -804,9 +804,6 @@ class InRange(Node):
             mask=cv2.inRange(x[0], lower, upper),
         )
 
-def write_function(genome, idx, function_id):
-    genome[g.inputs + idx, 0] = function_id
-
 
 def write_connections(genome, node, connections):
     genome[g.inputs + node, 1:g.para_idx] = connections
@@ -833,7 +830,7 @@ def random_connections(idx: int):
 
 
 def mutate_function(genome, idx):
-    write_function(genome, idx, np.random.randint(len(g.nodes)))
+    genome[g.inputs + idx, 0] = np.random.randint(len(g.nodes))
 
 
 def mutate_connections(genome, idx, only_one=None):
