@@ -1,6 +1,3 @@
-from dataclasses import dataclass
-from dataclasses import field
-from dataclasses import InitVar
 from enum import Enum
 from numba import jit
 from numena.image.basics import image_ew_max
@@ -1062,18 +1059,6 @@ class Dataset:
         self.inputs = inputs
         self.indices = indices
 
-
-@dataclass
-class DataItem:
-    datalist: List
-    shape: Tuple
-    count: int
-
-    @property
-    def size(self):
-        return len(self.datalist)
-
-
 def read0(filename):
     filepath = os.path.join("dataset", filename)
     image = imread_color(filepath, rgb=False)
@@ -1087,10 +1072,10 @@ def read1(filename, shape):
         filepath = os.path.join("dataset", filename)
     label_mask = image_new(shape)
     if filepath == "":
-        return DataItem([label_mask], shape, 0)
+        return [label_mask], shape, 0
     polygons = read_polygons_from_roi(filepath)
     fill_polygons_as_labels(label_mask, polygons)
-    return DataItem([label_mask], shape, len(polygons))
+    return [label_mask], shape, len(polygons)
 
 
 class G:
@@ -1131,10 +1116,9 @@ x0 = []
 y0 = []
 for row in dataframe_training.itertuples():
     x, shape = read0(row.input)
-    y = read1(row.label, shape=shape)
-    y = y.datalist
+    datalist, shape, count = read1(row.label, shape=shape)
     x0.append(x)
-    y0.append(y)
+    y0.append(datalist)
 for i in range(g._lambda + 1):
     zero = np.zeros((g.h, g.w), dtype=np.uint8)
     g.individuals[i] = g.instance_method.mutate(zero)
