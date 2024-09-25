@@ -1,3 +1,4 @@
+from nodes import registry
 from numba import jit
 from numena.image.basics import image_new
 from numena.image.basics import image_split
@@ -11,9 +12,6 @@ import numpy as np
 import os
 import pandas as pd
 import random
-
-from nodes import registry
-
 
 def _parse_one_graph(genome, graph_source):
     next_indices = graph_source.copy()
