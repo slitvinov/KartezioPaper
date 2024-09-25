@@ -806,10 +806,6 @@ class InRange(Node):
             mask=cv2.inRange(x[0], lower, upper),
         )
 
-def read_connections(genome, idx):
-    return genome[g.inputs + idx, 1:g.para_idx]
-
-
 def read_parameters(genome, node):
     return genome[g.inputs + node, g.para_idx:]
 
@@ -825,7 +821,7 @@ def mutate_function(genome, idx):
 def mutate_connections(genome, idx, only_one):
     new_connections = random_connections(idx)
     new_value = new_connections[only_one]
-    new_connections = read_connections(genome, idx)
+    new_connections = genome[g.inputs + idx, 1:g.para_idx]
     new_connections[only_one] = new_value
     genome[g.inputs + idx, 1:g.para_idx] = new_connections
 
