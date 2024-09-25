@@ -81,10 +81,6 @@ def read_active_connections(genome, node, active_connections):
     ]
 
 
-def read_outputs(genome):
-    return genome[g.out_idx:, :]
-
-
 def _parse_one_graph(genome, graph_source):
     next_indices = graph_source.copy()
     output_tree = graph_source.copy()
@@ -104,7 +100,7 @@ def _parse_one_graph(genome, graph_source):
 
 
 def parse_to_graphs(genome):
-    outputs = read_outputs(genome)
+    outputs = genome[g.out_idx:, :]
     graphs_list = [_parse_one_graph(genome, {output[1]}) for output in outputs]
     return graphs_list
 
@@ -127,7 +123,7 @@ def _x_to_output_map(genome, graphs_list, x):
 
 def _parse_one(genome, graphs_list, x):
     output_map = _x_to_output_map(genome, graphs_list, x)
-    return [output_map[output_gene[1]] for output_gene in read_outputs(genome)]
+    return [output_map[output_gene[1]] for output_gene in genome[g.out_idx:, :]]
 
 
 def parse(genome, x):
