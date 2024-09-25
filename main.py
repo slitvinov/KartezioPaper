@@ -833,7 +833,7 @@ def mutate_function(genome, idx):
     genome[g.inputs + idx, 0] = np.random.randint(len(g.nodes))
 
 
-def mutate_connections(genome, idx, only_one=None):
+def mutate_connections(genome, idx, only_one):
     new_connections = random_connections(idx)
     new_value = new_connections[only_one]
     new_connections = read_connections(genome, idx)
@@ -928,7 +928,7 @@ for i in range(g._lambda + 1):
     g.individuals[i] = np.zeros((g.h, g.w), dtype=np.uint8)
     for j in range(g.n):
         mutate_function(g.individuals[i], j)
-        mutate_connections(g.individuals[i], j)
+        mutate_connections(g.individuals[i], j, None)
         new_parameters = np.random.randint(g.max_val, size=g.parameters)
         write_parameters(g.individuals[i], j, new_parameters)
     for j in range(g.outputs):
