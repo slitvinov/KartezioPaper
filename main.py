@@ -813,9 +813,9 @@ def execute(function_index, inputs, p):
     return g.nodes[function_index].call(inputs, p)
 
 
-def call2(x):
-    mask, markers, labels = g.wt.apply(x[0], markers=x[1], mask=x[0] > 0)
-    return labels
+def call2(y_pred):
+    mask, markers, y_pred = g.wt.apply(y_pred[0], markers=y_pred[1], mask=y_pred[0] > 0)
+    return y_pred
 
 
 def write_function(genome, node, function_id):
