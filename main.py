@@ -218,21 +218,20 @@ class MetricCellpose(Node):
         fn = np.zeros((len(masks_true), self.n_thresholds), np.float32)
         n_true = np.array(list(map(np.max, masks_true)))
         n_pred = np.array(list(map(np.max, masks_pred)))
-        for n in range(len(masks_true)):
-            if n_pred[n] > 0:
-                iou = _intersection_over_union(masks_true[n],
-                                               masks_pred[n])[1:, 1:]
-                for k, th in enumerate(self.thresholds):
-                    tp[n, k] = self._true_positive(iou, th)
-            fp[n] = n_pred[n] - tp[n]
-            fn[n] = n_true[n] - tp[n]
-            if tp[n] == 0:
-                if n_true[n] == 0:
-                    ap[n] = 1.0
-                else:
-                    ap[n] = 0.0
+        if n_pred[0] > 0:
+            iou = _intersection_over_union(masks_true[0],
+                                           masks_pred[0])[1:, 1:]
+            for k, th in enumerate(self.thresholds):
+                tp[0, k] = self._true_positive(iou, th)
+        fp[0] = n_pred[0] - tp[0]
+        fn[0] = n_true[0] - tp[0]
+        if tp[0] == 0:
+            if n_true[0] == 0:
+                ap[0] = 1.0
             else:
-                ap[n] = tp[n] / (tp[n] + fp[n] + fn[n])
+                ap[0] = 0.0
+        else:
+            ap[0] = tp[0] / (tp[0] + fp[0] + fn[0])
         return ap[0]
 
     def _true_positive(self, iou, th):
