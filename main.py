@@ -985,9 +985,8 @@ print(f"{0:08} {g.fitness[0]:.16e}")
 current_generation = 0
 while current_generation < g.generations:
     i = np.argmin(g.fitness)
-    elite = g.individuals[i]
-    g.individuals[0] = elite
-    for i in range(1, g._lambda + 1):
+    elite = g.individuals[i].copy()
+    for i in range(g._lambda + 1):
         g.individuals[i] = elite.copy()
     for i in range(1, g._lambda + 1):
         changed = False
