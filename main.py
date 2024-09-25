@@ -144,10 +144,10 @@ def mutate_parameters1(genome, idx, only_one):
 
 
 def mutate1(genome):
-    sampling_indices = np.random.choice(range(len(g.all_indices)),
+    sampling_indices = np.random.choice(range(len(g.indices)),
                                         g.n_mutations,
                                         replace=False)
-    sampling_indices = g.all_indices[sampling_indices]
+    sampling_indices = g.indices[sampling_indices]
     for idx, mutation_parameter_index in sampling_indices:
         if mutation_parameter_index == 0:
             genome[g.inputs + idx, 0] = np.random.randint(len(g.nodes))
@@ -185,25 +185,21 @@ g.para_idx = 1 + g.arity
 g.w = 1 + g.arity + g.parameters
 g.h = g.inputs + g.n + g.outputs
 g.n_mutations = 15 * g.n * g.w // 100
-g.all_indices = np.indices((g.n, g.w))
-g.all_indices = np.vstack(
-    (g.all_indices[0].ravel(), g.all_indices[1].ravel())).T
+g.indices = np.array([[i, j] for i in range(g.n) for j in range(g.w)])
 g.individuals = [None] * (g._lambda + 1)
 dataframe = pd.read_csv("dataset/dataset.csv")
-dataframe_training = dataframe[dataframe["set"] == "training"]
-dataframe_training.reset_index(inplace=True)
+dataframe.reset_index(inplace=True)
 x0 = []
 y0 = []
-for row in dataframe_training.itertuples():
+for row in dataframe.itertuples():
     filepath = os.path.join("dataset", row.input)
     image = imread_color(filepath, rgb=False)
     x, shape = image_split(image), image.shape[:2]
     x0.append(x)
     label_mask = image_new(shape)
-    if str(row.label) != "nan":
-        filepath = os.path.join("dataset", row.label)
-        polygons = read_polygons_from_roi(filepath)
-        fill_polygons_as_labels(label_mask, polygons)
+    filepath = os.path.join("dataset", row.label)
+    polygons = read_polygons_from_roi(filepath)
+    fill_polygons_as_labels(label_mask, polygons)
     y0.append([label_mask])
 for i in range(g._lambda + 1):
     g.individuals[i] = np.zeros((g.h, g.w), dtype=np.uint8)
