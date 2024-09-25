@@ -845,8 +845,7 @@ def mutate_parameters1(genome, idx, only_one=None):
 
 
 def mutate_output1(genome, idx):
-    write_output_connection(genome, idx, np.random.randint(g.out_idx, size=1))
-
+    genome[g.out_idx + idx, 1] = np.random.randint(g.out_idx, size=1)
 
 def mutate1(genome):
     sampling_indices = np.random.choice(g.sampling_range,
