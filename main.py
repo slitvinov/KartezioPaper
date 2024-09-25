@@ -219,8 +219,8 @@ class MetricCellpose(Node):
         n_true = np.array(list(map(np.max, masks_true)))
         n_pred = np.array(list(map(np.max, masks_pred)))
         if n_pred[0] > 0:
-            iou = _intersection_over_union(masks_true[0],
-                                           masks_pred[0])[1:, 1:]
+            iou = _intersection_over_union(masks_true[0], masks_pred[0])[1:,
+                                                                         1:]
             for k, th in enumerate(self.thresholds):
                 tp[0, k] = self._true_positive(iou, th)
         fp[0] = n_pred[0] - tp[0]
@@ -1009,7 +1009,8 @@ for i in range(g._lambda + 1):
         new_parameters = np.random.randint(g.max_val, size=g.parameters)
         write_parameters(g.individuals[i], j, new_parameters)
     for j in range(g.outputs):
-        write_output_connection(g.individuals[i], j, np.random.randint(g.out_idx, size=1))
+        write_output_connection(g.individuals[i], j,
+                                np.random.randint(g.out_idx, size=1))
 y_pred = []
 for i in range(len(g.individuals)):
     y = parse(g.individuals[i], x0)
