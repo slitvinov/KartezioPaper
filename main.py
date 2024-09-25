@@ -903,6 +903,46 @@ def mutate0(genome):
     return genome
 
 
+def write_function(genome, node, function_id):
+    genome[g.inputs + node, 0] = function_id
+
+
+def write_connections(genome, node, connections):
+    genome[g.inputs + node, 1:g.para_idx] = connections
+
+
+def write_parameters(genome, node, parameters):
+    genome[g.inputs + node, g.para_idx:] = parameters
+
+
+def write_output_connection(genome, output_index, connection):
+    genome[g.out_idx + output_index, 1] = connection
+
+
+def read_connections(genome, node):
+    return genome[g.inputs + node, 1:g.para_idx]
+
+
+def read_parameters(genome, node):
+    return genome[g.inputs + node, g.para_idx:]
+
+
+def random_connections(idx: int):
+    return np.random.randint(g.inputs + idx, size=g.arity)
+
+
+def mutate_function(genome, idx: int):
+    write_function(genome, idx, np.random.randint(len(g.nodes)))
+
+
+def mutate_connections(genome, idx, only_one=None):
+    new_connections = random_connections(idx)
+    new_value = new_connections[only_one]
+    new_connections = read_connections(genome, idx)
+    new_connections[only_one] = new_value
+    write_connections(genome, idx, new_connections)
+
+
 class MutationClassic:
 
     def __init__(self):
@@ -912,49 +952,18 @@ class MutationClassic:
             (self.all_indices[0].ravel(), self.all_indices[1].ravel())).T
         self.sampling_range = range(len(self.all_indices))
 
-    def write_function(self, genome, node, function_id):
-        genome[g.inputs + node, 0] = function_id
-
-    def write_connections(self, genome, node, connections):
-        genome[g.inputs + node, 1:g.para_idx] = connections
-
-    def write_parameters(self, genome, node, parameters):
-        genome[g.inputs + node, g.para_idx:] = parameters
-
-    def write_output_connection(self, genome, output_index, connection):
-        genome[g.out_idx + output_index, 1] = connection
-
-    def read_connections(self, genome, node):
-        return genome[g.inputs + node, 1:g.para_idx]
-
-    def read_parameters(self, genome, node):
-        return genome[g.inputs + node, g.para_idx:]
-
-    def random_connections(self, idx: int):
-        return np.random.randint(g.inputs + idx, size=g.arity)
-
-    def mutate_function(self, genome, idx: int):
-        self.write_function(genome, idx, np.random.randint(len(g.nodes)))
-
-    def mutate_connections(self, genome, idx, only_one=None):
-        new_connections = self.random_connections(idx)
-        new_value = new_connections[only_one]
-        new_connections = self.read_connections(genome, idx)
-        new_connections[only_one] = new_value
-        self.write_connections(genome, idx, new_connections)
-
     def mutate_parameters(self, genome, idx, only_one=None):
         new_parameters = np.random.randint(g.parameter_max_value,
                                            size=g.parameters)
         if only_one is not None:
-            old_parameters = self.read_parameters(genome, idx)
+            old_parameters = read_parameters(genome, idx)
             old_parameters[only_one] = new_parameters[only_one]
             new_parameters = old_parameters.copy()
-        self.write_parameters(genome, idx, new_parameters)
+        write_parameters(genome, idx, new_parameters)
 
     def mutate_output(self, genome, idx):
-        self.write_output_connection(genome, idx,
-                                     np.random.randint(g.out_idx, size=1))
+        write_output_connection(genome, idx,
+                                np.random.randint(g.out_idx, size=1))
 
     def mutate(self, genome):
         sampling_indices = np.random.choice(self.sampling_range,
@@ -963,10 +972,10 @@ class MutationClassic:
         sampling_indices = self.all_indices[sampling_indices]
         for idx, mutation_parameter_index in sampling_indices:
             if mutation_parameter_index == 0:
-                self.mutate_function(genome, idx)
+                mutate_function(genome, idx)
             elif mutation_parameter_index <= g.arity:
                 connection_idx = mutation_parameter_index - 1
-                self.mutate_connections(genome, idx, only_one=connection_idx)
+                mutate_connections(genome, idx, only_one=connection_idx)
             else:
                 parameter_idx = mutation_parameter_index - g.arity - 1
                 self.mutate_parameters(genome, idx, only_one=parameter_idx)
@@ -978,47 +987,19 @@ class MutationClassic:
 
 class MutationAllRandom:
 
-    def write_function(self, genome, node, function_id):
-        genome[g.inputs + node, 0] = function_id
-
-    def write_connections(self, genome, node, connections):
-        genome[g.inputs + node, 1:g.para_idx] = connections
-
-    def write_parameters(self, genome, node, parameters):
-        genome[g.inputs + node, g.para_idx:] = parameters
-
-    def write_output_connection(self, genome, output_index, connection):
-        genome[g.out_idx + output_index, 1] = connection
-
-    def read_connections(self, genome, node):
-        return genome[g.inputs + node, 1:g.para_idx]
-
-    def random_connections(self, idx: int):
-        return np.random.randint(g.inputs + idx, size=g.arity)
-
-    def mutate_function(self, genome, idx: int):
-        self.write_function(genome, idx, np.random.randint(len(g.nodes)))
-
-    def mutate_connections(self, genome, idx, only_one=None):
-        new_connections = self.random_connections(idx)
-        new_value = new_connections[only_one]
-        new_connections = self.read_connections(genome, idx)
-        new_connections[only_one] = new_value
-        self.write_connections(genome, idx, new_connections)
-
     def mutate_parameters(self, genome, idx):
         new_parameters = np.random.randint(g.parameter_max_value,
                                            size=g.parameters)
-        self.write_parameters(genome, idx, new_parameters)
+        write_parameters(genome, idx, new_parameters)
 
     def mutate_output(self, genome, idx):
-        self.write_output_connection(genome, idx,
-                                     np.random.randint(g.out_idx, size=1))
+        write_output_connection(genome, idx,
+                                np.random.randint(g.out_idx, size=1))
 
     def mutate(self, genome):
         for i in range(g.n):
-            self.mutate_function(genome, i)
-            self.mutate_connections(genome, i)
+            mutate_function(genome, i)
+            mutate_connections(genome, i)
             self.mutate_parameters(genome, i)
         for i in range(g.outputs):
             self.mutate_output(genome, i)
