@@ -806,11 +806,6 @@ class InRange(Node):
             mask=cv2.inRange(x[0], lower, upper),
         )
 
-
-def write_output_connection(genome, j, connection):
-    genome[g.out_idx + j, 1] = connection
-
-
 def read_connections(genome, node):
     return genome[g.inputs + node, 1:g.para_idx]
 
@@ -925,8 +920,7 @@ for i in range(g._lambda + 1):
         new_parameters = np.random.randint(g.max_val, size=g.parameters)
         g.individuals[i][g.inputs + j, g.para_idx:] = new_parameters
     for j in range(g.outputs):
-        write_output_connection(g.individuals[i], j,
-                                np.random.randint(g.out_idx, size=1))
+        g.individuals[i][g.out_idx + j, 1] = np.random.randint(g.out_idx, size=1)
 y_pred = []
 for i in range(len(g.individuals)):
     y = parse(g.individuals[i], x0)
