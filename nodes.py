@@ -418,9 +418,9 @@ class FluoTopHat(Node):
         kur = np.mean(kurtosis(img, fisher=True))
         skew1 = np.mean(skew(img))
         if kur > 1 and skew1 > 1:
-            p2, p98 = np.percentile(img, (15, 99.5), interpolation="linear")
+            p2, p98 = np.percentile(img, (15, 99.5), method="linear")
         else:
-            p2, p98 = np.percentile(img, (15, 100), interpolation="linear")
+            p2, p98 = np.percentile(img, (15, 100), method="linear")
         return self._rescale_intensity(img, p2, p98)
 
 
