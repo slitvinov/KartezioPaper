@@ -159,7 +159,7 @@ def mutate1(genome):
             mutate_parameters1(genome, idx, only_one=parameter_idx)
     for idx in range(g.outputs):
         if random.random() < 0.2:
-            genome[g.out_idx + idx, 1] = np.random.randint(g.out_idx, size=1)
+            genome[g.out_idx + idx, 1] = np.random.randint(g.out_idx, size=1).item()
     return genome
 
 
@@ -222,7 +222,7 @@ for i in range(g._lambda + 1):
         g.individuals[i][g.inputs + j, g.para_idx:] = new_parameters
     for j in range(g.outputs):
         g.individuals[i][g.out_idx + j, 1] = np.random.randint(g.out_idx,
-                                                               size=1)
+                                                               size=1).item()
 y_pred = []
 for i in range(len(g.individuals)):
     y = parse(g.individuals[i], x0)
