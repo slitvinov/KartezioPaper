@@ -66,12 +66,7 @@ registry = Registry()
 
 class Node:
 
-    def __init__(self,
-                 name: str,
-                 symbol: str,
-                 arity: int,
-                 args: int,
-                 sources=None):
+    def __init__(self, name, symbol, arity, args, sources=None):
         self.name = name
         self.symbol = symbol
         self.arity = arity
