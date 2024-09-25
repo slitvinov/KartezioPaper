@@ -1059,23 +1059,17 @@ class Dataset:
         self.inputs = inputs
         self.indices = indices
 
-def read0(filename):
-    filepath = os.path.join("dataset", filename)
-    image = imread_color(filepath, rgb=False)
-    return image_split(image), image.shape[:2]
-
-
-def read1(filename, shape):
+def read1(filename):
     if str(filename) == "nan":
         filepath = ""
     else:
         filepath = os.path.join("dataset", filename)
     label_mask = image_new(shape)
     if filepath == "":
-        return [label_mask], shape, 0
+        return [label_mask]
     polygons = read_polygons_from_roi(filepath)
     fill_polygons_as_labels(label_mask, polygons)
-    return [label_mask], shape, len(polygons)
+    return [label_mask]
 
 
 class G:
@@ -1115,10 +1109,11 @@ dataframe_training.reset_index(inplace=True)
 x0 = []
 y0 = []
 for row in dataframe_training.itertuples():
-    x, shape = read0(row.input)
-    datalist, shape, count = read1(row.label, shape=shape)
+    filepath = os.path.join("dataset", row.input)
+    image = imread_color(filepath, rgb=False)
+    x, shape = image_split(image), image.shape[:2]
     x0.append(x)
-    y0.append(datalist)
+    y0.append(read1(row.label))
 for i in range(g._lambda + 1):
     zero = np.zeros((g.h, g.w), dtype=np.uint8)
     g.individuals[i] = g.instance_method.mutate(zero)
