@@ -74,10 +74,6 @@ class Node:
         self.sources = sources
 
 
-def read_function(genome, idx):
-    return genome[g.inputs + idx, 0]
-
-
 def read_active_connections(genome, node, active_connections):
     return genome[
         g.inputs + node,
@@ -96,10 +92,11 @@ def _parse_one_graph(genome, graph_source):
         next_index = next_indices.pop()
         if next_index < g.inputs:
             continue
-        function_index = read_function(genome, next_index - g.inputs)
+        idx = next_index - g.inputs
+        function_index = genome[g.inputs + idx, 0]
         active_connections = g.nodes[function_index].arity
         next_connections = set(
-            read_active_connections(genome, next_index - g.inputs,
+            read_active_connections(genome, idx,
                                     active_connections))
         next_indices = next_indices.union(next_connections)
         output_tree = output_tree.union(next_connections)
@@ -119,7 +116,7 @@ def _x_to_output_map(genome, graphs_list, x):
             if node < g.inputs:
                 continue
             idx = node - g.inputs
-            function_index = read_function(genome, idx)
+            function_index = genome[g.inputs + idx, 0]
             arity = g.nodes[function_index].arity
             connections = read_active_connections(genome, idx, arity)
             inputs = [output_map[c] for c in connections]
