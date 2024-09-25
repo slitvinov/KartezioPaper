@@ -817,6 +817,7 @@ def call2(x):
     mask, markers, labels = g.wt.apply(x[0], markers=x[1], mask=x[0] > 0)
     return labels
 
+
 def write_function(genome, node, function_id):
     genome[g.inputs + node, 0] = function_id
 
