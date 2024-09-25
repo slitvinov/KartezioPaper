@@ -807,8 +807,8 @@ class InRange(Node):
         )
 
 
-def write_output_connection(genome, output_index, connection):
-    genome[g.out_idx + output_index, 1] = connection
+def write_output_connection(genome, idx, connection):
+    genome[g.out_idx + idx, 1] = connection
 
 
 def read_connections(genome, node):
