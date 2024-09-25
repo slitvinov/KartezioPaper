@@ -153,19 +153,18 @@ def parse(genome, x):
     return all_y_pred
 
 
-class FitnessAP:
-    def call(self, y_true, y_pred):
-        scores = []
-        for yi_pred in y_pred:
-            scores.append(self.compute_one(y_true, yi_pred))
-        return scores
+def call1(y_true, y_pred):
+    scores = []
+    for yi_pred in y_pred:
+        scores.append(compute_one1(y_true, yi_pred))
+    return scores
 
-    def compute_one(self, y_true, y_pred):
-        score = 0.0
-        y_size = len(y_true)
-        for i in range(y_size):
-            score += call0(y_true[i].copy(), y_pred[i])
-        return score / y_size
+def compute_one1(y_true, y_pred):
+    score = 0.0
+    y_size = len(y_true)
+    for i in range(y_size):
+        score += call0(y_true[i].copy(), y_pred[i])
+    return score / y_size
 
 
 @jit(nopython=True)
@@ -949,7 +948,6 @@ g.all_indices = np.indices((g.n, g.w))
 g.all_indices = np.vstack(
     (g.all_indices[0].ravel(), g.all_indices[1].ravel())).T
 g.sampling_range = range(len(g.all_indices))
-g.fit = FitnessAP()
 g.individuals = [None] * (g._lambda + 1)
 g.fitness = np.zeros(g._lambda + 1)
 meta = json_read("dataset/META.json")
@@ -985,7 +983,7 @@ y_pred = []
 for i in range(len(g.individuals)):
     y = parse(g.individuals[i], x0)
     y_pred.append(y)
-g.fitness = g.fit.call(y0, y_pred)
+g.fitness = call1(y0, y_pred)
 print(f"{0:08} {g.fitness[0]:.16e}")
 current_generation = 0
 while current_generation < g.generations:
@@ -1005,6 +1003,6 @@ while current_generation < g.generations:
     for i in range(len(g.individuals)):
         y = parse(g.individuals[i], x0)
         y_pred.append(y)
-    g.fitness = g.fit.call(y0, y_pred)
+    g.fitness = call1(y0, y_pred)
     current_generation += 1
     print(f"{current_generation:08} {g.fitness[0]:.16e}")
