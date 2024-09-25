@@ -806,11 +806,11 @@ class InRange(Node):
             mask=cv2.inRange(x[0], lower, upper),
         )
 
-def read_parameters(genome, node):
-    return genome[g.inputs + node, g.para_idx:]
+def read_parameters(genome, idx):
+    return genome[g.inputs + idx, g.para_idx:]
 
 
-def random_connections(idx: int):
+def random_connections(idx):
     return np.random.randint(g.inputs + idx, size=g.arity)
 
 
