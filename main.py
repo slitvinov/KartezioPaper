@@ -838,7 +838,7 @@ def mutate1(genome):
     sampling_indices = g.all_indices[sampling_indices]
     for idx, mutation_parameter_index in sampling_indices:
         if mutation_parameter_index == 0:
-            mutate_function(genome, idx)
+            genome[g.inputs + idx, 0] = np.random.randint(len(g.nodes))
         elif mutation_parameter_index <= g.arity:
             connection_idx = mutation_parameter_index - 1
             mutate_connections(genome, idx, only_one=connection_idx)
