@@ -203,7 +203,7 @@ class MetricCellpose(Node):
         super().__init__(name, symbol, arity, 0)
 
     def call(self, y_true, y_pred):
-        return 1.0 - self.average_precision(y_true[0], y_pred)
+        return self.average_precision(y_true[0], y_pred)
 
     def average_precision(self, y_true, y_pred):
         n_true = np.max(y_true)
@@ -216,12 +216,11 @@ class MetricCellpose(Node):
         fn = n_true - tp
         if tp == 0:
             if n_true == 0:
-                ap = 1.0
+                return 0.0
             else:
-                ap = 0.0
+                return 1.0
         else:
-            ap = tp / (tp + fp + fn)
-        return ap
+            return (fp+fn)/(tp+fp+fn)
 
 
 def true_positive0(iou):
