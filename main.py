@@ -979,12 +979,12 @@ while current_generation < g.generations:
     for i in range(g._lambda + 1):
         g.individuals[i] = elite.copy()
     for i in range(1, g._lambda + 1):
-        changed = False
         active_nodes = parse_to_graphs(g.individuals[i])
-        while not changed:
+        while True:
             g.individuals[i] = mutate1(g.individuals[i])
             new_active_nodes = parse_to_graphs(g.individuals[i])
-            changed = active_nodes != new_active_nodes
+            if active_nodes != new_active_nodes:
+                break
     y_pred = []
     for i in range(len(g.individuals)):
         y = parse(g.individuals[i], x0)
