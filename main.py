@@ -153,14 +153,7 @@ def parse(genome, x):
     return all_y_pred
 
 
-class FitnessAP(Node):
-
-    def __init__(self):
-        name = f"Average Precision"
-        symbol = "AP"
-        arity = 1
-        super().__init__(name, symbol, arity, 0)
-
+class FitnessAP:
     def call(self, y_true, y_pred):
         scores = []
         for yi_pred in y_pred:
