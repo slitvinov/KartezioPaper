@@ -145,7 +145,7 @@ def mutate_parameters1(genome, idx, only_one):
 
 
 def mutate1(genome):
-    sampling_indices = np.random.choice(g.sampling_range,
+    sampling_indices = np.random.choice(range(len(g.all_indices)),
                                         g.n_mutations,
                                         replace=False)
     sampling_indices = g.all_indices[sampling_indices]
@@ -189,7 +189,6 @@ g.n_mutations = 15 * g.n * g.w // 100
 g.all_indices = np.indices((g.n, g.w))
 g.all_indices = np.vstack(
     (g.all_indices[0].ravel(), g.all_indices[1].ravel())).T
-g.sampling_range = range(len(g.all_indices))
 g.individuals = [None] * (g._lambda + 1)
 meta = json_read("dataset/META.json")
 name = meta["name"]
