@@ -198,7 +198,6 @@ class MetricCellpose(Node):
 
     def __init__(self, thresholds):
         self.thresholds = thresholds
-        self.thresholds = [self.thresholds]
         name = "Cellpose Average Precision"
         symbol = "CAP"
         arity = 1
@@ -220,8 +219,7 @@ class MetricCellpose(Node):
         if n_pred[0] > 0:
             iou = _intersection_over_union(masks_true[0], masks_pred[0])[1:,
                                                                          1:]
-            for k, th in enumerate(self.thresholds):
-                tp[0, k] = self._true_positive(iou, th)
+            tp[0, 0] = self._true_positive(iou, self.thresholds)
         fp[0] = n_pred[0] - tp[0]
         fn[0] = n_true[0] - tp[0]
         if tp[0] == 0:
