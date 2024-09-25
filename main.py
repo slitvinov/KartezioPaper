@@ -74,9 +74,6 @@ class Node:
         self.sources = sources
 
 
-def read_active_connections(genome, idx, arity):
-    return genome[g.inputs + idx, 1:1 + arity]
-
 def _parse_one_graph(genome, graph_source):
     next_indices = graph_source.copy()
     output_tree = graph_source.copy()
@@ -108,7 +105,7 @@ def _x_to_output_map(genome, graphs_list, x):
             idx = node - g.inputs
             function_index = genome[g.inputs + idx, 0]
             arity = g.nodes[function_index].arity
-            connections = read_active_connections(genome, idx, arity)
+            connections = genome[g.inputs + idx, 1:1 + arity]
             inputs = [output_map[c] for c in connections]
             p = genome[g.inputs + idx, g.para_idx:]
             output_map[node] = g.nodes[function_index].call(inputs, p)
