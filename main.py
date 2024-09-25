@@ -1101,12 +1101,9 @@ for row in dataframe_training.itertuples():
     image = imread_color(filepath, rgb=False)
     x, shape = image_split(image), image.shape[:2]
     x0.append(x)
-    if str(row.label) == "nan":
-        filepath = ""
-    else:
-        filepath = os.path.join("dataset", row.label)
     label_mask = image_new(shape)
-    if filepath != "":
+    if str(row.label) != "nan":
+        filepath = os.path.join("dataset", row.label)
         polygons = read_polygons_from_roi(filepath)
         fill_polygons_as_labels(label_mask, polygons)
     y0.append([label_mask])
