@@ -142,7 +142,7 @@ def parse(genome, x):
     graphs = parse_to_graphs(genome)
     for xi in x:
         y_pred = _parse_one(genome, graphs, xi)
-        y_pred = g.endpoint.call(y_pred)
+        y_pred = call2(y_pred)
         all_y_pred.append(y_pred)
     return all_y_pred
 
@@ -813,21 +813,9 @@ def execute(function_index, inputs, p):
     return g.nodes[function_index].call(inputs, p)
 
 
-class EndpointWatershed:
-
-    def __init__(self):
-        self.wt = WatershedSkimage(use_dt=False,
-                                   markers_distance=21,
-                                   markers_area=None)
-
-    def call(self, x):
-        mask = x[0]
-        markers = x[1]
-        mask, markers, labels = self.wt.apply(mask,
-                                              markers=markers,
-                                              mask=mask > 0)
-        return labels
-
+def call2(x):
+    mask, markers, labels = g.wt.apply(x[0], markers=x[1], mask=x[0] > 0)
+    return labels
 
 def write_function(genome, node, function_id):
     genome[g.inputs + node, 0] = function_id
@@ -912,7 +900,7 @@ g = G()
 g.max_val = 256
 g._lambda = 5
 g.generations = 10
-g.endpoint = EndpointWatershed()
+g.wt = WatershedSkimage(use_dt=False, markers_distance=21, markers_area=None)
 g.nodes = [
     registry.nodes.instantiate(name) for name in registry.nodes.list().keys()
 ]
