@@ -807,10 +807,6 @@ class InRange(Node):
         )
 
 
-def write_parameters(genome, idx, new_parameters):
-    genome[g.inputs + idx, g.para_idx:] = new_parameters
-
-
 def write_output_connection(genome, output_index, connection):
     genome[g.out_idx + output_index, 1] = connection
 
@@ -928,7 +924,7 @@ for i in range(g._lambda + 1):
         mutate_function(g.individuals[i], j)
         mutate_connections(g.individuals[i], j, None)
         new_parameters = np.random.randint(g.max_val, size=g.parameters)
-        write_parameters(g.individuals[i], j, new_parameters)
+        g.individuals[i][g.inputs + j, g.para_idx:] = new_parameters
     for j in range(g.outputs):
         write_output_connection(g.individuals[i], j,
                                 np.random.randint(g.out_idx, size=1))
