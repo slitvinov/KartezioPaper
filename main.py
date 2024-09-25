@@ -806,17 +806,12 @@ class InRange(Node):
             mask=cv2.inRange(x[0], lower, upper),
         )
 
-
-def random_connections(idx):
-    return np.random.randint(g.inputs + idx, size=g.arity)
-
-
 def mutate_function(genome, idx):
     genome[g.inputs + idx, 0] = np.random.randint(len(g.nodes))
 
 
 def mutate_connections(genome, idx, only_one):
-    new_connections = random_connections(idx)
+    new_connections = np.random.randint(g.inputs + idx, size=g.arity)
     new_value = new_connections[only_one]
     new_connections = genome[g.inputs + idx, 1:g.para_idx]
     new_connections[only_one] = new_value
