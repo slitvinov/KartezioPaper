@@ -174,9 +174,7 @@ g.max_val = 256
 g._lambda = 5
 g.generations = 10
 g.wt = WatershedSkimage(use_dt=False, markers_distance=21, markers_area=None)
-g.nodes = [
-    registry.nodes.instantiate(name) for name in registry.nodes.list().keys()
-]
+g.nodes = [cls() for cls in registry.nodes.components]
 g.inputs = 3
 g.n = 30
 g.outputs = 2
