@@ -123,7 +123,7 @@ def _x_to_output_map(genome, graphs_list, x):
             arity = g.nodes[function_index].arity
             connections = read_active_connections(genome, idx, arity)
             inputs = [output_map[c] for c in connections]
-            p = read_parameters(genome, idx)
+            p = genome[g.inputs + idx, g.para_idx:]
             output_map[node] = g.nodes[function_index].call(inputs, p)
     return output_map
 
@@ -806,9 +806,6 @@ class InRange(Node):
             mask=cv2.inRange(x[0], lower, upper),
         )
 
-def read_parameters(genome, idx):
-    return genome[g.inputs + idx, g.para_idx:]
-
 
 def random_connections(idx):
     return np.random.randint(g.inputs + idx, size=g.arity)
@@ -829,7 +826,7 @@ def mutate_connections(genome, idx, only_one):
 def mutate_parameters1(genome, idx, only_one=None):
     new_parameters = np.random.randint(g.max_val, size=g.parameters)
     if only_one is not None:
-        old_parameters = read_parameters(genome, idx)
+        old_parameters = genome[g.inputs + idx, g.para_idx:]
         old_parameters[only_one] = new_parameters[only_one]
         new_parameters = old_parameters.copy()
     genome[g.inputs + idx, g.para_idx:] = new_parameters
@@ -837,6 +834,7 @@ def mutate_parameters1(genome, idx, only_one=None):
 
 def mutate_output1(genome, idx):
     genome[g.out_idx + idx, 1] = np.random.randint(g.out_idx, size=1)
+
 
 def mutate1(genome):
     sampling_indices = np.random.choice(g.sampling_range,
@@ -916,7 +914,8 @@ for i in range(g._lambda + 1):
         new_parameters = np.random.randint(g.max_val, size=g.parameters)
         g.individuals[i][g.inputs + j, g.para_idx:] = new_parameters
     for j in range(g.outputs):
-        g.individuals[i][g.out_idx + j, 1] = np.random.randint(g.out_idx, size=1)
+        g.individuals[i][g.out_idx + j, 1] = np.random.randint(g.out_idx,
+                                                               size=1)
 y_pred = []
 for i in range(len(g.individuals)):
     y = parse(g.individuals[i], x0)
