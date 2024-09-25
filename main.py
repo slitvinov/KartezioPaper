@@ -114,7 +114,9 @@ def _x_to_output_map(genome, graphs_list, x):
 
 def _parse_one(genome, graphs_list, x):
     output_map = _x_to_output_map(genome, graphs_list, x)
-    return [output_map[output_gene[1]] for output_gene in genome[g.out_idx:, :]]
+    return [
+        output_map[output_gene[1]] for output_gene in genome[g.out_idx:, :]
+    ]
 
 
 def parse(genome, x):
@@ -789,6 +791,7 @@ class InRange(Node):
             x[0],
             mask=cv2.inRange(x[0], lower, upper),
         )
+
 
 def mutate_connections(genome, idx, only_one):
     new_connections = np.random.randint(g.inputs + idx, size=g.arity)
