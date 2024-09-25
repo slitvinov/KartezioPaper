@@ -205,12 +205,12 @@ class MetricCellpose(Node):
     def call(self, y_true, y_pred):
         return 1.0 - self.average_precision(y_true[0], y_pred)
 
-    def average_precision(self, masks_true, masks_pred):
-        n_true = np.max(masks_true)
-        n_pred = np.max(masks_pred)
+    def average_precision(self, y_true, y_pred):
+        n_true = np.max(y_true)
+        n_pred = np.max(y_pred)
         tp = 0
         if n_pred > 0:
-            iou = _intersection_over_union(masks_true, masks_pred)[1:, 1:]
+            iou = _intersection_over_union(y_true, y_pred)[1:, 1:]
             tp = true_positive0(iou)
         fp = n_pred - tp
         fn = n_true - tp
