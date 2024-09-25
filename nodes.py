@@ -18,12 +18,12 @@ class Registry:
     class SubRegistry:
 
         def __init__(self):
-            self.__components = {}
+            self.components = {}
 
         def add(self, item_name, replace=False):
 
             def inner(item_cls):
-                self.__components[item_name] = item_cls
+                self.components[item_name] = item_cls
 
                 def wrapper(*args, **kwargs):
                     return item_cls(*args, **kwargs)
@@ -33,13 +33,13 @@ class Registry:
             return inner
 
         def get(self, item_name):
-            return self.__components[item_name]
+            return self.components[item_name]
 
         def instantiate(self, item_name, *args, **kwargs):
             return self.get(item_name)(*args, **kwargs)
 
         def list(self):
-            return self.__components
+            return self.components
 
     def __init__(self):
         self.nodes = self.SubRegistry()
