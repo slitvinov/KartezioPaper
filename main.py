@@ -171,7 +171,7 @@ class FitnessAP(Node):
         score = 0.0
         y_size = len(y_true)
         for i in range(y_size):
-            score += g.metric.call(y_true[i].copy(), y_pred[i])
+            score += call0(y_true[i].copy(), y_pred[i])
         return score / y_size
 
 
@@ -193,31 +193,22 @@ def _intersection_over_union(masks_true, masks_pred):
     iou[np.isnan(iou)] = 0.0
     return iou
 
-
-class MetricCellpose(Node):
-
-    def __init__(self):
-        name = "Cellpose Average Precision"
-        symbol = "CAP"
-        arity = 1
-        super().__init__(name, symbol, arity, 0)
-
-    def call(self, y_true, y_pred):
-        n_true = np.max(y_true[0])
-        n_pred = np.max(y_pred)
-        tp = 0
-        if n_pred > 0:
-            iou = _intersection_over_union(y_true[0], y_pred)[1:, 1:]
-            tp = true_positive0(iou)
-        fp = n_pred - tp
-        fn = n_true - tp
-        if tp == 0:
-            if n_true == 0:
-                return 0.0
-            else:
-                return 1.0
+def call0(y_true, y_pred):
+    n_true = np.max(y_true[0])
+    n_pred = np.max(y_pred)
+    tp = 0
+    if n_pred > 0:
+        iou = _intersection_over_union(y_true[0], y_pred)[1:, 1:]
+        tp = true_positive0(iou)
+    fp = n_pred - tp
+    fn = n_true - tp
+    if tp == 0:
+        if n_true == 0:
+            return 0.0
         else:
-            return (fp+fn)/(tp+fp+fn)
+            return 1.0
+    else:
+        return (fp+fn)/(tp+fp+fn)
 
 
 def true_positive0(iou):
@@ -958,7 +949,6 @@ g.out_idx = g.inputs + g.n
 g.para_idx = 1 + g.arity
 g.w = 1 + g.arity + g.parameters
 g.h = g.inputs + g.n + g.outputs
-g.metric = MetricCellpose()
 g.th = 0.5
 g.n_mutations = int(np.floor(0.15 * g.n * g.w))
 g.all_indices = np.indices((g.n, g.w))
