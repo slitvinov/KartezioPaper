@@ -204,32 +204,28 @@ class MetricCellpose(Node):
         super().__init__(name, symbol, arity, 0)
 
     def call(self, y_true, y_pred):
-        ap = self.average_precision(y_true[0], y_pred)
-        return 1.0 - ap[0]
+        return 1.0 - self.average_precision(y_true[0], y_pred)
 
     def average_precision(self, masks_true, masks_pred):
         masks_true = [masks_true]
         masks_pred = [masks_pred]
-        ap = np.zeros((1, 1), np.float32)
-        tp = np.zeros((1, 1), np.float32)
-        fp = np.zeros((1, 1), np.float32)
-        fn = np.zeros((1, 1), np.float32)
         n_true = np.array(list(map(np.max, masks_true)))
         n_pred = np.array(list(map(np.max, masks_pred)))
+        tp = 0
         if n_pred[0] > 0:
             iou = _intersection_over_union(masks_true[0], masks_pred[0])[1:,
                                                                          1:]
-            tp[0, 0] = self._true_positive(iou, self.thresholds)
-        fp[0] = n_pred[0] - tp[0]
-        fn[0] = n_true[0] - tp[0]
-        if tp[0] == 0:
+            tp = self._true_positive(iou, self.thresholds)
+        fp = n_pred[0] - tp
+        fn = n_true[0] - tp
+        if tp == 0:
             if n_true[0] == 0:
-                ap[0] = 1.0
+                ap = 1.0
             else:
-                ap[0] = 0.0
+                ap = 0.0
         else:
-            ap[0] = tp[0] / (tp[0] + fp[0] + fn[0])
-        return ap[0]
+            ap = tp / (tp + fp + fn)
+        return ap
 
     def _true_positive(self, iou, th):
         n_min = min(iou.shape[0], iou.shape[1])
