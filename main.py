@@ -815,8 +815,8 @@ class InRange(Node):
         )
 
 
-def execute(function_index, x, args):
-    return g.nodes[function_index].call(x, args)
+def execute(function_index, inputs, p):
+    return g.nodes[function_index].call(inputs, p)
 
 
 class EndpointWatershed(Node):
