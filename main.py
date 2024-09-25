@@ -133,8 +133,7 @@ def _x_to_output_map(genome, graphs_list, x):
             connections = read_active_connections(genome, node_index, arity)
             inputs = [output_map[c] for c in connections]
             p = read_parameters(genome, node_index)
-            value = execute(function_index, inputs, p)
-            output_map[node] = value
+            output_map[node] = g.nodes[function_index].call(inputs, p)
     return output_map
 
 
