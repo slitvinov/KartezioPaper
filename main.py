@@ -199,7 +199,6 @@ class MetricCellpose(Node):
     def __init__(self, thresholds):
         self.thresholds = thresholds
         self.thresholds = [self.thresholds]
-        self.n_thresholds = len(self.thresholds)
         name = "Cellpose Average Precision"
         symbol = "CAP"
         arity = 1
@@ -212,10 +211,10 @@ class MetricCellpose(Node):
     def average_precision(self, masks_true, masks_pred):
         masks_true = [masks_true]
         masks_pred = [masks_pred]
-        ap = np.zeros((len(masks_true), self.n_thresholds), np.float32)
-        tp = np.zeros((len(masks_true), self.n_thresholds), np.float32)
-        fp = np.zeros((len(masks_true), self.n_thresholds), np.float32)
-        fn = np.zeros((len(masks_true), self.n_thresholds), np.float32)
+        ap = np.zeros((1, 1), np.float32)
+        tp = np.zeros((1, 1), np.float32)
+        fp = np.zeros((1, 1), np.float32)
+        fn = np.zeros((1, 1), np.float32)
         n_true = np.array(list(map(np.max, masks_true)))
         n_pred = np.array(list(map(np.max, masks_pred)))
         if n_pred[0] > 0:
