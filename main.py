@@ -191,7 +191,6 @@ g.all_indices = np.vstack(
     (g.all_indices[0].ravel(), g.all_indices[1].ravel())).T
 g.sampling_range = range(len(g.all_indices))
 g.individuals = [None] * (g._lambda + 1)
-g.fitness = np.zeros(g._lambda + 1)
 meta = json_read("dataset/META.json")
 name = meta["name"]
 label_name = meta["label_name"]
