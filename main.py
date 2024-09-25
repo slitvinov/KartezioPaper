@@ -138,7 +138,9 @@ def parse(genome, x):
     graphs = parse_to_graphs(genome)
     for xi in x:
         y_pred = _parse_one(genome, graphs, xi)
-        mask, markers, y_pred = g.wt.apply(y_pred[0], markers=y_pred[1], mask=y_pred[0] > 0)
+        mask, markers, y_pred = g.wt.apply(y_pred[0],
+                                           markers=y_pred[1],
+                                           mask=y_pred[0] > 0)
         all_y_pred.append(y_pred)
     return all_y_pred
 
@@ -843,7 +845,7 @@ def mutate_parameters1(genome, idx, only_one=None):
         old_parameters = read_parameters(genome, idx)
         old_parameters[only_one] = new_parameters[only_one]
         new_parameters = old_parameters.copy()
-    write_parameters(genome, idx, new_parameters)
+    genome[g.inputs + idx, g.para_idx:] = new_parameters
 
 
 def mutate_output1(genome, idx):
