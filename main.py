@@ -156,16 +156,12 @@ def parse(genome, x):
 def call1(y_true, y_pred):
     scores = []
     for yi_pred in y_pred:
-        scores.append(compute_one1(y_true, yi_pred))
+        score = 0.0
+        y_size = len(y_true)
+        for i in range(y_size):
+            score += call0(y_true[i].copy(), yi_pred[i])
+        scores.append(score / y_size)
     return scores
-
-
-def compute_one1(y_true, yi_pred):
-    score = 0.0
-    y_size = len(y_true)
-    for i in range(y_size):
-        score += call0(y_true[i].copy(), yi_pred[i])
-    return score / y_size
 
 
 @jit(nopython=True)
