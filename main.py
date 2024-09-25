@@ -806,8 +806,8 @@ class InRange(Node):
             mask=cv2.inRange(x[0], lower, upper),
         )
 
-def read_connections(genome, node):
-    return genome[g.inputs + node, 1:g.para_idx]
+def read_connections(genome, idx):
+    return genome[g.inputs + idx, 1:g.para_idx]
 
 
 def read_parameters(genome, node):
