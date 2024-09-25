@@ -1050,16 +1050,6 @@ class MutationAllRandom:
         return genome
 
 
-class Dataset:
-
-    def __init__(self, train_set, name, label_name, inputs, indices=None):
-        self.train_set = train_set
-        self.name = name
-        self.label_name = label_name
-        self.inputs = inputs
-        self.indices = indices
-
-
 class G:
     pass
 
