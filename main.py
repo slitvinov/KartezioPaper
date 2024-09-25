@@ -935,10 +935,6 @@ class MutationClassic:
         return np.random.randint(g.out_idx, size=1)
 
     @property
-    def random_parameters(self):
-        return np.random.randint(g.parameter_max_value, size=g.parameters)
-
-    @property
     def random_functions(self):
         return np.random.randint(len(g.nodes))
 
@@ -956,7 +952,7 @@ class MutationClassic:
         self.write_connections(genome, idx, new_connections)
 
     def mutate_parameters(self, genome, idx, only_one=None):
-        new_parameters = self.random_parameters
+        new_parameters = np.random.randint(g.parameter_max_value, size=g.parameters)
         if only_one is not None:
             old_parameters = self.read_parameters(genome, idx)
             old_parameters[only_one] = new_parameters[only_one]
@@ -1003,10 +999,6 @@ class MutationAllRandom:
         return genome[g.inputs + node, 1:g.para_idx]
 
     @property
-    def random_parameters(self):
-        return np.random.randint(g.parameter_max_value, size=g.parameters)
-
-    @property
     def random_functions(self):
         return np.random.randint(len(g.nodes))
 
@@ -1028,7 +1020,7 @@ class MutationAllRandom:
         self.write_connections(genome, idx, new_connections)
 
     def mutate_parameters(self, genome, idx):
-        new_parameters = self.random_parameters
+        new_parameters = np.random.randint(g.parameter_max_value, size=g.parameters)
         self.write_parameters(genome, idx, new_parameters)
 
     def mutate_output(self, genome, idx):
