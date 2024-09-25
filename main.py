@@ -1,4 +1,3 @@
-from enum import Enum
 from numba import jit
 from numena.image.basics import image_ew_max
 from numena.image.basics import image_ew_mean
