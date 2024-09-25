@@ -893,7 +893,6 @@ class EndpointWatershed(Node):
         }
 
 
-
 def write_function(genome, node, function_id):
     genome[g.inputs + node, 0] = function_id
 
@@ -934,46 +933,38 @@ def mutate_connections(genome, idx, only_one=None):
     write_connections(genome, idx, new_connections)
 
 
-class MutationClassic:
+def mutate_parameters1(genome, idx, only_one=None):
+    new_parameters = np.random.randint(g.parameter_max_value,
+                                       size=g.parameters)
+    if only_one is not None:
+        old_parameters = read_parameters(genome, idx)
+        old_parameters[only_one] = new_parameters[only_one]
+        new_parameters = old_parameters.copy()
+    write_parameters(genome, idx, new_parameters)
 
-    def __init__(self):
-        self.n_mutations = int(np.floor(0.15 * g.n * g.w))
-        self.all_indices = np.indices((g.n, g.w))
-        self.all_indices = np.vstack(
-            (self.all_indices[0].ravel(), self.all_indices[1].ravel())).T
-        self.sampling_range = range(len(self.all_indices))
 
-    def mutate_parameters(self, genome, idx, only_one=None):
-        new_parameters = np.random.randint(g.parameter_max_value,
-                                           size=g.parameters)
-        if only_one is not None:
-            old_parameters = read_parameters(genome, idx)
-            old_parameters[only_one] = new_parameters[only_one]
-            new_parameters = old_parameters.copy()
-        write_parameters(genome, idx, new_parameters)
+def mutate_output1(genome, idx):
+    write_output_connection(genome, idx, np.random.randint(g.out_idx, size=1))
 
-    def mutate_output(self, genome, idx):
-        write_output_connection(genome, idx,
-                                np.random.randint(g.out_idx, size=1))
 
-    def mutate(self, genome):
-        sampling_indices = np.random.choice(self.sampling_range,
-                                            self.n_mutations,
-                                            replace=False)
-        sampling_indices = self.all_indices[sampling_indices]
-        for idx, mutation_parameter_index in sampling_indices:
-            if mutation_parameter_index == 0:
-                mutate_function(genome, idx)
-            elif mutation_parameter_index <= g.arity:
-                connection_idx = mutation_parameter_index - 1
-                mutate_connections(genome, idx, only_one=connection_idx)
-            else:
-                parameter_idx = mutation_parameter_index - g.arity - 1
-                self.mutate_parameters(genome, idx, only_one=parameter_idx)
-        for output in range(g.outputs):
-            if random.random() < 0.2:
-                self.mutate_output(genome, output)
-        return genome
+def mutate1(genome):
+    sampling_indices = np.random.choice(g.sampling_range,
+                                        g.n_mutations,
+                                        replace=False)
+    sampling_indices = g.all_indices[sampling_indices]
+    for idx, mutation_parameter_index in sampling_indices:
+        if mutation_parameter_index == 0:
+            mutate_function(genome, idx)
+        elif mutation_parameter_index <= g.arity:
+            connection_idx = mutation_parameter_index - 1
+            mutate_connections(genome, idx, only_one=connection_idx)
+        else:
+            parameter_idx = mutation_parameter_index - g.arity - 1
+            mutate_parameters1(genome, idx, only_one=parameter_idx)
+    for output in range(g.outputs):
+        if random.random() < 0.2:
+            mutate_output1(genome, output)
+    return genome
 
 
 def mutate_parameters0(genome, idx):
@@ -981,9 +972,10 @@ def mutate_parameters0(genome, idx):
                                        size=g.parameters)
     write_parameters(genome, idx, new_parameters)
 
+
 def mutate_output0(genome, idx):
-    write_output_connection(genome, idx,
-                            np.random.randint(g.out_idx, size=1))
+    write_output_connection(genome, idx, np.random.randint(g.out_idx, size=1))
+
 
 def mutate0(genome):
     for i in range(g.n):
@@ -1019,7 +1011,11 @@ g.para_idx = 1 + g.arity
 g.w = 1 + g.arity + g.parameters
 g.h = g.inputs + g.n + g.outputs
 g.metric = MetricCellpose(thresholds=0.5)
-g.mutation = MutationClassic()
+g.n_mutations = int(np.floor(0.15 * g.n * g.w))
+g.all_indices = np.indices((g.n, g.w))
+g.all_indices = np.vstack(
+    (g.all_indices[0].ravel(), g.all_indices[1].ravel())).T
+g.sampling_range = range(len(g.all_indices))
 g.fit = FitnessAP()
 g.individuals = [None] * (g._lambda + 1)
 g.fitness = np.zeros(g._lambda + 1)
@@ -1062,7 +1058,7 @@ while current_generation < g.generations:
         changed = False
         active_nodes = parse_to_graphs(g.individuals[i])
         while not changed:
-            g.individuals[i] = g.mutation.mutate(g.individuals[i])
+            g.individuals[i] = mutate1(g.individuals[i])
             new_active_nodes = parse_to_graphs(g.individuals[i])
             changed = active_nodes != new_active_nodes
     y_pred = []
