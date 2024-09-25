@@ -186,9 +186,10 @@ g.w = 1 + g.arity + g.parameters
 g.h = g.inputs + g.n + g.outputs
 g.n_mutations = 15 * g.n * g.w // 100
 g.indices = np.array([[i, j] for i in range(g.n) for j in range(g.w)])
-g.individuals = [None] * (g._lambda + 1)
+g.individuals = [
+    np.zeros((g.h, g.w), dtype=np.uint8) for i in range(g._lambda + 1)
+]
 dataframe = pd.read_csv("dataset/dataset.csv")
-dataframe.reset_index(inplace=True)
 x0 = []
 y0 = []
 for row in dataframe.itertuples():
@@ -201,15 +202,14 @@ for row in dataframe.itertuples():
     polygons = read_polygons_from_roi(filepath)
     fill_polygons_as_labels(label_mask, polygons)
     y0.append([label_mask])
-for i in range(g._lambda + 1):
-    g.individuals[i] = np.zeros((g.h, g.w), dtype=np.uint8)
+for genome in g.individuals:
     for j in range(g.n):
-        g.individuals[i][g.inputs + j, 0] = np.random.randint(len(g.nodes))
-        mutate_connections(g.individuals[i], j, None)
+        genome[g.inputs + j, 0] = random.randrange(len(g.nodes))
+        mutate_connections(genome, j, None)
         new_parameters = np.random.randint(g.max_val, size=g.parameters)
-        g.individuals[i][g.inputs + j, g.para_idx:] = new_parameters
+        genome[g.inputs + j, g.para_idx:] = new_parameters
     for j in range(g.outputs):
-        g.individuals[i][g.out_idx + j, 1] = random.randrange(g.out_idx)
+        genome[g.out_idx + j, 1] = random.randrange(g.out_idx)
 y_pred = []
 for i in range(len(g.individuals)):
     y = parse(g.individuals[i], x0)
