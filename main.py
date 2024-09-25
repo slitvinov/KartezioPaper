@@ -934,7 +934,7 @@ def mutate_connections(genome, idx, only_one=None):
 
 
 def mutate_parameters1(genome, idx, only_one=None):
-    new_parameters = np.random.randint(g.parameter_max_value,
+    new_parameters = np.random.randint(g.max_val,
                                        size=g.parameters)
     if only_one is not None:
         old_parameters = read_parameters(genome, idx)
@@ -967,12 +967,6 @@ def mutate1(genome):
     return genome
 
 
-def mutate_parameters0(genome, j):
-    new_parameters = np.random.randint(g.parameter_max_value,
-                                       size=g.parameters)
-    write_parameters(genome, j, new_parameters)
-
-
 def mutate_output0(genome, idx):
     write_output_connection(genome, idx, np.random.randint(g.out_idx, size=1))
 
@@ -984,7 +978,7 @@ class G:
 random.seed(1)
 np.random.seed(1)
 g = G()
-g.parameter_max_value = 256
+g.max_val = 256
 g._lambda = 5
 g.generations = 10
 g.endpoint = EndpointWatershed()
@@ -1033,7 +1027,8 @@ for i in range(g._lambda + 1):
     for j in range(g.n):
         mutate_function(g.individuals[i], j)
         mutate_connections(g.individuals[i], j)
-        mutate_parameters0(g.individuals[i], j)
+        new_parameters = np.random.randint(g.max_val, size=g.parameters)
+        write_parameters(g.individuals[i], j, new_parameters)
     for j in range(g.outputs):
         mutate_output0(g.individuals[i], j)
 y_pred = []
