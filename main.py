@@ -28,6 +28,8 @@ import os
 import pandas as pd
 import random
 
+import nodes
+
 
 class Registry:
 
@@ -72,120 +74,6 @@ class Node:
         self.arity = arity
         self.args = args
         self.sources = sources
-
-
-def _parse_one_graph(genome, graph_source):
-    next_indices = graph_source.copy()
-    output_tree = graph_source.copy()
-    while next_indices:
-        next_index = next_indices.pop()
-        if next_index < g.inputs:
-            continue
-        idx = next_index - g.inputs
-        function_index = genome[g.inputs + idx, 0]
-        arity = g.nodes[function_index].arity
-        next_connections = set(genome[g.inputs + idx, 1:1 + arity])
-        next_indices = next_indices.union(next_connections)
-        output_tree = output_tree.union(next_connections)
-    return sorted(list(output_tree))
-
-
-def parse_to_graphs(genome):
-    outputs = genome[g.out_idx:, :]
-    graphs_list = [_parse_one_graph(genome, {output[1]}) for output in outputs]
-    return graphs_list
-
-
-def _x_to_output_map(genome, graphs_list, x):
-    output_map = {i: x[i].copy() for i in range(g.inputs)}
-    for graph in graphs_list:
-        for node in graph:
-            if node < g.inputs:
-                continue
-            idx = node - g.inputs
-            function_index = genome[g.inputs + idx, 0]
-            arity = g.nodes[function_index].arity
-            connections = genome[g.inputs + idx, 1:1 + arity]
-            inputs = [output_map[c] for c in connections]
-            p = genome[g.inputs + idx, g.para_idx:]
-            output_map[node] = g.nodes[function_index].call(inputs, p)
-    return output_map
-
-
-def _parse_one(genome, graphs_list, x):
-    output_map = _x_to_output_map(genome, graphs_list, x)
-    return [
-        output_map[output_gene[1]] for output_gene in genome[g.out_idx:, :]
-    ]
-
-
-def parse(genome, x):
-    all_y_pred = []
-    graphs = parse_to_graphs(genome)
-    for xi in x:
-        y_pred = _parse_one(genome, graphs, xi)
-        mask, markers, y_pred = g.wt.apply(y_pred[0],
-                                           markers=y_pred[1],
-                                           mask=y_pred[0] > 0)
-        all_y_pred.append(y_pred)
-    return all_y_pred
-
-
-def call1(y_true, y_pred):
-    scores = []
-    for yi_pred in y_pred:
-        score = 0.0
-        y_size = len(y_true)
-        for i in range(y_size):
-            score += call0(y_true[i].copy(), yi_pred[i])
-        scores.append(score / y_size)
-    return scores
-
-
-@jit(nopython=True)
-def _label_overlap(x, y):
-    x = x.ravel()
-    y = y.ravel()
-    overlap = np.zeros((1 + x.max(), 1 + y.max()), dtype=np.uint)
-    for i in range(len(x)):
-        overlap[x[i], y[i]] += 1
-    return overlap
-
-
-def _intersection_over_union(masks_true, masks_pred):
-    overlap = _label_overlap(masks_true, masks_pred)
-    n_pixels_pred = np.sum(overlap, axis=0, keepdims=True)
-    n_pixels_true = np.sum(overlap, axis=1, keepdims=True)
-    iou = overlap / (n_pixels_pred + n_pixels_true - overlap)
-    iou[np.isnan(iou)] = 0.0
-    return iou
-
-
-def call0(y_true, y_pred):
-    n_true = np.max(y_true[0])
-    n_pred = np.max(y_pred)
-    tp = 0
-    if n_pred > 0:
-        iou = _intersection_over_union(y_true[0], y_pred)[1:, 1:]
-        tp = true_positive0(iou)
-    fp = n_pred - tp
-    fn = n_true - tp
-    if tp == 0:
-        if n_true == 0:
-            return 0.0
-        else:
-            return 1.0
-    else:
-        return (fp + fn) / (tp + fp + fn)
-
-
-def true_positive0(iou):
-    n_min = min(iou.shape[0], iou.shape[1])
-    costs = -(iou >= g.th).astype(float) - iou / (2 * n_min)
-    true_ind, pred_ind = linear_sum_assignment(costs)
-    match_ok = iou[true_ind, pred_ind] >= g.th
-    return match_ok.sum()
-
 
 SHARPEN_KERNEL = np.array(([0, -1, 0], [-1, 5, -1], [0, -1, 0]), dtype="int")
 ROBERT_CROSS_H_KERNEL = np.array(([0, 1], [-1, 0]), dtype="int")
@@ -791,6 +679,118 @@ class InRange(Node):
             x[0],
             mask=cv2.inRange(x[0], lower, upper),
         )
+
+def _parse_one_graph(genome, graph_source):
+    next_indices = graph_source.copy()
+    output_tree = graph_source.copy()
+    while next_indices:
+        next_index = next_indices.pop()
+        if next_index < g.inputs:
+            continue
+        idx = next_index - g.inputs
+        function_index = genome[g.inputs + idx, 0]
+        arity = g.nodes[function_index].arity
+        next_connections = set(genome[g.inputs + idx, 1:1 + arity])
+        next_indices = next_indices.union(next_connections)
+        output_tree = output_tree.union(next_connections)
+    return sorted(list(output_tree))
+
+
+def parse_to_graphs(genome):
+    outputs = genome[g.out_idx:, :]
+    graphs_list = [_parse_one_graph(genome, {output[1]}) for output in outputs]
+    return graphs_list
+
+
+def _x_to_output_map(genome, graphs_list, x):
+    output_map = {i: x[i].copy() for i in range(g.inputs)}
+    for graph in graphs_list:
+        for node in graph:
+            if node < g.inputs:
+                continue
+            idx = node - g.inputs
+            function_index = genome[g.inputs + idx, 0]
+            arity = g.nodes[function_index].arity
+            connections = genome[g.inputs + idx, 1:1 + arity]
+            inputs = [output_map[c] for c in connections]
+            p = genome[g.inputs + idx, g.para_idx:]
+            output_map[node] = g.nodes[function_index].call(inputs, p)
+    return output_map
+
+
+def _parse_one(genome, graphs_list, x):
+    output_map = _x_to_output_map(genome, graphs_list, x)
+    return [
+        output_map[output_gene[1]] for output_gene in genome[g.out_idx:, :]
+    ]
+
+
+def parse(genome, x):
+    all_y_pred = []
+    graphs = parse_to_graphs(genome)
+    for xi in x:
+        y_pred = _parse_one(genome, graphs, xi)
+        mask, markers, y_pred = g.wt.apply(y_pred[0],
+                                           markers=y_pred[1],
+                                           mask=y_pred[0] > 0)
+        all_y_pred.append(y_pred)
+    return all_y_pred
+
+
+def call1(y_true, y_pred):
+    scores = []
+    for yi_pred in y_pred:
+        score = 0.0
+        y_size = len(y_true)
+        for i in range(y_size):
+            score += call0(y_true[i].copy(), yi_pred[i])
+        scores.append(score / y_size)
+    return scores
+
+
+@jit(nopython=True)
+def _label_overlap(x, y):
+    x = x.ravel()
+    y = y.ravel()
+    overlap = np.zeros((1 + x.max(), 1 + y.max()), dtype=np.uint)
+    for i in range(len(x)):
+        overlap[x[i], y[i]] += 1
+    return overlap
+
+
+def _intersection_over_union(masks_true, masks_pred):
+    overlap = _label_overlap(masks_true, masks_pred)
+    n_pixels_pred = np.sum(overlap, axis=0, keepdims=True)
+    n_pixels_true = np.sum(overlap, axis=1, keepdims=True)
+    iou = overlap / (n_pixels_pred + n_pixels_true - overlap)
+    iou[np.isnan(iou)] = 0.0
+    return iou
+
+
+def call0(y_true, y_pred):
+    n_true = np.max(y_true[0])
+    n_pred = np.max(y_pred)
+    tp = 0
+    if n_pred > 0:
+        iou = _intersection_over_union(y_true[0], y_pred)[1:, 1:]
+        tp = true_positive0(iou)
+    fp = n_pred - tp
+    fn = n_true - tp
+    if tp == 0:
+        if n_true == 0:
+            return 0.0
+        else:
+            return 1.0
+    else:
+        return (fp + fn) / (tp + fp + fn)
+
+
+def true_positive0(iou):
+    n_min = min(iou.shape[0], iou.shape[1])
+    costs = -(iou >= g.th).astype(float) - iou / (2 * n_min)
+    true_ind, pred_ind = linear_sum_assignment(costs)
+    match_ok = iou[true_ind, pred_ind] >= g.th
+    return match_ok.sum()
 
 
 def mutate_connections(genome, idx, only_one):
