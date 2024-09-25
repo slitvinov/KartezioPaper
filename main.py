@@ -142,7 +142,7 @@ def parse(genome, x):
     graphs = parse_to_graphs(genome)
     for xi in x:
         y_pred = _parse_one(genome, graphs, xi)
-        y_pred = call2(y_pred)
+        mask, markers, y_pred = g.wt.apply(y_pred[0], markers=y_pred[1], mask=y_pred[0] > 0)
         all_y_pred.append(y_pred)
     return all_y_pred
 
@@ -807,16 +807,6 @@ class InRange(Node):
             x[0],
             mask=cv2.inRange(x[0], lower, upper),
         )
-
-
-def execute(function_index, inputs, p):
-    return g.nodes[function_index].call(inputs, p)
-
-
-def call2(y_pred):
-    mask, markers, y_pred = g.wt.apply(y_pred[0], markers=y_pred[1], mask=y_pred[0] > 0)
-    return y_pred
-
 
 def write_function(genome, node, function_id):
     genome[g.inputs + node, 0] = function_id
