@@ -805,8 +805,8 @@ class InRange(Node):
         )
 
 
-def write_parameters(genome, node, parameters):
-    genome[g.inputs + node, g.para_idx:] = parameters
+def write_parameters(genome, idx, new_parameters):
+    genome[g.inputs + idx, g.para_idx:] = new_parameters
 
 
 def write_output_connection(genome, output_index, connection):
