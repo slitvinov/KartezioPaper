@@ -205,10 +205,8 @@ class MetricCellpose(Node):
         arity = 1
         super().__init__(name, symbol, arity, 0)
 
-    def call(self, y_true: np.ndarray, y_pred: np.ndarray):
-        _y_true = y_true[0]
-        _y_pred = y_pred["labels"]
-        ap, tp, fp, fn = self.average_precision(_y_true, _y_pred)
+    def call(self, y_true, y_pred):
+        ap, tp, fp, fn = self.average_precision(y_true[0], y_pred)
         return 1.0 - ap[0]
 
     def average_precision(self, masks_true, masks_pred):
@@ -224,7 +222,6 @@ class MetricCellpose(Node):
         n_true = np.array(list(map(np.max, masks_true)))
         n_pred = np.array(list(map(np.max, masks_pred)))
         for n in range(len(masks_true)):
-            #  _,mt = np.reshape(np.unique(masks_true[n], return_index=True), masks_pred[n].shape)
             if n_pred[n] > 0:
                 iou = _intersection_over_union(masks_true[n],
                                                masks_pred[n])[1:, 1:]
@@ -883,7 +880,7 @@ class EndpointWatershed(Node):
         mask, markers, labels = self.wt.apply(mask,
                                               markers=markers,
                                               mask=mask > 0)
-        return {"labels": labels}
+        return labels
 
 
 def write_function(genome, node, function_id):
