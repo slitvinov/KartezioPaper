@@ -806,10 +806,6 @@ class InRange(Node):
             mask=cv2.inRange(x[0], lower, upper),
         )
 
-def mutate_function(genome, idx):
-    genome[g.inputs + idx, 0] = np.random.randint(len(g.nodes))
-
-
 def mutate_connections(genome, idx, only_one):
     new_connections = np.random.randint(g.inputs + idx, size=g.arity)
     new_value = new_connections[only_one]
@@ -827,10 +823,6 @@ def mutate_parameters1(genome, idx, only_one=None):
     genome[g.inputs + idx, g.para_idx:] = new_parameters
 
 
-def mutate_output1(genome, idx):
-    genome[g.out_idx + idx, 1] = np.random.randint(g.out_idx, size=1)
-
-
 def mutate1(genome):
     sampling_indices = np.random.choice(g.sampling_range,
                                         g.n_mutations,
@@ -845,9 +837,9 @@ def mutate1(genome):
         else:
             parameter_idx = mutation_parameter_index - g.arity - 1
             mutate_parameters1(genome, idx, only_one=parameter_idx)
-    for output in range(g.outputs):
+    for idx in range(g.outputs):
         if random.random() < 0.2:
-            mutate_output1(genome, output)
+            genome[g.out_idx + idx, 1] = np.random.randint(g.out_idx, size=1)
     return genome
 
 
@@ -904,7 +896,7 @@ for row in dataframe_training.itertuples():
 for i in range(g._lambda + 1):
     g.individuals[i] = np.zeros((g.h, g.w), dtype=np.uint8)
     for j in range(g.n):
-        mutate_function(g.individuals[i], j)
+        g.individuals[i][g.inputs + j, 0] = np.random.randint(len(g.nodes))
         mutate_connections(g.individuals[i], j, None)
         new_parameters = np.random.randint(g.max_val, size=g.parameters)
         g.individuals[i][g.inputs + j, g.para_idx:] = new_parameters
