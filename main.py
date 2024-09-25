@@ -207,19 +207,16 @@ class MetricCellpose(Node):
         return 1.0 - self.average_precision(y_true[0], y_pred)
 
     def average_precision(self, masks_true, masks_pred):
-        masks_true = [masks_true]
-        masks_pred = [masks_pred]
-        n_true = np.array(list(map(np.max, masks_true)))
-        n_pred = np.array(list(map(np.max, masks_pred)))
+        n_true = np.max(masks_true)
+        n_pred = np.max(masks_pred)
         tp = 0
-        if n_pred[0] > 0:
-            iou = _intersection_over_union(masks_true[0], masks_pred[0])[1:,
-                                                                         1:]
+        if n_pred > 0:
+            iou = _intersection_over_union(masks_true, masks_pred)[1:, 1:]
             tp = self._true_positive(iou, self.thresholds)
-        fp = n_pred[0] - tp
-        fn = n_true[0] - tp
+        fp = n_pred - tp
+        fn = n_true - tp
         if tp == 0:
-            if n_true[0] == 0:
+            if n_true == 0:
                 ap = 1.0
             else:
                 ap = 0.0
