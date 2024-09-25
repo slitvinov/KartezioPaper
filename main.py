@@ -976,25 +976,23 @@ class MutationClassic:
         return genome
 
 
-class MutationAllRandom:
+def mutate_parameters0(genome, idx):
+    new_parameters = np.random.randint(g.parameter_max_value,
+                                       size=g.parameters)
+    write_parameters(genome, idx, new_parameters)
 
-    def mutate_parameters(self, genome, idx):
-        new_parameters = np.random.randint(g.parameter_max_value,
-                                           size=g.parameters)
-        write_parameters(genome, idx, new_parameters)
+def mutate_output0(genome, idx):
+    write_output_connection(genome, idx,
+                            np.random.randint(g.out_idx, size=1))
 
-    def mutate_output(self, genome, idx):
-        write_output_connection(genome, idx,
-                                np.random.randint(g.out_idx, size=1))
-
-    def mutate(self, genome):
-        for i in range(g.n):
-            mutate_function(genome, i)
-            mutate_connections(genome, i)
-            self.mutate_parameters(genome, i)
-        for i in range(g.outputs):
-            self.mutate_output(genome, i)
-        return genome
+def mutate0(genome):
+    for i in range(g.n):
+        mutate_function(genome, i)
+        mutate_connections(genome, i)
+        mutate_parameters0(genome, i)
+    for i in range(g.outputs):
+        mutate_output0(genome, i)
+    return genome
 
 
 class G:
@@ -1021,7 +1019,6 @@ g.para_idx = 1 + g.arity
 g.w = 1 + g.arity + g.parameters
 g.h = g.inputs + g.n + g.outputs
 g.metric = MetricCellpose(thresholds=0.5)
-g.instance_method = MutationAllRandom()
 g.mutation = MutationClassic()
 g.fit = FitnessAP()
 g.individuals = [None] * (g._lambda + 1)
@@ -1047,7 +1044,7 @@ for row in dataframe_training.itertuples():
     y0.append([label_mask])
 for i in range(g._lambda + 1):
     zero = np.zeros((g.h, g.w), dtype=np.uint8)
-    g.individuals[i] = g.instance_method.mutate(zero)
+    g.individuals[i] = mutate0(zero)
 y_pred = []
 for i in range(len(g.individuals)):
     y = parse(g.individuals[i], x0)
