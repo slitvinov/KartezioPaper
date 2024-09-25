@@ -206,15 +206,12 @@ class MetricCellpose(Node):
         super().__init__(name, symbol, arity, 0)
 
     def call(self, y_true, y_pred):
-        ap, tp, fp, fn = self.average_precision(y_true[0], y_pred)
+        ap = self.average_precision(y_true[0], y_pred)
         return 1.0 - ap[0]
 
     def average_precision(self, masks_true, masks_pred):
-        not_list = False
-        if not isinstance(masks_true, list):
-            masks_true = [masks_true]
-            masks_pred = [masks_pred]
-            not_list = True
+        masks_true = [masks_true]
+        masks_pred = [masks_pred]
         ap = np.zeros((len(masks_true), self.n_thresholds), np.float32)
         tp = np.zeros((len(masks_true), self.n_thresholds), np.float32)
         fp = np.zeros((len(masks_true), self.n_thresholds), np.float32)
@@ -236,9 +233,7 @@ class MetricCellpose(Node):
                     ap[n] = 0.0
             else:
                 ap[n] = tp[n] / (tp[n] + fp[n] + fn[n])
-        if not_list:
-            ap, tp, fp, fn = ap[0], tp[0], fp[0], fn[0]
-        return ap, tp, fp, fn
+        return ap[0]
 
     def _true_positive(self, iou, th):
         n_min = min(iou.shape[0], iou.shape[1])
