@@ -1,0 +1,14 @@
+{
+    "name": "Melanoma",
+    "scale": 1.0,
+    "label_name": "melanoma",
+    "mode": "dataframe",
+    "input": {
+        "type": "image",
+        "format": "rgb"
+    },
+    "label": {
+        "type": "roi",
+        "format": "polygon"
+    }
+}
