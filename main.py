@@ -966,10 +966,6 @@ def mutate1(genome):
     return genome
 
 
-def mutate_output0(genome, idx):
-    write_output_connection(genome, idx, np.random.randint(g.out_idx, size=1))
-
-
 class G:
     pass
 
@@ -1029,7 +1025,7 @@ for i in range(g._lambda + 1):
         new_parameters = np.random.randint(g.max_val, size=g.parameters)
         write_parameters(g.individuals[i], j, new_parameters)
     for j in range(g.outputs):
-        mutate_output0(g.individuals[i], j)
+        write_output_connection(g.individuals[i], j, np.random.randint(g.out_idx, size=1))
 y_pred = []
 for i in range(len(g.individuals)):
     y = parse(g.individuals[i], x0)
