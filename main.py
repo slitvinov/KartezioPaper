@@ -120,10 +120,11 @@ def call0(y_true, y_pred):
 
 
 def true_positive0(iou):
+    th = 0.5
     n_min = min(iou.shape[0], iou.shape[1])
-    costs = -(iou >= g.th).astype(float) - iou / (2 * n_min)
+    costs = -(iou >= th).astype(float) - iou / (2 * n_min)
     true_ind, pred_ind = linear_sum_assignment(costs)
-    match_ok = iou[true_ind, pred_ind] >= g.th
+    match_ok = iou[true_ind, pred_ind] >= th
     return match_ok.sum()
 
 
@@ -184,8 +185,7 @@ g.out_idx = g.inputs + g.n
 g.para_idx = 1 + g.arity
 g.w = 1 + g.arity + g.parameters
 g.h = g.inputs + g.n + g.outputs
-g.th = 0.5
-g.n_mutations = int(np.floor(0.15 * g.n * g.w))
+g.n_mutations = 15 * g.n * g.w // 100
 g.all_indices = np.indices((g.n, g.w))
 g.all_indices = np.vstack(
     (g.all_indices[0].ravel(), g.all_indices[1].ravel())).T
