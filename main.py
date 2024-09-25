@@ -906,7 +906,6 @@ def mutate0(genome):
 class MutationClassic:
 
     def __init__(self):
-        self.parameter_max_value = 256
         self.n_mutations = int(np.floor(0.15 * g.n * g.w))
         self.all_indices = np.indices((g.n, g.w))
         self.all_indices = np.vstack(
@@ -937,7 +936,7 @@ class MutationClassic:
 
     @property
     def random_parameters(self):
-        return np.random.randint(self.parameter_max_value, size=g.parameters)
+        return np.random.randint(g.parameter_max_value, size=g.parameters)
 
     @property
     def random_functions(self):
@@ -988,10 +987,6 @@ class MutationClassic:
 
 
 class MutationAllRandom:
-
-    def __init__(self):
-        self.parameter_max_value = 256
-
     def write_function(self, genome, node, function_id):
         genome[g.inputs + node, 0] = function_id
 
@@ -1009,7 +1004,7 @@ class MutationAllRandom:
 
     @property
     def random_parameters(self):
-        return np.random.randint(self.parameter_max_value, size=g.parameters)
+        return np.random.randint(g.parameter_max_value, size=g.parameters)
 
     @property
     def random_functions(self):
@@ -1056,6 +1051,7 @@ class G:
 random.seed(1)
 np.random.seed(1)
 g = G()
+g.parameter_max_value = 256
 g._lambda = 5
 g.generations = 10
 g.endpoint = EndpointWatershed()
