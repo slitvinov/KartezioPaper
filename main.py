@@ -978,12 +978,12 @@ def mutate_output0(genome, idx):
 
 
 def mutate0(genome):
-    for i in range(g.n):
-        mutate_function(genome, i)
-        mutate_connections(genome, i)
-        mutate_parameters0(genome, i)
-    for i in range(g.outputs):
-        mutate_output0(genome, i)
+    for j in range(g.n):
+        mutate_function(genome, j)
+        mutate_connections(genome, j)
+        mutate_parameters0(genome, j)
+    for j in range(g.outputs):
+        mutate_output0(genome, j)
     return genome
 
 
