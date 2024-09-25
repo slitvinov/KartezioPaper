@@ -815,8 +815,8 @@ class InRange(Node):
         )
 
 
-def arity_of(i):
-    return g.nodes[i].arity
+def arity_of(function_index):
+    return g.nodes[function_index].arity
 
 
 def execute(name, x, args):
