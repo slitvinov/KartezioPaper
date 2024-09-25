@@ -193,6 +193,7 @@ def _intersection_over_union(masks_true, masks_pred):
     iou[np.isnan(iou)] = 0.0
     return iou
 
+
 def call0(y_true, y_pred):
     n_true = np.max(y_true[0])
     n_pred = np.max(y_pred)
@@ -208,7 +209,7 @@ def call0(y_true, y_pred):
         else:
             return 1.0
     else:
-        return (fp+fn)/(tp+fp+fn)
+        return (fp + fn) / (tp + fp + fn)
 
 
 def true_positive0(iou):
