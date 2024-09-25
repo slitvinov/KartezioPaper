@@ -934,8 +934,7 @@ def mutate_connections(genome, idx, only_one=None):
 
 
 def mutate_parameters1(genome, idx, only_one=None):
-    new_parameters = np.random.randint(g.max_val,
-                                       size=g.parameters)
+    new_parameters = np.random.randint(g.max_val, size=g.parameters)
     if only_one is not None:
         old_parameters = read_parameters(genome, idx)
         old_parameters[only_one] = new_parameters[only_one]
