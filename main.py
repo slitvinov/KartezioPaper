@@ -74,8 +74,8 @@ class Node:
         self.sources = sources
 
 
-def read_function(genome, node):
-    return genome[g.inputs + node, 0]
+def read_function(genome, idx):
+    return genome[g.inputs + idx, 0]
 
 
 def read_active_connections(genome, node, active_connections):
