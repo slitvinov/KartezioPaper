@@ -6,7 +6,6 @@ from numena.image.drawing import fill_polygons_as_labels
 from numena.image.morphology import WatershedSkimage
 from numena.io.image import imread_color
 from numena.io.imagej import read_polygons_from_roi
-from numena.io.json import json_read
 from scipy.optimize import linear_sum_assignment
 import numpy as np
 import os
@@ -190,9 +189,6 @@ g.all_indices = np.indices((g.n, g.w))
 g.all_indices = np.vstack(
     (g.all_indices[0].ravel(), g.all_indices[1].ravel())).T
 g.individuals = [None] * (g._lambda + 1)
-meta = json_read("dataset/META.json")
-name = meta["name"]
-label_name = meta["label_name"]
 dataframe = pd.read_csv("dataset/dataset.csv")
 dataframe_training = dataframe[dataframe["set"] == "training"]
 dataframe_training.reset_index(inplace=True)
