@@ -106,7 +106,7 @@ def _parse_one_graph(genome, graph_source):
         if next_index < g.inputs:
             continue
         function_index = read_function(genome, next_index - g.inputs)
-        active_connections = arity_of(function_index)
+        active_connections = g.nodes[function_index].arity
         next_connections = set(
             read_active_connections(genome, next_index - g.inputs,
                                     active_connections))
@@ -129,7 +129,7 @@ def _x_to_output_map(genome, graphs_list, x):
                 continue
             node_index = node - g.inputs
             function_index = read_function(genome, node_index)
-            arity = arity_of(function_index)
+            arity = g.nodes[function_index].arity
             connections = read_active_connections(genome, node_index, arity)
             inputs = [output_map[c] for c in connections]
             p = read_parameters(genome, node_index)
@@ -815,12 +815,8 @@ class InRange(Node):
         )
 
 
-def arity_of(function_index):
-    return g.nodes[function_index].arity
-
-
-def execute(name, x, args):
-    return g.nodes[name].call(x, args)
+def execute(function_index, x, args):
+    return g.nodes[function_index].call(x, args)
 
 
 class EndpointWatershed(Node):
