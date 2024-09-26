@@ -197,13 +197,13 @@ for genome in g.individuals:
     for j in range(g.outputs):
         genome[g.out_idx + j, 1] = random.randrange(g.out_idx)
 y_pred = [parse0(genome, x0) for genome in g.individuals]
-g.fitness = [
+g.cost = [
     sum(cost(u, v) for u, v in zip(g.y, y0)) / len(g.y) for y0 in y_pred
 ]
-print(f"{0:08} {g.fitness[0]:.16e}")
+print(f"{0:08} {g.cost[0]:.16e}")
 current_generation = 0
 while current_generation < g.generations:
-    i = np.argmin(g.fitness)
+    i = np.argmin(g.cost)
     elite = g.individuals[i].copy()
     for i in range(g._lambda + 1):
         g.individuals[i] = elite.copy()
@@ -215,8 +215,8 @@ while current_generation < g.generations:
             if active_nodes != new_active_nodes:
                 break
     y_pred = [parse0(genome, x0) for genome in g.individuals]
-    g.fitness = [
+    g.cost = [
         sum(cost(u, v) for u, v in zip(g.y, y0)) / len(g.y) for y0 in y_pred
     ]
     current_generation += 1
-    print(f"{current_generation:08} {g.fitness[0]:.16e}")
+    print(f"{current_generation:08} {g.cost[0]:.16e}")
