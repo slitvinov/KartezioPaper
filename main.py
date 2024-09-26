@@ -129,12 +129,14 @@ g.genes = [
 for gen in g.genes:
     for j in range(g.n):
         gen[g.i + j, 0] = randrange(len(g.nodes))
-        gen[g.i + j, 1:1 + g.a] = np.random.randint(g.i + j, size=g.a)
-        gen[g.i + j, 1 + g.a:] = np.random.randint(g.max_val, size=g.p)
+        for k in range(g.a):
+            gen[g.i + j, 1 + k] = randrange(g.i + j)
+        for k in range(g.p):
+            gen[g.i + j, 1 + g.a + k] = randrange(g.max_val)
     for j in range(g.o):
         gen[g.i + g.n + j, 1] = randrange(g.i + g.n)
 generation = 0
-g.n_mutations = 15 * g.n * (1 + g.a + g.p) // 100
+n_mutations = 15 * g.n * (1 + g.a + g.p) // 100
 while True:
     g.cost = [cost(gen) for gen in g.genes]
     i = np.argmin(g.cost)
@@ -145,7 +147,7 @@ while True:
     elite = g.genes[0] = g.genes[i]
     for i in range(1, g.lmb + 1):
         gen = g.genes[i] = elite.copy()
-        for m in range(g.n_mutations):
+        for m in range(n_mutations):
             j = randrange(g.n)
             k = randrange(1 + g.a + g.p)
             if k == 0:
