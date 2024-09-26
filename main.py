@@ -97,31 +97,23 @@ def _intersection_over_union(masks_true, masks_pred):
 
 
 def diff(y_true, y_pred):
+    th = 0.5
     n_true = np.max(y_true[0])
     n_pred = np.max(y_pred)
     tp = 0
     if n_pred > 0:
         iou = _intersection_over_union(y_true[0], y_pred)[1:, 1:]
-        tp = true_positive0(iou)
+        n_min = min(iou.shape[0], iou.shape[1])
+        costs = -(iou >= th).astype(float) - iou / (2 * n_min)
+        true_ind, pred_ind = linear_sum_assignment(costs)
+        match_ok = iou[true_ind, pred_ind] >= th
+        tp = match_ok.sum()
     fp = n_pred - tp
     fn = n_true - tp
     if tp == 0:
-        if n_true == 0:
-            return 0.0
-        else:
-            return 1.0
+        return 0 if n_true == 0 else 1
     else:
         return (fp + fn) / (tp + fp + fn)
-
-
-def true_positive0(iou):
-    th = 0.5
-    n_min = min(iou.shape[0], iou.shape[1])
-    costs = -(iou >= th).astype(float) - iou / (2 * n_min)
-    true_ind, pred_ind = linear_sum_assignment(costs)
-    match_ok = iou[true_ind, pred_ind] >= th
-    return match_ok.sum()
-
 
 def mutate1(genome):
     sampling_indices = np.random.choice(range(len(g.indices)),
