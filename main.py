@@ -114,20 +114,6 @@ def diff(y_true, y_pred):
         return (fp + fn) / (tp + fp + fn)
 
 
-def mutate1(gen):
-    for idx, j in random.sample(g.indices, g.n_mutations):
-        if j == 0:
-            gen[g.i + idx, 0] = random.randrange(len(g.nodes))
-        elif j <= g.arity:
-            gen[g.i + idx, 1:g.para_idx][j - 1] = random.randrange(g.i + idx)
-        else:
-            gen[g.i + idx,
-                g.para_idx:][j - g.arity - 1] = random.randrange(g.max_val)
-    for idx in range(g.outputs):
-        if random.random() < 0.2:
-            gen[g.out_idx + idx, 1] = random.randrange(g.out_idx)
-
-
 class G:
     pass
 
@@ -176,12 +162,22 @@ current_generation = 0
 while True:
     g.cost = [cost(gen) for gen in g.individuals]
     i = np.argmin(g.cost)
-    elite = g.individuals[i].copy()
     print(f"{current_generation:08} {g.cost[i]:.16e}")
     if current_generation == g.generations:
         break
     current_generation += 1
-    for i in range(g._lambda + 1):
-        g.individuals[i] = elite.copy()
+    elite = g.individuals[0] = g.individuals[i]
     for i in range(1, g._lambda + 1):
-        mutate1(g.individuals[i])
+        gen = g.individuals[i] = elite.copy()
+        for idx, j in random.sample(g.indices, g.n_mutations):
+            if j == 0:
+                gen[g.i + idx, 0] = random.randrange(len(g.nodes))
+            elif j <= g.arity:
+                gen[g.i + idx,
+                    1:g.para_idx][j - 1] = random.randrange(g.i + idx)
+            else:
+                gen[g.i + idx,
+                    g.para_idx:][j - g.arity - 1] = random.randrange(g.max_val)
+        for idx in range(g.outputs):
+            if random.random() < 0.2:
+                gen[g.out_idx + idx, 1] = random.randrange(g.out_idx)
