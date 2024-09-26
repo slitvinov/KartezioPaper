@@ -118,8 +118,8 @@ class G:
     pass
 
 
-random.seed(123)
-np.random.seed(123)
+random.seed(1)
+np.random.seed(1)
 g = G()
 g.max_val = 256
 g._lambda = 5
