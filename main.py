@@ -42,9 +42,9 @@ def _parse_one_graph(gen, source):
     return sorted(output_tree)
 
 
-def _x_to_output_map(gen, graphs_list, x):
+def _parse_one(gen, graphs, x):
     output_map = {i: x[i].copy() for i in range(g.i)}
-    for graph in graphs_list:
+    for graph in graphs:
         for node in graph:
             if node < g.i:
                 continue
@@ -55,11 +55,6 @@ def _x_to_output_map(gen, graphs_list, x):
             inputs = [output_map[c] for c in connections]
             p = gen[g.i + idx, g.para_idx:]
             output_map[node] = g.nodes[function_index].call(inputs, p)
-    return output_map
-
-
-def _parse_one(gen, graphs, x):
-    output_map = _x_to_output_map(gen, graphs, x)
     return [output_map[output_gene] for output_gene in gen[g.out_idx:, 1]]
 
 
