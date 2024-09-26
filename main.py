@@ -112,13 +112,13 @@ g.wt = WatershedSkimage(use_dt=False, markers_distance=21, markers_area=None)
 g.nodes = [cls() for cls in registry.nodes.components]
 g.i = 3
 g.n = 30
-g.outputs = 2
+g.o = 2
 g.arity = 2
 g.parameters = 2
 g.out = g.i + g.n
 g.par = 1 + g.arity
 g.w = 1 + g.arity + g.parameters
-g.h = g.i + g.n + g.outputs
+g.h = g.i + g.n + g.o
 g.n_mutations = 15 * g.n * g.w // 100
 g.indices = [[i, j] for i in range(g.n) for j in range(g.w)]
 g.individuals = [
@@ -140,7 +140,7 @@ for gen in g.individuals:
         gen[g.i + j, 1:g.par] = np.random.randint(g.i + j, size=g.arity)
         gen[g.i + j, g.par:] = np.random.randint(g.max_val,
                                                       size=g.parameters)
-    for j in range(g.outputs):
+    for j in range(g.o):
         gen[g.out + j, 1] = random.randrange(g.out)
 current_generation = 0
 while True:
@@ -162,6 +162,6 @@ while True:
             else:
                 gen[g.i + idx,
                     g.par:][j - g.arity - 1] = random.randrange(g.max_val)
-        for idx in range(g.outputs):
+        for idx in range(g.o):
             if random.random() < 0.2:
                 gen[g.out + idx, 1] = random.randrange(g.out)
