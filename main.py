@@ -25,24 +25,22 @@ DATA = [
     ["dataset/24.png", "dataset/24.zip"],
 ]
 
-
-def _parse_one_graph(gen, source):
-    next_indices = {source}
-    output_tree = {source}
-    while next_indices:
-        next_index = next_indices.pop()
-        if next_index < g.i:
-            continue
-        idx = next_index - g.i
-        function_index = gen[g.i + idx, 0]
-        arity = g.nodes[function_index].arity
-        next_connections = set(gen[g.i + idx, 1:1 + arity])
-        next_indices = next_indices.union(next_connections)
-        output_tree = output_tree.union(next_connections)
-    return sorted(output_tree)
-
 def cost(gen):
-    graphs = [_parse_one_graph(gen, output) for output in gen[g.out_idx:, 1]]
+    graphs = [ ]
+    for source in gen[g.out_idx:, 1]:
+        next_indices = {source}
+        output_tree = {source}
+        while next_indices:
+            next_index = next_indices.pop()
+            if next_index < g.i:
+                continue
+            idx = next_index - g.i
+            function_index = gen[g.i + idx, 0]
+            arity = g.nodes[function_index].arity
+            next_connections = set(gen[g.i + idx, 1:1 + arity])
+            next_indices = next_indices.union(next_connections)
+            output_tree = output_tree.union(next_connections)
+        graphs.append(sorted(output_tree))
     Cost = 0
     for x, y in zip(g.x, g.y):
         output_map = {i: x[i].copy() for i in range(g.i)}
