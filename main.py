@@ -26,7 +26,7 @@ DATA = [
 ]
 
 
-def _parse_one_graph(genome, source):
+def _parse_one_graph(gen, source):
     next_indices = {source}
     output_tree = {source}
     while next_indices:
@@ -34,44 +34,44 @@ def _parse_one_graph(genome, source):
         if next_index < g.i:
             continue
         idx = next_index - g.i
-        function_index = genome[g.i + idx, 0]
+        function_index = gen[g.i + idx, 0]
         arity = g.nodes[function_index].arity
-        next_connections = set(genome[g.i + idx, 1:1 + arity])
+        next_connections = set(gen[g.i + idx, 1:1 + arity])
         next_indices = next_indices.union(next_connections)
         output_tree = output_tree.union(next_connections)
     return sorted(output_tree)
 
 
-def _x_to_output_map(genome, graphs_list, x):
+def _x_to_output_map(gen, graphs_list, x):
     output_map = {i: x[i].copy() for i in range(g.i)}
     for graph in graphs_list:
         for node in graph:
             if node < g.i:
                 continue
             idx = node - g.i
-            function_index = genome[g.i + idx, 0]
+            function_index = gen[g.i + idx, 0]
             arity = g.nodes[function_index].arity
-            connections = genome[g.i + idx, 1:1 + arity]
+            connections = gen[g.i + idx, 1:1 + arity]
             inputs = [output_map[c] for c in connections]
-            p = genome[g.i + idx, g.para_idx:]
+            p = gen[g.i + idx, g.para_idx:]
             output_map[node] = g.nodes[function_index].call(inputs, p)
     return output_map
 
 
-def _parse_one(genome, graphs_list, x):
-    output_map = _x_to_output_map(genome, graphs_list, x)
+def _parse_one(gen, graphs_list, x):
+    output_map = _x_to_output_map(gen, graphs_list, x)
     return [
-        output_map[output_gene[1]] for output_gene in genome[g.out_idx:, :]
+        output_map[output_gene[1]] for output_gene in gen[g.out_idx:, :]
     ]
 
 
-def cost(genome):
+def cost(gen):
     graphs = [
-        _parse_one_graph(genome, output) for output in genome[g.out_idx:, 1]
+        _parse_one_graph(gen, output) for output in gen[g.out_idx:, 1]
     ]
     Cost = 0
     for xi, yi in zip(g.x, g.y):
-        y_pred = _parse_one(genome, graphs, xi)
+        y_pred = _parse_one(gen, graphs, xi)
         mask, markers, y_pred = g.wt.apply(y_pred[0],
                                            markers=y_pred[1],
                                            mask=y_pred[0] > 0)
@@ -118,19 +118,19 @@ def diff(y_true, y_pred):
         return (fp + fn) / (tp + fp + fn)
 
 
-def mutate1(genome):
+def mutate1(gen):
     for idx, j in random.sample(g.indices, g.n_mutations):
         if j == 0:
-            genome[g.i + idx, 0] = random.randrange(len(g.nodes))
+            gen[g.i + idx, 0] = random.randrange(len(g.nodes))
         elif j <= g.arity:
-            genome[g.i + idx,
+            gen[g.i + idx,
                    1:g.para_idx][j - 1] = random.randrange(g.i + idx)
         else:
-            genome[g.i + idx,
+            gen[g.i + idx,
                    g.para_idx:][j - g.arity - 1] = random.randrange(g.max_val)
     for idx in range(g.outputs):
         if random.random() < 0.2:
-            genome[g.out_idx + idx, 1] = random.randrange(g.out_idx)
+            gen[g.out_idx + idx, 1] = random.randrange(g.out_idx)
 
 
 class G:
@@ -169,18 +169,18 @@ for sample, label in DATA:
     polygons = read_polygons_from_roi(label)
     fill_polygons_as_labels(label_mask, polygons)
     g.y.append(label_mask)
-for genome in g.individuals:
+for gen in g.individuals:
     for j in range(g.n):
-        genome[g.i + j, 0] = random.randrange(len(g.nodes))
-        genome[g.i + j, 1:g.para_idx] = np.random.randint(g.i + j,
+        gen[g.i + j, 0] = random.randrange(len(g.nodes))
+        gen[g.i + j, 1:g.para_idx] = np.random.randint(g.i + j,
                                                           size=g.arity)
-        genome[g.i + j, g.para_idx:] = np.random.randint(g.max_val,
+        gen[g.i + j, g.para_idx:] = np.random.randint(g.max_val,
                                                          size=g.parameters)
     for j in range(g.outputs):
-        genome[g.out_idx + j, 1] = random.randrange(g.out_idx)
+        gen[g.out_idx + j, 1] = random.randrange(g.out_idx)
 current_generation = 0
 while True:
-    g.cost = [cost(genome) for genome in g.individuals]
+    g.cost = [cost(gen) for gen in g.individuals]
     i = np.argmin(g.cost)
     elite = g.individuals[i].copy()
     print(f"{current_generation:08} {g.cost[i]:.16e}")
