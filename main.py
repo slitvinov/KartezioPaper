@@ -28,7 +28,7 @@ DATA = [
 
 def cost(gen):
     graphs = []
-    for source in gen[g.out_idx:, 1]:
+    for source in gen[g.out:, 1]:
         q = {source}
         graph = {source}
         while q:
@@ -51,7 +51,7 @@ def cost(gen):
                 inputs = [output_map[c] for c in gen[node, 1:1 + arity]]
                 p = gen[node, g.para_idx:]
                 output_map[node] = g.nodes[gen[node, 0]].call(inputs, p)
-        y_pred = [output_map[j] for j in gen[g.out_idx:, 1]]
+        y_pred = [output_map[j] for j in gen[g.out:, 1]]
         *rest, y_pred = g.wt.apply(y_pred[0],
                                    markers=y_pred[1],
                                    mask=y_pred[0] > 0)
@@ -115,7 +115,7 @@ g.n = 30
 g.outputs = 2
 g.arity = 2
 g.parameters = 2
-g.out_idx = g.i + g.n
+g.out = g.i + g.n
 g.para_idx = 1 + g.arity
 g.w = 1 + g.arity + g.parameters
 g.h = g.i + g.n + g.outputs
@@ -141,7 +141,7 @@ for gen in g.individuals:
         gen[g.i + j, g.para_idx:] = np.random.randint(g.max_val,
                                                       size=g.parameters)
     for j in range(g.outputs):
-        gen[g.out_idx + j, 1] = random.randrange(g.out_idx)
+        gen[g.out + j, 1] = random.randrange(g.out)
 current_generation = 0
 while True:
     g.cost = [cost(gen) for gen in g.individuals]
@@ -164,4 +164,4 @@ while True:
                     g.para_idx:][j - g.arity - 1] = random.randrange(g.max_val)
         for idx in range(g.outputs):
             if random.random() < 0.2:
-                gen[g.out_idx + idx, 1] = random.randrange(g.out_idx)
+                gen[g.out + idx, 1] = random.randrange(g.out)
