@@ -70,16 +70,8 @@ def parse(genome, x):
     return all_y_pred
 
 
-def call1(y_pred):
-    scores = []
-    for yi_pred in y_pred:
-        score = 0.0
-        y_size = len(g.y)
-        for i in range(y_size):
-            score += call0(g.y[i].copy(), yi_pred[i])
-        scores.append(score / y_size)
-    return scores
-
+def call1(y):
+    return [sum(call0(u, v) for u, v in zip(g.y, y0)) / len(g.y) for y0 in y]
 
 @jit(nopython=True)
 def _label_overlap(x, y):
