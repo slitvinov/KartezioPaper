@@ -10,6 +10,7 @@ from scipy.optimize import linear_sum_assignment
 import numpy as np
 import os
 import random
+from random import randrange
 
 DATA = [
     ["dataset/03.png", "dataset/03.zip"],  #
@@ -134,11 +135,11 @@ g.genes = [
 ]
 for gen in g.genes:
     for j in range(g.n):
-        gen[g.i + j, 0] = random.randrange(len(g.nodes))
-        gen[g.i + j, 1 : 1 + g.arity] = np.random.randint(g.i + j, size=g.arity)
-        gen[g.i + j, 1 + g.arity : ] = np.random.randint(g.max_val, size=g.p)
+        gen[g.i + j, 0] = randrange(len(g.nodes))
+        gen[g.i + j, 1:1 + g.arity] = np.random.randint(g.i + j, size=g.arity)
+        gen[g.i + j, 1 + g.arity:] = np.random.randint(g.max_val, size=g.p)
     for j in range(g.o):
-        gen[g.i + g.n + j, 1] = random.randrange(g.i + g.n)
+        gen[g.i + g.n + j, 1] = randrange(g.i + g.n)
 generation = 0
 while True:
     g.cost = [cost(gen) for gen in g.genes]
@@ -150,15 +151,14 @@ while True:
     elite = g.genes[0] = g.genes[i]
     for i in range(1, g.lmb + 1):
         gen = g.genes[i] = elite.copy()
-        for idx, j in random.sample(g.indices, g.n_mutations):
+        for k, j in random.sample(g.indices, g.n_mutations):
             if j == 0:
-                gen[g.i + idx, 0] = random.randrange(len(g.nodes))
+                gen[g.i + k, 0] = randrange(len(g.nodes))
             elif j <= g.arity:
-                gen[g.i + idx,
-                    1:1 + g.arity][j - 1] = random.randrange(g.i + idx)
+                gen[g.i + k, 1:1 + g.arity][j - 1] = randrange(g.i + k)
             else:
-                gen[g.i + idx, 1 + g.arity:][j - g.arity -
-                                             1] = random.randrange(g.max_val)
-        for idx in range(g.o):
+                gen[g.i + k,
+                    1 + g.arity:][j - g.arity - 1] = randrange(g.max_val)
+        for k in range(g.o):
             if random.random() < 0.2:
-                gen[g.i + g.n + idx, 1] = random.randrange(g.i + g.n)
+                gen[g.i + g.n + k, 1] = randrange(g.i + g.n)
