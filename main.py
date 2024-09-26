@@ -60,15 +60,11 @@ def _x_to_output_map(gen, graphs_list, x):
 
 def _parse_one(gen, graphs_list, x):
     output_map = _x_to_output_map(gen, graphs_list, x)
-    return [
-        output_map[output_gene[1]] for output_gene in gen[g.out_idx:, :]
-    ]
+    return [output_map[output_gene[1]] for output_gene in gen[g.out_idx:, :]]
 
 
 def cost(gen):
-    graphs = [
-        _parse_one_graph(gen, output) for output in gen[g.out_idx:, 1]
-    ]
+    graphs = [_parse_one_graph(gen, output) for output in gen[g.out_idx:, 1]]
     Cost = 0
     for xi, yi in zip(g.x, g.y):
         y_pred = _parse_one(gen, graphs, xi)
@@ -123,11 +119,10 @@ def mutate1(gen):
         if j == 0:
             gen[g.i + idx, 0] = random.randrange(len(g.nodes))
         elif j <= g.arity:
-            gen[g.i + idx,
-                   1:g.para_idx][j - 1] = random.randrange(g.i + idx)
+            gen[g.i + idx, 1:g.para_idx][j - 1] = random.randrange(g.i + idx)
         else:
             gen[g.i + idx,
-                   g.para_idx:][j - g.arity - 1] = random.randrange(g.max_val)
+                g.para_idx:][j - g.arity - 1] = random.randrange(g.max_val)
     for idx in range(g.outputs):
         if random.random() < 0.2:
             gen[g.out_idx + idx, 1] = random.randrange(g.out_idx)
@@ -172,10 +167,9 @@ for sample, label in DATA:
 for gen in g.individuals:
     for j in range(g.n):
         gen[g.i + j, 0] = random.randrange(len(g.nodes))
-        gen[g.i + j, 1:g.para_idx] = np.random.randint(g.i + j,
-                                                          size=g.arity)
+        gen[g.i + j, 1:g.para_idx] = np.random.randint(g.i + j, size=g.arity)
         gen[g.i + j, g.para_idx:] = np.random.randint(g.max_val,
-                                                         size=g.parameters)
+                                                      size=g.parameters)
     for j in range(g.outputs):
         gen[g.out_idx + j, 1] = random.randrange(g.out_idx)
 current_generation = 0
