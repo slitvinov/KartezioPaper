@@ -114,10 +114,10 @@ g.i = 3
 g.n = 30
 g.o = 2
 g.arity = 2
-g.parameters = 2
+g.p = 2
 g.out = g.i + g.n
 g.par = 1 + g.arity
-g.w = 1 + g.arity + g.parameters
+g.w = 1 + g.arity + g.p
 g.h = g.i + g.n + g.o
 g.n_mutations = 15 * g.n * g.w // 100
 g.indices = [[i, j] for i in range(g.n) for j in range(g.w)]
@@ -139,7 +139,7 @@ for gen in g.individuals:
         gen[g.i + j, 0] = random.randrange(len(g.nodes))
         gen[g.i + j, 1:g.par] = np.random.randint(g.i + j, size=g.arity)
         gen[g.i + j, g.par:] = np.random.randint(g.max_val,
-                                                      size=g.parameters)
+                                                      size=g.p)
     for j in range(g.o):
         gen[g.out + j, 1] = random.randrange(g.out)
 current_generation = 0
