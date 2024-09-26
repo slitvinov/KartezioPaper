@@ -41,28 +41,23 @@ def _parse_one_graph(gen, source):
         output_tree = output_tree.union(next_connections)
     return sorted(output_tree)
 
-
-def _parse_one(gen, graphs, x):
-    output_map = {i: x[i].copy() for i in range(g.i)}
-    for graph in graphs:
-        for node in graph:
-            if node < g.i:
-                continue
-            idx = node - g.i
-            function_index = gen[g.i + idx, 0]
-            arity = g.nodes[function_index].arity
-            connections = gen[g.i + idx, 1:1 + arity]
-            inputs = [output_map[c] for c in connections]
-            p = gen[g.i + idx, g.para_idx:]
-            output_map[node] = g.nodes[function_index].call(inputs, p)
-    return [output_map[output_gene] for output_gene in gen[g.out_idx:, 1]]
-
-
 def cost(gen):
     graphs = [_parse_one_graph(gen, output) for output in gen[g.out_idx:, 1]]
     Cost = 0
     for x, y in zip(g.x, g.y):
-        y_pred = _parse_one(gen, graphs, x)
+        output_map = {i: x[i].copy() for i in range(g.i)}
+        for graph in graphs:
+            for node in graph:
+                if node < g.i:
+                    continue
+                idx = node - g.i
+                function_index = gen[g.i + idx, 0]
+                arity = g.nodes[function_index].arity
+                connections = gen[g.i + idx, 1:1 + arity]
+                inputs = [output_map[c] for c in connections]
+                p = gen[g.i + idx, g.para_idx:]
+                output_map[node] = g.nodes[function_index].call(inputs, p)
+        y_pred = [output_map[output_gene] for output_gene in gen[g.out_idx:, 1]]
         *rest, y_pred = g.wt.apply(y_pred[0],
                                    markers=y_pred[1],
                                    mask=y_pred[0] > 0)
