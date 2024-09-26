@@ -60,7 +60,7 @@ def _x_to_output_map(gen, graphs_list, x):
 
 def _parse_one(gen, graphs, x):
     output_map = _x_to_output_map(gen, graphs, x)
-    return [output_map[output_gene[1]] for output_gene in gen[g.out_idx:, :]]
+    return [output_map[output_gene] for output_gene in gen[g.out_idx:, 1]]
 
 
 def cost(gen):
