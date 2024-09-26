@@ -127,11 +127,7 @@ def true_positive0(iou):
     return match_ok.sum()
 
 def mutate_connections0(genome, idx):
-    new_connections = np.random.randint(g.inputs + idx, size=g.arity)
-    new_value = new_connections[None]
-    new_connections = genome[g.inputs + idx, 1:g.para_idx]
-    new_connections[None] = new_value
-    genome[g.inputs + idx, 1:g.para_idx] = new_connections
+    genome[g.inputs + idx, 1:g.para_idx] = np.random.randint(g.inputs + idx, size=g.arity)
 
 def mutate_connections1(genome, idx, only_one):
     new_connections = np.random.randint(g.inputs + idx, size=g.arity)
