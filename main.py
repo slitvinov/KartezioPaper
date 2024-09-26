@@ -138,7 +138,7 @@ for sample, label in DATA:
 for gen in g.individuals:
     for j in range(g.n):
         gen[g.i + j, 0] = random.randrange(len(g.nodes))
-        gen[g.i + j, 1:g.par] = np.random.randint(g.i + j, size=g.arity)
+        gen[g.i + j, 1:1 + g.arity] = np.random.randint(g.i + j, size=g.arity)
         gen[g.i + j, g.par:] = np.random.randint(g.max_val, size=g.p)
     for j in range(g.o):
         gen[g.out + j, 1] = random.randrange(g.out)
