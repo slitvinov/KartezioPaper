@@ -29,17 +29,16 @@ DATA = [
 
 def cost(gen):
     graphs = []
-    for source in gen[g.i + g.n:, 1]:
-        q = {source}
-        graph = {source}
+    for o in gen[g.i + g.n:, 1]:
+        q = { o }
+        graph = { o }
         while q:
-            node = q.pop()
-            if node < g.i:
-                continue
-            arity = g.nodes[gen[node, 0]].arity
-            adj = gen[node, 1:1 + arity]
-            q.update(adj)
-            graph.update(adj)
+            n = q.pop()
+            if n >= g.i:
+                arity = g.nodes[gen[n, 0]].arity
+                adj = gen[n, 1:1 + arity]
+                q.update(adj)
+                graph.update(adj)
         graphs.append(sorted(graph))
     Cost = 0
     for x, y in zip(g.x, g.y):
@@ -118,7 +117,7 @@ for sample, label in DATA:
     g.y.append(label_mask)
 g.max_val = 256
 g.lmb = 5
-max_generation = 20000
+max_generation = 10
 g.wt = WatershedSkimage(use_dt=False, markers_distance=21, markers_area=None)
 g.nodes = [cls() for cls in registry.nodes.components]
 # input, maximum node, otuput, arity, parameters
