@@ -118,7 +118,7 @@ for sample, label in DATA:
     g.y.append(label_mask)
 g.max_val = 256
 g.lmb = 5
-g.generations = 10
+max_generation = 20000
 g.wt = WatershedSkimage(use_dt=False, markers_distance=21, markers_area=None)
 g.nodes = [cls() for cls in registry.nodes.components]
 # input, maximum node, otuput, arity, parameters
@@ -127,7 +127,6 @@ g.n = 30
 g.o = 2
 g.a = 2
 g.p = 2
-g.n_mutations = 15 * g.n * (1 + g.a + g.p) // 100
 g.genes = [
     np.zeros((g.i + g.n + g.o, 1 + g.a + g.p), dtype=np.uint8) for i in range(g.lmb + 1)
 ]
@@ -139,24 +138,26 @@ for gen in g.genes:
     for j in range(g.o):
         gen[g.i + g.n + j, 1] = randrange(g.i + g.n)
 generation = 0
-g.indices = [[i, j] for i in range(g.n) for j in range(1 + g.a + g.p)]
+g.n_mutations = 15 * g.n * (1 + g.a + g.p) // 100
 while True:
     g.cost = [cost(gen) for gen in g.genes]
     i = np.argmin(g.cost)
     print(f"{generation:08} {g.cost[i]:.16e}")
-    if generation == g.generations:
+    if generation == max_generation:
         break
     generation += 1
     elite = g.genes[0] = g.genes[i]
     for i in range(1, g.lmb + 1):
         gen = g.genes[i] = elite.copy()
-        for k, j in random.sample(g.indices, g.n_mutations):
-            if j == 0:
-                gen[g.i + k, 0] = randrange(len(g.nodes))
-            elif j <= g.a:
-                gen[g.i + k, 1:1 + g.a][j - 1] = randrange(g.i + k)
+        for m in range(g.n_mutations):
+            j = randrange(g.n)
+            k = randrange(1 + g.a + g.p)
+            if k == 0:
+                gen[g.i + j, 0] = randrange(len(g.nodes))
+            elif k <= g.a:
+                gen[g.i + j, k] = randrange(g.i + j)
             else:
-                gen[g.i + k, 1 + g.a:][j - g.a - 1] = randrange(g.max_val)
+                gen[g.i + j, k] = randrange(g.max_val)
         for k in range(g.o):
             if random.random() < 0.2:
                 gen[g.i + g.n + k, 1] = randrange(g.i + g.n)
