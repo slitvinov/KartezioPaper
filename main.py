@@ -105,6 +105,16 @@ class G:
 random.seed(1)
 np.random.seed(1)
 g = G()
+g.x = []
+g.y = []
+for sample, label in DATA:
+    image = imread_color(sample, rgb=False)
+    x, shape = image_split(image), image.shape[:2]
+    g.x.append(x)
+    label_mask = image_new(shape)
+    polygons = read_polygons_from_roi(label)
+    fill_polygons_as_labels(label_mask, polygons)
+    g.y.append(label_mask)
 g.max_val = 256
 g.lmb = 5
 g.generations = 10
@@ -124,16 +134,6 @@ g.indices = [[i, j] for i in range(g.n) for j in range(g.w)]
 g.genes = [
     np.zeros((g.h, g.w), dtype=np.uint8) for i in range(g.lmb + 1)
 ]
-g.x = []
-g.y = []
-for sample, label in DATA:
-    image = imread_color(sample, rgb=False)
-    x, shape = image_split(image), image.shape[:2]
-    g.x.append(x)
-    label_mask = image_new(shape)
-    polygons = read_polygons_from_roi(label)
-    fill_polygons_as_labels(label_mask, polygons)
-    g.y.append(label_mask)
 for gen in g.genes:
     for j in range(g.n):
         gen[g.i + j, 0] = random.randrange(len(g.nodes))
