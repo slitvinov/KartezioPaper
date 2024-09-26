@@ -1,10 +1,10 @@
+from numena.enums import IMAGE_UINT8_POSITIVE
 from numena.image.basics import image_ew_max
 from numena.image.basics import image_ew_mean
 from numena.image.basics import image_ew_min
 from numena.image.color import rgb2bgr
 from numena.image.morphology import morph_fill
 from numena.image.threshold import threshold_binary
-from numena.image.threshold import threshold_tozero
 from scipy.stats import kurtosis
 from scipy.stats import skew
 from skimage.morphology import remove_small_holes
@@ -12,6 +12,11 @@ from skimage.morphology import remove_small_objects
 import cv2
 import numpy as np
 
+def threshold_tozero(image, threshold):
+    return cv2.threshold(image, threshold, IMAGE_UINT8_POSITIVE, cv2.THRESH_TOZERO)[1]
+
+def threshold_binary(image, threshold, value=IMAGE_UINT8_POSITIVE):
+    return cv2.threshold(image, threshold, value, cv2.THRESH_BINARY)[1]
 
 class Registry:
 
