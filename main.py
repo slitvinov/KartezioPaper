@@ -28,30 +28,26 @@ DATA = [
 
 
 def cost(gen):
-    graphs = []
-    for o in gen[g.i + g.n:, 1]:
-        q = { o }
-        graph = { o }
-        while q:
-            n = q.pop()
+    q = {x for x in gen[g.i + g.n:, 1]}
+    topo = set()
+    while q:
+        n = q.pop()
+        topo.add(n)
+        if n >= g.i:
+            arity = g.nodes[gen[n, 0]].arity
+            adj = gen[n, 1:1 + arity]
+            q.update(adj)
+    Cost = 0
+    topo = sorted(topo)
+    for x, y in zip(g.x, g.y):
+        values = {i: x[i].copy() for i in range(g.i)}
+        for n in topo:
             if n >= g.i:
                 arity = g.nodes[gen[n, 0]].arity
-                adj = gen[n, 1:1 + arity]
-                q.update(adj)
-                graph.update(adj)
-        graphs.append(sorted(graph))
-    Cost = 0
-    for x, y in zip(g.x, g.y):
-        output_map = {i: x[i].copy() for i in range(g.i)}
-        for graph in graphs:
-            for node in graph:
-                if node < g.i:
-                    continue
-                arity = g.nodes[gen[node, 0]].arity
-                inputs = [output_map[c] for c in gen[node, 1:1 + arity]]
-                p = gen[node, 1 + g.a:]
-                output_map[node] = g.nodes[gen[node, 0]].call(inputs, p)
-        y_pred = [output_map[j] for j in gen[g.i + g.n:, 1]]
+                inputs = [values[i] for i in gen[n, 1:1 + arity]]
+                params = gen[n, 1 + g.a:]
+                values[n] = g.nodes[gen[n, 0]].call(inputs, params)
+        y_pred = [values[j] for j in gen[g.i + g.n:, 1]]
         *rest, y_pred = g.wt.apply(y_pred[0],
                                    markers=y_pred[1],
                                    mask=y_pred[0] > 0)
@@ -102,8 +98,8 @@ class G:
     pass
 
 
-random.seed(1)
-np.random.seed(1)
+random.seed(2)
+np.random.seed(2)
 g = G()
 g.x = []
 g.y = []
@@ -127,7 +123,8 @@ g.o = 2
 g.a = 2
 g.p = 2
 g.genes = [
-    np.zeros((g.i + g.n + g.o, 1 + g.a + g.p), dtype=np.uint8) for i in range(g.lmb + 1)
+    np.zeros((g.i + g.n + g.o, 1 + g.a + g.p), dtype=np.uint8)
+    for i in range(g.lmb + 1)
 ]
 for gen in g.genes:
     for j in range(g.n):
