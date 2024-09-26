@@ -78,7 +78,7 @@ def cost(genome):
 
 
 @jit(nopython=True)
-def _label_overlap(x, y):
+def label_overlap(x, y):
     x = x.ravel()
     y = y.ravel()
     overlap = np.zeros((1 + x.max(), 1 + y.max()), dtype=np.uint)
@@ -87,8 +87,8 @@ def _label_overlap(x, y):
     return overlap
 
 
-def _intersection_over_union(masks_true, masks_pred):
-    overlap = _label_overlap(masks_true, masks_pred)
+def intersection_over_union(masks_true, masks_pred):
+    overlap = label_overlap(masks_true, masks_pred)
     n_pixels_pred = np.sum(overlap, axis=0, keepdims=True)
     n_pixels_true = np.sum(overlap, axis=1, keepdims=True)
     iou = overlap / (n_pixels_pred + n_pixels_true - overlap)
@@ -102,7 +102,7 @@ def diff(y_true, y_pred):
     n_pred = np.max(y_pred)
     tp = 0
     if n_pred > 0:
-        iou = _intersection_over_union(y_true[0], y_pred)[1:, 1:]
+        iou = intersection_over_union(y_true[0], y_pred)[1:, 1:]
         n_min = min(iou.shape[0], iou.shape[1])
         costs = -(iou >= th).astype(float) - iou / (2 * n_min)
         true_ind, pred_ind = linear_sum_assignment(costs)
