@@ -43,9 +43,7 @@ def _parse_one_graph(genome, graph_source):
 
 
 def parse_to_graphs(genome):
-    outputs = genome[g.out_idx:, :]
-    graphs_list = [_parse_one_graph(genome, {output[1]}) for output in outputs]
-    return graphs_list
+    return [_parse_one_graph(genome, {output[1]}) for output in genome[g.out_idx:, :]]
 
 
 def _x_to_output_map(genome, graphs_list, x):
@@ -71,7 +69,7 @@ def _parse_one(genome, graphs_list, x):
     ]
 
 
-def parse(genome, x):
+def parse0(genome, x):
     all_y_pred = []
     graphs = parse_to_graphs(genome)
     for xi in x:
@@ -198,7 +196,7 @@ for genome in g.individuals:
                g.para_idx:] = np.random.randint(g.max_val, size=g.parameters)
     for j in range(g.outputs):
         genome[g.out_idx + j, 1] = random.randrange(g.out_idx)
-y_pred = [parse(genome, x0) for genome in g.individuals]
+y_pred = [parse0(genome, x0) for genome in g.individuals]
 g.fitness = [
     sum(cost(u, v) for u, v in zip(g.y, y0)) / len(g.y) for y0 in y_pred
 ]
@@ -216,7 +214,7 @@ while current_generation < g.generations:
             new_active_nodes = parse_to_graphs(g.individuals[i])
             if active_nodes != new_active_nodes:
                 break
-    y_pred = [parse(genome, x0) for genome in g.individuals]
+    y_pred = [parse0(genome, x0) for genome in g.individuals]
     g.fitness = [
         sum(cost(u, v) for u, v in zip(g.y, y0)) / len(g.y) for y0 in y_pred
     ]
