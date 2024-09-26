@@ -11,6 +11,7 @@ from skimage.morphology import remove_small_holes
 from skimage.morphology import remove_small_objects
 import cv2
 import numpy as np
+import functools
 
 
 def threshold_tozero(image, threshold):
@@ -22,30 +23,22 @@ def threshold_binary(image, threshold, value=IMAGE_UINT8_POSITIVE):
     return cv2.threshold(image, threshold, value, cv2.THRESH_BINARY)[1]
 
 
-class Registry:
-
-    class SubRegistry:
-
-        def __init__(self):
-            self.components = []
-
-        def add(self, item_name, replace=False):
-
-            def inner(item_cls):
-                self.components.append(item_cls)
-
-                def wrapper(*args, **kwargs):
-                    return item_cls(*args, **kwargs)
-
-                return wrapper
-
-            return inner
-
-    def __init__(self):
-        self.nodes = self.SubRegistry()
+Nodes = {}
 
 
-registry = Registry()
+def node(label=None):
+
+    def wrap(cls):
+        Nodes[label if label != None else cls.
+              __name__ if hasattr(cls, '__name__') else str(cls)] = cls
+
+        @functools.wraps(cls)
+        def wrapper(*args, **kwargs):
+            return item_cls(*args, **kwargs)
+
+        return wrapper
+
+    return wrap
 
 
 class Node:
@@ -141,7 +134,7 @@ def kernel_from_parameters(p):
     return rect_kernel(p[0])
 
 
-@registry.nodes.add("max")
+@node()
 class Max(Node):
 
     def __init__(self):
@@ -151,7 +144,7 @@ class Max(Node):
         return image_ew_max(x[0], x[1])
 
 
-@registry.nodes.add("min")
+@node()
 class Min(Node):
 
     def __init__(self):
@@ -161,7 +154,7 @@ class Min(Node):
         return image_ew_min(x[0], x[1])
 
 
-@registry.nodes.add("mean")
+@node()
 class Mean(Node):
 
     def __init__(self):
@@ -171,7 +164,7 @@ class Mean(Node):
         return image_ew_mean(x[0], x[1])
 
 
-@registry.nodes.add("add")
+@node()
 class Add(Node):
 
     def __init__(self):
@@ -181,7 +174,7 @@ class Add(Node):
         return cv2.add(x[0], x[1])
 
 
-@registry.nodes.add("subtract")
+@node()
 class Subtract(Node):
 
     def __init__(self):
@@ -191,7 +184,7 @@ class Subtract(Node):
         return cv2.subtract(x[0], x[1])
 
 
-@registry.nodes.add("bitwise_not")
+@node()
 class BitwiseNot(Node):
 
     def __init__(self):
@@ -201,7 +194,7 @@ class BitwiseNot(Node):
         return cv2.bitwise_not(x[0])
 
 
-@registry.nodes.add("bitwise_or")
+@node()
 class BitwiseOr(Node):
 
     def __init__(self):
@@ -211,7 +204,7 @@ class BitwiseOr(Node):
         return cv2.bitwise_or(x[0], x[1])
 
 
-@registry.nodes.add("bitwise_and")
+@node()
 class BitwiseAnd(Node):
 
     def __init__(self):
@@ -221,7 +214,7 @@ class BitwiseAnd(Node):
         return cv2.bitwise_and(x[0], x[1])
 
 
-@registry.nodes.add("bitwise_and_mask")
+@node()
 class BitwiseAndMask(Node):
 
     def __init__(self):
@@ -231,7 +224,7 @@ class BitwiseAndMask(Node):
         return cv2.bitwise_and(x[0], x[0], mask=x[1])
 
 
-@registry.nodes.add("bitwise_xor")
+@node()
 class BitwiseXor(Node):
 
     def __init__(self):
@@ -241,7 +234,7 @@ class BitwiseXor(Node):
         return cv2.bitwise_xor(x[0], x[1])
 
 
-@registry.nodes.add("sqrt")
+@node()
 class SquareRoot(Node):
 
     def __init__(self):
@@ -252,7 +245,7 @@ class SquareRoot(Node):
             (x[0] / 255.0).astype(np.float32)) * 255).astype(np.uint8)
 
 
-@registry.nodes.add("pow2")
+@node()
 class Square(Node):
 
     def __init__(self):
@@ -263,7 +256,7 @@ class Square(Node):
             (x[0] / 255.0).astype(np.float32), 2) * 255).astype(np.uint8)
 
 
-@registry.nodes.add("exp")
+@node()
 class Exp(Node):
 
     def __init__(self):
@@ -274,7 +267,7 @@ class Exp(Node):
             (x[0] / 255.0).astype(np.float32), 2) * 255).astype(np.uint8)
 
 
-@registry.nodes.add("log")
+@node()
 class Log(Node):
 
     def __init__(self):
@@ -284,7 +277,7 @@ class Log(Node):
         return np.log1p(x[0]).astype(np.uint8)
 
 
-@registry.nodes.add("median_blur")
+@node()
 class MedianBlur(Node):
 
     def __init__(self):
@@ -295,7 +288,7 @@ class MedianBlur(Node):
         return cv2.medianBlur(x[0], ksize)
 
 
-@registry.nodes.add("gaussian_blur")
+@node()
 class GaussianBlur(Node):
 
     def __init__(self):
@@ -306,7 +299,7 @@ class GaussianBlur(Node):
         return cv2.GaussianBlur(x[0], (ksize, ksize), 0)
 
 
-@registry.nodes.add("laplacian")
+@node()
 class Laplacian(Node):
 
     def __init__(self):
@@ -316,7 +309,7 @@ class Laplacian(Node):
         return cv2.Laplacian(x[0], cv2.CV_64F).astype(np.uint8)
 
 
-@registry.nodes.add("sobel")
+@node()
 class Sobel(Node):
 
     def __init__(self):
@@ -330,7 +323,7 @@ class Sobel(Node):
         return cv2.Sobel(x[0], cv2.CV_64F, 0, 1, ksize=ksize).astype(np.uint8)
 
 
-@registry.nodes.add("robert_cross")
+@node()
 class RobertCross(Node):
 
     def __init__(self):
@@ -343,7 +336,7 @@ class RobertCross(Node):
         return (cv2.sqrt(cv2.pow(h, 2) + cv2.pow(v, 2)) * 255).astype(np.uint8)
 
 
-@registry.nodes.add("canny")
+@node()
 class Canny(Node):
 
     def __init__(self):
@@ -353,7 +346,7 @@ class Canny(Node):
         return cv2.Canny(x[0], args[0], args[1])
 
 
-@registry.nodes.add("sharpen")
+@node()
 class Sharpen(Node):
 
     def __init__(self):
@@ -363,7 +356,7 @@ class Sharpen(Node):
         return cv2.filter2D(x[0], -1, SHARPEN_KERNEL)
 
 
-@registry.nodes.add("gabor")
+@node()
 class GaborFilter(Node):
 
     def __init__(self, ksize=11):
@@ -375,7 +368,7 @@ class GaborFilter(Node):
         return cv2.filter2D(x[0], -1, gabor_k)
 
 
-@registry.nodes.add("abs_diff")
+@node()
 class AbsoluteDifference(Node):
     """from https://github.com/cytosmart-bv/tomni"""
 
@@ -388,7 +381,7 @@ class AbsoluteDifference(Node):
         return image - cv2.GaussianBlur(image, (ksize, ksize), 0) + args[1]
 
 
-@registry.nodes.add("abs_diff2")
+@node()
 class AbsoluteDifference2(Node):
 
     def __init__(self):
@@ -398,7 +391,7 @@ class AbsoluteDifference2(Node):
         return 255 - cv2.absdiff(x[0], x[1])
 
 
-@registry.nodes.add("fluo_tophat")
+@node()
 class FluoTopHat(Node):
     """from https://github.com/cytosmart-bv/tomni"""
 
@@ -424,7 +417,7 @@ class FluoTopHat(Node):
         return self._rescale_intensity(img, p2, p98)
 
 
-@registry.nodes.add("rel_diff")
+@node()
 class RelativeDifference(Node):
     """from https://github.com/cytosmart-bv/tomni"""
 
@@ -443,7 +436,7 @@ class RelativeDifference(Node):
         return img.astype(np.uint8)
 
 
-@registry.nodes.add("erode")
+@node()
 class Erode(Node):
 
     def __init__(self):
@@ -454,7 +447,7 @@ class Erode(Node):
         return cv2.erode(inputs[0], kernel)
 
 
-@registry.nodes.add("dilate")
+@node()
 class Dilate(Node):
 
     def __init__(self):
@@ -465,7 +458,7 @@ class Dilate(Node):
         return cv2.dilate(inputs[0], kernel)
 
 
-@registry.nodes.add("open")
+@node()
 class Open(Node):
 
     def __init__(self):
@@ -476,7 +469,7 @@ class Open(Node):
         return cv2.morphologyEx(inputs[0], cv2.MORPH_OPEN, kernel)
 
 
-@registry.nodes.add("close")
+@node()
 class Close(Node):
 
     def __init__(self):
@@ -487,7 +480,7 @@ class Close(Node):
         return cv2.morphologyEx(inputs[0], cv2.MORPH_CLOSE, kernel)
 
 
-@registry.nodes.add("morph_gradient")
+@node()
 class MorphGradient(Node):
 
     def __init__(self):
@@ -498,7 +491,7 @@ class MorphGradient(Node):
         return cv2.morphologyEx(inputs[0], cv2.MORPH_GRADIENT, kernel)
 
 
-@registry.nodes.add("morph_tophat")
+@node()
 class MorphTopHat(Node):
 
     def __init__(self):
@@ -509,7 +502,7 @@ class MorphTopHat(Node):
         return cv2.morphologyEx(inputs[0], cv2.MORPH_TOPHAT, kernel)
 
 
-@registry.nodes.add("morph_blackhat")
+@node()
 class MorphBlackHat(Node):
 
     def __init__(self):
@@ -520,7 +513,7 @@ class MorphBlackHat(Node):
         return cv2.morphologyEx(inputs[0], cv2.MORPH_BLACKHAT, kernel)
 
 
-@registry.nodes.add("fill_holes")
+@node()
 class FillHoles(Node):
 
     def __init__(self):
@@ -530,7 +523,7 @@ class FillHoles(Node):
         return morph_fill(inputs[0])
 
 
-@registry.nodes.add("remove_small_objects")
+@node()
 class RemoveSmallObjects(Node):
 
     def __init__(self):
@@ -544,7 +537,7 @@ class RemoveSmallObjects(Node):
         return remove_small_objects(x[0] > 0, args[0]).astype(np.uint8)
 
 
-@registry.nodes.add("remove_small_holes")
+@node()
 class RemoveSmallHoles(Node):
 
     def __init__(self):
@@ -554,7 +547,7 @@ class RemoveSmallHoles(Node):
         return remove_small_holes(x[0] > 0, args[0]).astype(np.uint8)
 
 
-@registry.nodes.add("threshold")
+@node()
 class Threshold(Node):
 
     def __init__(self):
@@ -566,7 +559,7 @@ class Threshold(Node):
         return threshold_tozero(x[0], args[1])
 
 
-@registry.nodes.add("threshold_at_1")
+@node()
 class ThresholdAt1(Node):
 
     def __init__(self):
@@ -578,7 +571,7 @@ class ThresholdAt1(Node):
         return threshold_tozero(x[0], 1)
 
 
-# @registry.nodes.add("TRHA")
+# @node()
 class ThresholdAdaptive(Node):
 
     def __init__(self):
@@ -597,7 +590,7 @@ class ThresholdAdaptive(Node):
         )
 
 
-@registry.nodes.add("distance_transform")
+@node()
 class DistanceTransform(Node):
 
     def __init__(self):
@@ -614,7 +607,7 @@ class DistanceTransform(Node):
         )
 
 
-@registry.nodes.add("distance_transform_and_thresh")
+@node()
 class DistanceTransformAndThresh(Node):
 
     def __init__(self):
@@ -636,7 +629,7 @@ class DistanceTransformAndThresh(Node):
         return threshold_binary(d, args[0])
 
 
-@registry.nodes.add("inrange_bin")
+@node()
 class BinaryInRange(Node):
 
     def __init__(self):
@@ -648,7 +641,7 @@ class BinaryInRange(Node):
         return cv2.inRange(x[0], lower, upper)
 
 
-@registry.nodes.add("inrange")
+@node()
 class InRange(Node):
 
     def __init__(self):

@@ -1,4 +1,4 @@
-from nodes import registry
+from nodes import Nodes
 from numba import jit
 from numena.image.basics import image_new
 from numena.image.basics import image_split
@@ -115,7 +115,7 @@ g.max_val = 256
 g.lmb = 5
 max_generation = 10
 g.wt = WatershedSkimage(use_dt=False, markers_distance=21, markers_area=None)
-g.nodes = [cls() for cls in registry.nodes.components]
+g.nodes = [cls() for cls in Nodes.values()]
 # input, maximum node, otuput, arity, parameters
 g.i = 3
 g.n = 30
