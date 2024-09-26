@@ -32,11 +32,11 @@ def cost(gen):
         q = {source}
         graph = {source}
         while q:
-            p = q.pop()
-            if p < g.i:
+            node = q.pop()
+            if node < g.i:
                 continue
-            arity = g.nodes[gen[p, 0]].arity
-            adj = gen[p, 1:1 + arity]
+            arity = g.nodes[gen[node, 0]].arity
+            adj = gen[node, 1:1 + arity]
             q.update(adj)
             graph.update(adj)
         graphs.append(sorted(graph))
@@ -47,16 +47,11 @@ def cost(gen):
             for node in graph:
                 if node < g.i:
                     continue
-                idx = node - g.i
-                function_index = gen[g.i + idx, 0]
-                arity = g.nodes[function_index].arity
-                connections = gen[g.i + idx, 1:1 + arity]
-                inputs = [output_map[c] for c in connections]
-                p = gen[g.i + idx, g.para_idx:]
-                output_map[node] = g.nodes[function_index].call(inputs, p)
-        y_pred = [
-            output_map[output_gene] for output_gene in gen[g.out_idx:, 1]
-        ]
+                arity = g.nodes[gen[node, 0]].arity
+                inputs = [output_map[c] for c in gen[node, 1:1 + arity]]
+                p = gen[node, g.para_idx:]
+                output_map[node] = g.nodes[gen[node, 0]].call(inputs, p)
+        y_pred = [output_map[j] for j in gen[g.out_idx:, 1]]
         *rest, y_pred = g.wt.apply(y_pred[0],
                                    markers=y_pred[1],
                                    mask=y_pred[0] > 0)
