@@ -31,29 +31,29 @@ def _parse_one_graph(genome, source):
     output_tree = {source}
     while next_indices:
         next_index = next_indices.pop()
-        if next_index < g.inputs:
+        if next_index < g.i:
             continue
-        idx = next_index - g.inputs
-        function_index = genome[g.inputs + idx, 0]
+        idx = next_index - g.i
+        function_index = genome[g.i + idx, 0]
         arity = g.nodes[function_index].arity
-        next_connections = set(genome[g.inputs + idx, 1:1 + arity])
+        next_connections = set(genome[g.i + idx, 1:1 + arity])
         next_indices = next_indices.union(next_connections)
         output_tree = output_tree.union(next_connections)
     return sorted(output_tree)
 
 
 def _x_to_output_map(genome, graphs_list, x):
-    output_map = {i: x[i].copy() for i in range(g.inputs)}
+    output_map = {i: x[i].copy() for i in range(g.i)}
     for graph in graphs_list:
         for node in graph:
-            if node < g.inputs:
+            if node < g.i:
                 continue
-            idx = node - g.inputs
-            function_index = genome[g.inputs + idx, 0]
+            idx = node - g.i
+            function_index = genome[g.i + idx, 0]
             arity = g.nodes[function_index].arity
-            connections = genome[g.inputs + idx, 1:1 + arity]
+            connections = genome[g.i + idx, 1:1 + arity]
             inputs = [output_map[c] for c in connections]
-            p = genome[g.inputs + idx, g.para_idx:]
+            p = genome[g.i + idx, g.para_idx:]
             output_map[node] = g.nodes[function_index].call(inputs, p)
     return output_map
 
@@ -66,7 +66,9 @@ def _parse_one(genome, graphs_list, x):
 
 
 def cost(genome):
-    graphs = [_parse_one_graph(genome, output) for output in genome[g.out_idx:, 1]]
+    graphs = [
+        _parse_one_graph(genome, output) for output in genome[g.out_idx:, 1]
+    ]
     Cost = 0
     for xi, yi in zip(g.x, g.y):
         y_pred = _parse_one(genome, graphs, xi)
@@ -115,18 +117,17 @@ def diff(y_true, y_pred):
     else:
         return (fp + fn) / (tp + fp + fn)
 
+
 def mutate1(genome):
     for idx, j in random.sample(g.indices, g.n_mutations):
         if j == 0:
-            genome[g.inputs + idx, 0] = np.random.randint(len(g.nodes))
+            genome[g.i + idx, 0] = random.randrange(len(g.nodes))
         elif j <= g.arity:
-            genome[g.inputs + idx,
-                   1:g.para_idx][j - 1] = random.randrange(g.inputs +
-                                                                    idx)
+            genome[g.i + idx,
+                   1:g.para_idx][j - 1] = random.randrange(g.i + idx)
         else:
-            genome[g.inputs + idx,
-                   g.para_idx:][j - g.arity - 1] = np.random.randint(
-                       g.max_val, size=g.parameters)[j - g.arity - 1]
+            genome[g.i + idx,
+                   g.para_idx:][j - g.arity - 1] = random.randrange(g.max_val)
     for idx in range(g.outputs):
         if random.random() < 0.2:
             genome[g.out_idx + idx, 1] = random.randrange(g.out_idx)
@@ -144,15 +145,15 @@ g._lambda = 5
 g.generations = 10
 g.wt = WatershedSkimage(use_dt=False, markers_distance=21, markers_area=None)
 g.nodes = [cls() for cls in registry.nodes.components]
-g.inputs = 3
+g.i = 3
 g.n = 30
 g.outputs = 2
 g.arity = 2
 g.parameters = 2
-g.out_idx = g.inputs + g.n
+g.out_idx = g.i + g.n
 g.para_idx = 1 + g.arity
 g.w = 1 + g.arity + g.parameters
-g.h = g.inputs + g.n + g.outputs
+g.h = g.i + g.n + g.outputs
 g.n_mutations = 15 * g.n * g.w // 100
 g.indices = [[i, j] for i in range(g.n) for j in range(g.w)]
 g.individuals = [
@@ -170,11 +171,11 @@ for sample, label in DATA:
     g.y.append(label_mask)
 for genome in g.individuals:
     for j in range(g.n):
-        genome[g.inputs + j, 0] = random.randrange(len(g.nodes))
-        genome[g.inputs + j, 1:g.para_idx] = np.random.randint(g.inputs + j,
-                                                               size=g.arity)
-        genome[g.inputs + j,
-               g.para_idx:] = np.random.randint(g.max_val, size=g.parameters)
+        genome[g.i + j, 0] = random.randrange(len(g.nodes))
+        genome[g.i + j, 1:g.para_idx] = np.random.randint(g.i + j,
+                                                          size=g.arity)
+        genome[g.i + j, g.para_idx:] = np.random.randint(g.max_val,
+                                                         size=g.parameters)
     for j in range(g.outputs):
         genome[g.out_idx + j, 1] = random.randrange(g.out_idx)
 current_generation = 0
