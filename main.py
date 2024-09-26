@@ -28,7 +28,7 @@ DATA = [
 
 def cost(gen):
     graphs = []
-    for source in gen[g.out:, 1]:
+    for source in gen[g.i + g.n:, 1]:
         q = {source}
         graph = {source}
         while q:
@@ -51,7 +51,7 @@ def cost(gen):
                 inputs = [output_map[c] for c in gen[node, 1:1 + arity]]
                 p = gen[node, 1 + g.arity:]
                 output_map[node] = g.nodes[gen[node, 0]].call(inputs, p)
-        y_pred = [output_map[j] for j in gen[g.out:, 1]]
+        y_pred = [output_map[j] for j in gen[g.i + g.n:, 1]]
         *rest, y_pred = g.wt.apply(y_pred[0],
                                    markers=y_pred[1],
                                    mask=y_pred[0] > 0)
@@ -126,7 +126,6 @@ g.n = 30
 g.o = 2
 g.arity = 2
 g.p = 2
-g.out = g.i + g.n
 w = 1 + g.arity + g.p
 g.n_mutations = 15 * g.n * w // 100
 g.indices = [[i, j] for i in range(g.n) for j in range(w)]
@@ -136,18 +135,18 @@ g.genes = [
 for gen in g.genes:
     for j in range(g.n):
         gen[g.i + j, 0] = random.randrange(len(g.nodes))
-        gen[g.i + j, 1:1 + g.arity] = np.random.randint(g.i + j, size=g.arity)
-        gen[g.i + j, 1 + g.arity:] = np.random.randint(g.max_val, size=g.p)
+        gen[g.i + j, 1 : 1 + g.arity] = np.random.randint(g.i + j, size=g.arity)
+        gen[g.i + j, 1 + g.arity : ] = np.random.randint(g.max_val, size=g.p)
     for j in range(g.o):
-        gen[g.out + j, 1] = random.randrange(g.out)
-current_generation = 0
+        gen[g.i + g.n + j, 1] = random.randrange(g.i + g.n)
+generation = 0
 while True:
     g.cost = [cost(gen) for gen in g.genes]
     i = np.argmin(g.cost)
-    print(f"{current_generation:08} {g.cost[i]:.16e}")
-    if current_generation == g.generations:
+    print(f"{generation:08} {g.cost[i]:.16e}")
+    if generation == g.generations:
         break
-    current_generation += 1
+    generation += 1
     elite = g.genes[0] = g.genes[i]
     for i in range(1, g.lmb + 1):
         gen = g.genes[i] = elite.copy()
@@ -162,4 +161,4 @@ while True:
                                              1] = random.randrange(g.max_val)
         for idx in range(g.o):
             if random.random() < 0.2:
-                gen[g.out + idx, 1] = random.randrange(g.out)
+                gen[g.i + g.n + idx, 1] = random.randrange(g.i + g.n)
