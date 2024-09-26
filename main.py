@@ -61,12 +61,12 @@ def _parse_one(gen, graphs, x):
 def cost(gen):
     graphs = [_parse_one_graph(gen, output) for output in gen[g.out_idx:, 1]]
     Cost = 0
-    for xi, yi in zip(g.x, g.y):
-        y_pred = _parse_one(gen, graphs, xi)
-        mask, markers, y_pred = g.wt.apply(y_pred[0],
-                                           markers=y_pred[1],
-                                           mask=y_pred[0] > 0)
-        Cost += diff(yi, y_pred)
+    for x, y in zip(g.x, g.y):
+        y_pred = _parse_one(gen, graphs, x)
+        *rest, y_pred = g.wt.apply(y_pred[0],
+                                   markers=y_pred[1],
+                                   mask=y_pred[0] > 0)
+        Cost += diff(y, y_pred)
     return Cost / len(g.y)
 
 
