@@ -148,8 +148,6 @@ def mutate1(genome):
     for idx in range(g.outputs):
         if random.random() < 0.2:
             genome[g.out_idx + idx, 1] = random.randrange(g.out_idx)
-    return genome
-
 
 class G:
     pass
@@ -211,4 +209,4 @@ while True:
     for i in range(g._lambda + 1):
         g.individuals[i] = elite.copy()
     for i in range(1, g._lambda + 1):
-        g.individuals[i] = mutate1(g.individuals[i])
+        mutate1(g.individuals[i])
