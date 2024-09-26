@@ -70,9 +70,6 @@ def parse(genome, x):
     return all_y_pred
 
 
-def call1(y):
-    return [sum(call0(u, v) for u, v in zip(g.y, y0)) / len(g.y) for y0 in y]
-
 @jit(nopython=True)
 def _label_overlap(x, y):
     x = x.ravel()
@@ -187,11 +184,14 @@ for genome in g.individuals:
         genome[g.inputs + j, 0] = random.randrange(len(g.nodes))
         genome[g.inputs + j, 1:g.para_idx] = np.random.randint(g.inputs + j,
                                                                size=g.arity)
-        genome[g.inputs + j, g.para_idx:] = np.random.randint(g.max_val, size=g.parameters)
+        genome[g.inputs + j,
+               g.para_idx:] = np.random.randint(g.max_val, size=g.parameters)
     for j in range(g.outputs):
         genome[g.out_idx + j, 1] = random.randrange(g.out_idx)
 y_pred = [parse(genome, x0) for genome in g.individuals]
-g.fitness = call1(y_pred)
+g.fitness = [
+    sum(call0(u, v) for u, v in zip(g.y, y0)) / len(g.y) for y0 in y_pred
+]
 print(f"{0:08} {g.fitness[0]:.16e}")
 current_generation = 0
 while current_generation < g.generations:
@@ -207,6 +207,8 @@ while current_generation < g.generations:
             if active_nodes != new_active_nodes:
                 break
     y_pred = [parse(genome, x0) for genome in g.individuals]
-    g.fitness = call1(y_pred)
+    g.fitness = [
+        sum(call0(u, v) for u, v in zip(g.y, y0)) / len(g.y) for y0 in y_pred
+    ]
     current_generation += 1
     print(f"{current_generation:08} {g.fitness[0]:.16e}")
