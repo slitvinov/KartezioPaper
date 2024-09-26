@@ -50,7 +50,7 @@ def cost(gen):
                     continue
                 arity = g.nodes[gen[node, 0]].arity
                 inputs = [output_map[c] for c in gen[node, 1:1 + arity]]
-                p = gen[node, 1 + g.arity:]
+                p = gen[node, 1 + g.a:]
                 output_map[node] = g.nodes[gen[node, 0]].call(inputs, p)
         y_pred = [output_map[j] for j in gen[g.i + g.n:, 1]]
         *rest, y_pred = g.wt.apply(y_pred[0],
@@ -125,9 +125,9 @@ g.nodes = [cls() for cls in registry.nodes.components]
 g.i = 3
 g.n = 30
 g.o = 2
-g.arity = 2
+g.a = 2
 g.p = 2
-w = 1 + g.arity + g.p
+w = 1 + g.a + g.p
 g.n_mutations = 15 * g.n * w // 100
 g.indices = [[i, j] for i in range(g.n) for j in range(w)]
 g.genes = [
@@ -136,8 +136,8 @@ g.genes = [
 for gen in g.genes:
     for j in range(g.n):
         gen[g.i + j, 0] = randrange(len(g.nodes))
-        gen[g.i + j, 1:1 + g.arity] = np.random.randint(g.i + j, size=g.arity)
-        gen[g.i + j, 1 + g.arity:] = np.random.randint(g.max_val, size=g.p)
+        gen[g.i + j, 1:1 + g.a] = np.random.randint(g.i + j, size=g.a)
+        gen[g.i + j, 1 + g.a:] = np.random.randint(g.max_val, size=g.p)
     for j in range(g.o):
         gen[g.i + g.n + j, 1] = randrange(g.i + g.n)
 generation = 0
@@ -154,11 +154,10 @@ while True:
         for k, j in random.sample(g.indices, g.n_mutations):
             if j == 0:
                 gen[g.i + k, 0] = randrange(len(g.nodes))
-            elif j <= g.arity:
-                gen[g.i + k, 1:1 + g.arity][j - 1] = randrange(g.i + k)
+            elif j <= g.a:
+                gen[g.i + k, 1:1 + g.a][j - 1] = randrange(g.i + k)
             else:
-                gen[g.i + k,
-                    1 + g.arity:][j - g.arity - 1] = randrange(g.max_val)
+                gen[g.i + k, 1 + g.a:][j - g.a - 1] = randrange(g.max_val)
         for k in range(g.o):
             if random.random() < 0.2:
                 gen[g.i + g.n + k, 1] = randrange(g.i + g.n)
