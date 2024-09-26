@@ -49,7 +49,7 @@ def cost(gen):
                     continue
                 arity = g.nodes[gen[node, 0]].arity
                 inputs = [output_map[c] for c in gen[node, 1:1 + arity]]
-                p = gen[node, g.para_idx:]
+                p = gen[node, g.par:]
                 output_map[node] = g.nodes[gen[node, 0]].call(inputs, p)
         y_pred = [output_map[j] for j in gen[g.out:, 1]]
         *rest, y_pred = g.wt.apply(y_pred[0],
@@ -116,7 +116,7 @@ g.outputs = 2
 g.arity = 2
 g.parameters = 2
 g.out = g.i + g.n
-g.para_idx = 1 + g.arity
+g.par = 1 + g.arity
 g.w = 1 + g.arity + g.parameters
 g.h = g.i + g.n + g.outputs
 g.n_mutations = 15 * g.n * g.w // 100
@@ -137,8 +137,8 @@ for sample, label in DATA:
 for gen in g.individuals:
     for j in range(g.n):
         gen[g.i + j, 0] = random.randrange(len(g.nodes))
-        gen[g.i + j, 1:g.para_idx] = np.random.randint(g.i + j, size=g.arity)
-        gen[g.i + j, g.para_idx:] = np.random.randint(g.max_val,
+        gen[g.i + j, 1:g.par] = np.random.randint(g.i + j, size=g.arity)
+        gen[g.i + j, g.par:] = np.random.randint(g.max_val,
                                                       size=g.parameters)
     for j in range(g.outputs):
         gen[g.out + j, 1] = random.randrange(g.out)
@@ -158,10 +158,10 @@ while True:
                 gen[g.i + idx, 0] = random.randrange(len(g.nodes))
             elif j <= g.arity:
                 gen[g.i + idx,
-                    1:g.para_idx][j - 1] = random.randrange(g.i + idx)
+                    1:g.par][j - 1] = random.randrange(g.i + idx)
             else:
                 gen[g.i + idx,
-                    g.para_idx:][j - g.arity - 1] = random.randrange(g.max_val)
+                    g.par:][j - g.arity - 1] = random.randrange(g.max_val)
         for idx in range(g.outputs):
             if random.random() < 0.2:
                 gen[g.out + idx, 1] = random.randrange(g.out)
