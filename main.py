@@ -195,14 +195,10 @@ for genome in g.individuals:
         genome[g.inputs + j, 0] = random.randrange(len(g.nodes))
         genome[g.inputs + j, 1:g.para_idx] = np.random.randint(g.inputs + j,
                                                                size=g.arity)
-        new_parameters = np.random.randint(g.max_val, size=g.parameters)
-        genome[g.inputs + j, g.para_idx:] = new_parameters
+        genome[g.inputs + j, g.para_idx:] = np.random.randint(g.max_val, size=g.parameters)
     for j in range(g.outputs):
         genome[g.out_idx + j, 1] = random.randrange(g.out_idx)
-y_pred = []
-for i in range(len(g.individuals)):
-    y = parse(g.individuals[i], x0)
-    y_pred.append(y)
+y_pred = [parse(genome, x0) for genome in g.individuals]
 g.fitness = call1(y0, y_pred)
 print(f"{0:08} {g.fitness[0]:.16e}")
 current_generation = 0
@@ -218,10 +214,7 @@ while current_generation < g.generations:
             new_active_nodes = parse_to_graphs(g.individuals[i])
             if active_nodes != new_active_nodes:
                 break
-    y_pred = []
-    for i in range(len(g.individuals)):
-        y = parse(g.individuals[i], x0)
-        y_pred.append(y)
+    y_pred = [parse(genome, x0) for genome in g.individuals]
     g.fitness = call1(y0, y_pred)
     current_generation += 1
     print(f"{current_generation:08} {g.fitness[0]:.16e}")
