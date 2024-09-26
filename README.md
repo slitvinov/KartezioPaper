@@ -26,6 +26,6 @@ python -m coverage run main.py
 ```
 
 ```
-[g.i g.n g.o][1 g.arity g.p]
+[i0 i1 i2 n0 .. n29 o0 o1][1 arity0 arity1 p0 p2]
 ```
 
