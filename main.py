@@ -9,7 +9,6 @@ from numena.io.imagej import read_polygons_from_roi
 from scipy.optimize import linear_sum_assignment
 import numpy as np
 import os
-import pandas as pd
 import random
 
 DATA = [
@@ -180,17 +179,14 @@ g.indices = np.array([[i, j] for i in range(g.n) for j in range(g.w)])
 g.individuals = [
     np.zeros((g.h, g.w), dtype=np.uint8) for i in range(g._lambda + 1)
 ]
-dataframe = pd.read_csv("dataset/dataset.csv")
 x0 = []
 g.y = []
-for row in dataframe.itertuples():
-    filepath = os.path.join("dataset", row.input)
-    image = imread_color(filepath, rgb=False)
+for sample, label in DATA:
+    image = imread_color(sample, rgb=False)
     x, shape = image_split(image), image.shape[:2]
     x0.append(x)
     label_mask = image_new(shape)
-    filepath = os.path.join("dataset", row.label)
-    polygons = read_polygons_from_roi(filepath)
+    polygons = read_polygons_from_roi(label)
     fill_polygons_as_labels(label_mask, polygons)
     g.y.append([label_mask])
 for genome in g.individuals:
