@@ -26,9 +26,9 @@ DATA = [
 ]
 
 
-def _parse_one_graph(genome, graph_source):
-    next_indices = graph_source.copy()
-    output_tree = graph_source.copy()
+def _parse_one_graph(genome, source):
+    next_indices = {source}
+    output_tree = {source}
     while next_indices:
         next_index = next_indices.pop()
         if next_index < g.inputs:
@@ -43,7 +43,7 @@ def _parse_one_graph(genome, graph_source):
 
 
 def parse_to_graphs(genome):
-    return [_parse_one_graph(genome, {output[1]}) for output in genome[g.out_idx:, :]]
+    return [_parse_one_graph(genome, output) for output in genome[g.out_idx:, 1]]
 
 
 def _x_to_output_map(genome, graphs_list, x):
