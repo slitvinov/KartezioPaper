@@ -121,14 +121,13 @@ g.lmb = 5
 g.generations = 10
 g.wt = WatershedSkimage(use_dt=False, markers_distance=21, markers_area=None)
 g.nodes = [cls() for cls in registry.nodes.components]
-# input, nodes, output, paramters
+# input, maximum node, otuput, arity, parameters
 g.i = 3
 g.n = 30
 g.o = 2
 g.a = 2
 g.p = 2
 g.n_mutations = 15 * g.n * (1 + g.a + g.p) // 100
-g.indices = [[i, j] for i in range(g.n) for j in range(1 + g.a + g.p)]
 g.genes = [
     np.zeros((g.i + g.n + g.o, 1 + g.a + g.p), dtype=np.uint8) for i in range(g.lmb + 1)
 ]
@@ -140,6 +139,7 @@ for gen in g.genes:
     for j in range(g.o):
         gen[g.i + g.n + j, 1] = randrange(g.i + g.n)
 generation = 0
+g.indices = [[i, j] for i in range(g.n) for j in range(1 + g.a + g.p)]
 while True:
     g.cost = [cost(gen) for gen in g.genes]
     i = np.argmin(g.cost)
