@@ -98,11 +98,11 @@ def intersection_over_union(masks_true, masks_pred):
 
 def diff(y_true, y_pred):
     th = 0.5
-    n_true = np.max(y_true[0])
+    n_true = np.max(y_true)
     n_pred = np.max(y_pred)
     tp = 0
     if n_pred > 0:
-        iou = intersection_over_union(y_true[0], y_pred)[1:, 1:]
+        iou = intersection_over_union(y_true, y_pred)[1:, 1:]
         n_min = min(iou.shape[0], iou.shape[1])
         costs = -(iou >= th).astype(float) - iou / (2 * n_min)
         true_ind, pred_ind = linear_sum_assignment(costs)
@@ -173,7 +173,7 @@ for sample, label in DATA:
     label_mask = image_new(shape)
     polygons = read_polygons_from_roi(label)
     fill_polygons_as_labels(label_mask, polygons)
-    g.y.append([label_mask])
+    g.y.append(label_mask)
 for genome in g.individuals:
     for j in range(g.n):
         genome[g.inputs + j, 0] = random.randrange(len(g.nodes))
