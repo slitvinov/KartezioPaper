@@ -70,13 +70,13 @@ def parse(genome, x):
     return all_y_pred
 
 
-def call1(y_true, y_pred):
+def call1(y_pred):
     scores = []
     for yi_pred in y_pred:
         score = 0.0
-        y_size = len(y_true)
+        y_size = len(g.y)
         for i in range(y_size):
-            score += call0(y_true[i].copy(), yi_pred[i])
+            score += call0(g.y[i].copy(), yi_pred[i])
         scores.append(score / y_size)
     return scores
 
@@ -179,7 +179,7 @@ g.individuals = [
 ]
 dataframe = pd.read_csv("dataset/dataset.csv")
 x0 = []
-y0 = []
+g.y = []
 for row in dataframe.itertuples():
     filepath = os.path.join("dataset", row.input)
     image = imread_color(filepath, rgb=False)
@@ -189,7 +189,7 @@ for row in dataframe.itertuples():
     filepath = os.path.join("dataset", row.label)
     polygons = read_polygons_from_roi(filepath)
     fill_polygons_as_labels(label_mask, polygons)
-    y0.append([label_mask])
+    g.y.append([label_mask])
 for genome in g.individuals:
     for j in range(g.n):
         genome[g.inputs + j, 0] = random.randrange(len(g.nodes))
@@ -199,7 +199,7 @@ for genome in g.individuals:
     for j in range(g.outputs):
         genome[g.out_idx + j, 1] = random.randrange(g.out_idx)
 y_pred = [parse(genome, x0) for genome in g.individuals]
-g.fitness = call1(y0, y_pred)
+g.fitness = call1(y_pred)
 print(f"{0:08} {g.fitness[0]:.16e}")
 current_generation = 0
 while current_generation < g.generations:
@@ -215,6 +215,6 @@ while current_generation < g.generations:
             if active_nodes != new_active_nodes:
                 break
     y_pred = [parse(genome, x0) for genome in g.individuals]
-    g.fitness = call1(y0, y_pred)
+    g.fitness = call1(y_pred)
     current_generation += 1
     print(f"{current_generation:08} {g.fitness[0]:.16e}")
