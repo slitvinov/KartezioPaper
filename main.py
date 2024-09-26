@@ -110,6 +110,7 @@ g._lambda = 5
 g.generations = 10
 g.wt = WatershedSkimage(use_dt=False, markers_distance=21, markers_area=None)
 g.nodes = [cls() for cls in registry.nodes.components]
+# input, nodes, output, paramters
 g.i = 3
 g.n = 30
 g.o = 2
@@ -138,8 +139,7 @@ for gen in g.individuals:
     for j in range(g.n):
         gen[g.i + j, 0] = random.randrange(len(g.nodes))
         gen[g.i + j, 1:g.par] = np.random.randint(g.i + j, size=g.arity)
-        gen[g.i + j, g.par:] = np.random.randint(g.max_val,
-                                                      size=g.p)
+        gen[g.i + j, g.par:] = np.random.randint(g.max_val, size=g.p)
     for j in range(g.o):
         gen[g.out + j, 1] = random.randrange(g.out)
 current_generation = 0
@@ -157,8 +157,7 @@ while True:
             if j == 0:
                 gen[g.i + idx, 0] = random.randrange(len(g.nodes))
             elif j <= g.arity:
-                gen[g.i + idx,
-                    1:g.par][j - 1] = random.randrange(g.i + idx)
+                gen[g.i + idx, 1:g.par][j - 1] = random.randrange(g.i + idx)
             else:
                 gen[g.i + idx,
                     g.par:][j - g.arity - 1] = random.randrange(g.max_val)
