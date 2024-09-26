@@ -116,20 +116,17 @@ def diff(y_true, y_pred):
         return (fp + fn) / (tp + fp + fn)
 
 def mutate1(genome):
-    sampling_indices = random.sample(g.indices, g.n_mutations)
-    for idx, mutation_parameter_index in sampling_indices:
-        if mutation_parameter_index == 0:
+    for idx, j in random.sample(g.indices, g.n_mutations):
+        if j == 0:
             genome[g.inputs + idx, 0] = np.random.randint(len(g.nodes))
-        elif mutation_parameter_index <= g.arity:
-            connection_idx = mutation_parameter_index - 1
+        elif j <= g.arity:
             genome[g.inputs + idx,
-                   1:g.para_idx][connection_idx] = random.randrange(g.inputs +
+                   1:g.para_idx][j - 1] = random.randrange(g.inputs +
                                                                     idx)
         else:
-            parameter_idx = mutation_parameter_index - g.arity - 1
             genome[g.inputs + idx,
-                   g.para_idx:][parameter_idx] = np.random.randint(
-                       g.max_val, size=g.parameters)[parameter_idx]
+                   g.para_idx:][j - g.arity - 1] = np.random.randint(
+                       g.max_val, size=g.parameters)[j - g.arity - 1]
     for idx in range(g.outputs):
         if random.random() < 0.2:
             genome[g.out_idx + idx, 1] = random.randrange(g.out_idx)
