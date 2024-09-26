@@ -196,22 +196,19 @@ for genome in g.individuals:
                g.para_idx:] = np.random.randint(g.max_val, size=g.parameters)
     for j in range(g.outputs):
         genome[g.out_idx + j, 1] = random.randrange(g.out_idx)
-y_pred = [parse0(genome, x0) for genome in g.individuals]
-g.cost = [
-    sum(cost(u, v) for u, v in zip(g.y, y0)) / len(g.y) for y0 in y_pred
-]
-print(f"{0:08} {g.cost[0]:.16e}")
 current_generation = 0
-while current_generation < g.generations:
-    i = np.argmin(g.cost)
-    elite = g.individuals[i].copy()
-    for i in range(g._lambda + 1):
-        g.individuals[i] = elite.copy()
-    for i in range(1, g._lambda + 1):
-        g.individuals[i] = mutate1(g.individuals[i])
+while True:
     y_pred = [parse0(genome, x0) for genome in g.individuals]
     g.cost = [
         sum(cost(u, v) for u, v in zip(g.y, y0)) / len(g.y) for y0 in y_pred
     ]
+    i = np.argmin(g.cost)
+    elite = g.individuals[i].copy()
+    print(f"{current_generation:08} {g.cost[i]:.16e}")
+    if current_generation == g.generations:
+        break
     current_generation += 1
-    print(f"{current_generation:08} {g.cost[0]:.16e}")
+    for i in range(g._lambda + 1):
+        g.individuals[i] = elite.copy()
+    for i in range(1, g._lambda + 1):
+        g.individuals[i] = mutate1(g.individuals[i])
