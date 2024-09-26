@@ -12,11 +12,15 @@ from skimage.morphology import remove_small_objects
 import cv2
 import numpy as np
 
+
 def threshold_tozero(image, threshold):
-    return cv2.threshold(image, threshold, IMAGE_UINT8_POSITIVE, cv2.THRESH_TOZERO)[1]
+    return cv2.threshold(image, threshold, IMAGE_UINT8_POSITIVE,
+                         cv2.THRESH_TOZERO)[1]
+
 
 def threshold_binary(image, threshold, value=IMAGE_UINT8_POSITIVE):
     return cv2.threshold(image, threshold, value, cv2.THRESH_BINARY)[1]
+
 
 class Registry:
 
