@@ -43,9 +43,7 @@ def node(label=None):
 
 class Node:
 
-    def __init__(self, name, symbol, arity, args):
-        self.name = name
-        self.symbol = symbol
+    def __init__(self, arity, args):
         self.arity = arity
         self.args = args
 
@@ -137,7 +135,7 @@ def kernel_from_parameters(p):
 class Max(Node):
 
     def __init__(self):
-        super().__init__("max", "MAX", 2, 0)
+        super().__init__(2, 0)
 
     def call(self, x, args=None):
         return image_ew_max(x[0], x[1])
@@ -147,7 +145,7 @@ class Max(Node):
 class Min(Node):
 
     def __init__(self):
-        super().__init__("min", "MIN", 2, 0)
+        super().__init__(2, 0)
 
     def call(self, x, args=None):
         return image_ew_min(x[0], x[1])
@@ -157,7 +155,7 @@ class Min(Node):
 class Mean(Node):
 
     def __init__(self):
-        super().__init__("mean", "MEAN", 2, 0)
+        super().__init__(2, 0)
 
     def call(self, x, args=None):
         return image_ew_mean(x[0], x[1])
@@ -167,7 +165,7 @@ class Mean(Node):
 class Add(Node):
 
     def __init__(self):
-        super().__init__("add", "ADD", 2, 0)
+        super().__init__(2, 0)
 
     def call(self, x, args=None):
         return cv2.add(x[0], x[1])
@@ -177,7 +175,7 @@ class Add(Node):
 class Subtract(Node):
 
     def __init__(self):
-        super().__init__("subtract", "SUB", 2, 0)
+        super().__init__(2, 0)
 
     def call(self, x, args=None):
         return cv2.subtract(x[0], x[1])
@@ -187,7 +185,7 @@ class Subtract(Node):
 class BitwiseNot(Node):
 
     def __init__(self):
-        super().__init__("bitwise_not", "NOT", 1, 0)
+        super().__init__(1, 0)
 
     def call(self, x, args=None):
         return cv2.bitwise_not(x[0])
@@ -197,7 +195,7 @@ class BitwiseNot(Node):
 class BitwiseOr(Node):
 
     def __init__(self):
-        super().__init__("bitwise_or", "BOR", 2, 0)
+        super().__init__(2, 0)
 
     def call(self, x, args=None):
         return cv2.bitwise_or(x[0], x[1])
@@ -207,7 +205,7 @@ class BitwiseOr(Node):
 class BitwiseAnd(Node):
 
     def __init__(self):
-        super().__init__("bitwise_and", "BAND", 2, 0)
+        super().__init__(2, 0)
 
     def call(self, x, args=None):
         return cv2.bitwise_and(x[0], x[1])
@@ -217,7 +215,7 @@ class BitwiseAnd(Node):
 class BitwiseAndMask(Node):
 
     def __init__(self):
-        super().__init__("bitwise_and_mask", "ANDM", 2, 0)
+        super().__init__(2, 0)
 
     def call(self, x, args=None):
         return cv2.bitwise_and(x[0], x[0], mask=x[1])
@@ -227,7 +225,7 @@ class BitwiseAndMask(Node):
 class BitwiseXor(Node):
 
     def __init__(self):
-        super().__init__("bitwise_xor", "BXOR", 2, 0)
+        super().__init__(2, 0)
 
     def call(self, x, args=None):
         return cv2.bitwise_xor(x[0], x[1])
@@ -237,7 +235,7 @@ class BitwiseXor(Node):
 class SquareRoot(Node):
 
     def __init__(self):
-        super().__init__("sqrt", "SQRT", 1, 0)
+        super().__init__(1, 0)
 
     def call(self, x, args=None):
         return (cv2.sqrt(
@@ -248,7 +246,7 @@ class SquareRoot(Node):
 class Square(Node):
 
     def __init__(self):
-        super().__init__("pow2", "POW", 1, 0)
+        super().__init__(1, 0)
 
     def call(self, x, args=None):
         return (cv2.pow(
@@ -259,7 +257,7 @@ class Square(Node):
 class Exp(Node):
 
     def __init__(self):
-        super().__init__("exp", "EXP", 1, 0)
+        super().__init__(1, 0)
 
     def call(self, x, args=None):
         return (cv2.exp(
@@ -270,7 +268,7 @@ class Exp(Node):
 class Log(Node):
 
     def __init__(self):
-        super().__init__("log", "LOG", 1, 0)
+        super().__init__(1, 0)
 
     def call(self, x, args=None):
         return np.log1p(x[0]).astype(np.uint8)
@@ -280,7 +278,7 @@ class Log(Node):
 class MedianBlur(Node):
 
     def __init__(self):
-        super().__init__("median_blur", "BLRM", 1, 1)
+        super().__init__(1, 1)
 
     def call(self, x, args=None):
         ksize = correct_ksize(args[0])
@@ -291,7 +289,7 @@ class MedianBlur(Node):
 class GaussianBlur(Node):
 
     def __init__(self):
-        super().__init__("gaussian_blur", "BLRG", 1, 1)
+        super().__init__(1, 1)
 
     def call(self, x, args=None):
         ksize = correct_ksize(args[0])
@@ -302,7 +300,7 @@ class GaussianBlur(Node):
 class Laplacian(Node):
 
     def __init__(self):
-        super().__init__("laplacian", "LPLC", 1, 0)
+        super().__init__(1, 0)
 
     def call(self, x, args=None):
         return cv2.Laplacian(x[0], cv2.CV_64F).astype(np.uint8)
@@ -312,7 +310,7 @@ class Laplacian(Node):
 class Sobel(Node):
 
     def __init__(self):
-        super().__init__("sobel", "SOBL", 1, 2)
+        super().__init__(1, 2)
 
     def call(self, x, args=None):
         ksize = correct_ksize(args[0])
@@ -326,7 +324,7 @@ class Sobel(Node):
 class RobertCross(Node):
 
     def __init__(self):
-        super().__init__("robert_cross", "RBRT", 1, 1)
+        super().__init__(1, 1)
 
     def call(self, x, args=None):
         img = (x[0] / 255.0).astype(np.float32)
@@ -339,7 +337,7 @@ class RobertCross(Node):
 class Canny(Node):
 
     def __init__(self):
-        super().__init__("canny", "CANY", 1, 2)
+        super().__init__(1, 2)
 
     def call(self, x, args=None):
         return cv2.Canny(x[0], args[0], args[1])
@@ -349,7 +347,7 @@ class Canny(Node):
 class Sharpen(Node):
 
     def __init__(self):
-        super().__init__("sharpen", "SHRP", 1, 0)
+        super().__init__(1, 0)
 
     def call(self, x, args=None):
         return cv2.filter2D(x[0], -1, SHARPEN_KERNEL)
@@ -359,7 +357,7 @@ class Sharpen(Node):
 class GaborFilter(Node):
 
     def __init__(self, ksize=11):
-        super().__init__("gabor", "GABR", 1, 2)
+        super().__init__(1, 2)
         self.ksize = ksize
 
     def call(self, x, args=None):
@@ -372,7 +370,7 @@ class AbsoluteDifference(Node):
     """from https://github.com/cytosmart-bv/tomni"""
 
     def __init__(self):
-        super().__init__("abs_diff", "ABSD", 1, 2)
+        super().__init__(1, 2)
 
     def call(self, x, args=None):
         ksize = correct_ksize(args[0])
@@ -384,7 +382,7 @@ class AbsoluteDifference(Node):
 class AbsoluteDifference2(Node):
 
     def __init__(self):
-        super().__init__("abs_diff2", "ABS2", 2, 0)
+        super().__init__(2, 0)
 
     def call(self, x, args=None):
         return 255 - cv2.absdiff(x[0], x[1])
@@ -395,7 +393,7 @@ class FluoTopHat(Node):
     """from https://github.com/cytosmart-bv/tomni"""
 
     def __init__(self):
-        super().__init__("fluo_tophat", "FLUO", 1, 2)
+        super().__init__(1, 2)
 
     def _rescale_intensity(self, img, min_val, max_val):
         output_img = np.clip(img, min_val, max_val)
@@ -421,7 +419,7 @@ class RelativeDifference(Node):
     """from https://github.com/cytosmart-bv/tomni"""
 
     def __init__(self):
-        super().__init__("rel_diff", "RELD", 1, 1)
+        super().__init__(1, 1)
 
     def call(self, x, args=None):
         img = x[0]
@@ -439,7 +437,7 @@ class RelativeDifference(Node):
 class Erode(Node):
 
     def __init__(self):
-        super().__init__("erode", "EROD", 1, 2)
+        super().__init__(1, 2)
 
     def call(self, inputs, p):
         kernel = kernel_from_parameters(p)
@@ -450,7 +448,7 @@ class Erode(Node):
 class Dilate(Node):
 
     def __init__(self):
-        super().__init__("dilate", "DILT", 1, 2)
+        super().__init__(1, 2)
 
     def call(self, inputs, p):
         kernel = kernel_from_parameters(p)
@@ -461,7 +459,7 @@ class Dilate(Node):
 class Open(Node):
 
     def __init__(self):
-        super().__init__("open", "OPEN", 1, 2)
+        super().__init__(1, 2)
 
     def call(self, inputs, p):
         kernel = kernel_from_parameters(p)
@@ -472,7 +470,7 @@ class Open(Node):
 class Close(Node):
 
     def __init__(self):
-        super().__init__("close", "CLSE", 1, 2)
+        super().__init__(1, 2)
 
     def call(self, inputs, p):
         kernel = kernel_from_parameters(p)
@@ -483,7 +481,7 @@ class Close(Node):
 class MorphGradient(Node):
 
     def __init__(self):
-        super().__init__("morph_gradient", "MGRD", 1, 2)
+        super().__init__(1, 2)
 
     def call(self, inputs, p):
         kernel = kernel_from_parameters(p)
@@ -494,7 +492,7 @@ class MorphGradient(Node):
 class MorphTopHat(Node):
 
     def __init__(self):
-        super().__init__("morph_tophat", "MTHT", 1, 2)
+        super().__init__(1, 2)
 
     def call(self, inputs, p):
         kernel = kernel_from_parameters(p)
@@ -505,7 +503,7 @@ class MorphTopHat(Node):
 class MorphBlackHat(Node):
 
     def __init__(self):
-        super().__init__("morph_blackhat", "MBHT", 1, 2)
+        super().__init__(1, 2)
 
     def call(self, inputs, p):
         kernel = kernel_from_parameters(p)
@@ -516,7 +514,7 @@ class MorphBlackHat(Node):
 class FillHoles(Node):
 
     def __init__(self):
-        super().__init__("fill_holes", "FILL", 1, 0)
+        super().__init__(1, 0)
 
     def call(self, inputs, p):
         return morph_fill(inputs[0])
@@ -526,10 +524,7 @@ class FillHoles(Node):
 class RemoveSmallObjects(Node):
 
     def __init__(self):
-        super().__init__("remove_small_objects",
-                         "RMSO",
-                         1,
-                         1)
+        super().__init__(1, 1)
 
     def call(self, x, args=None):
         return remove_small_objects(x[0] > 0, args[0]).astype(np.uint8)
@@ -539,7 +534,8 @@ class RemoveSmallObjects(Node):
 class RemoveSmallHoles(Node):
 
     def __init__(self):
-        super().__init__("remove_small_holes", "RMSH", 1, 1)
+
+        super().__init__(1, 1)
 
     def call(self, x, args=None):
         return remove_small_holes(x[0] > 0, args[0]).astype(np.uint8)
@@ -549,7 +545,7 @@ class RemoveSmallHoles(Node):
 class Threshold(Node):
 
     def __init__(self):
-        super().__init__("threshold", "TRH", 1, 2)
+        super().__init__(1, 2)
 
     def call(self, x, args=None):
         if args[0] < 128:
@@ -561,7 +557,7 @@ class Threshold(Node):
 class ThresholdAt1(Node):
 
     def __init__(self):
-        super().__init__("threshold_at_1", "TRH1", 1, 1)
+        super().__init__(1, 1)
 
     def call(self, x, args=None):
         if args[0] < 128:
@@ -573,7 +569,7 @@ class ThresholdAt1(Node):
 class ThresholdAdaptive(Node):
 
     def __init__(self):
-        super().__init__("adaptive_threshold", "TRHA", 1, 2)
+        super().__init__(1, 2)
 
     def call(self, x, args=None):
         ksize = correct_ksize(args[0])
@@ -592,7 +588,7 @@ class ThresholdAdaptive(Node):
 class DistanceTransform(Node):
 
     def __init__(self):
-        super().__init__("distance_transform", "DTRF", 1, 1)
+        super().__init__(1, 1)
 
     def call(self, x, args=None):
         return cv2.normalize(
@@ -609,10 +605,7 @@ class DistanceTransform(Node):
 class DistanceTransformAndThresh(Node):
 
     def __init__(self):
-        super().__init__("distance_transform_and_thresh",
-                         "DTTR",
-                         1,
-                         2)
+        super().__init__(1, 2)
 
     def call(self, x, args=None):
         d = cv2.normalize(
@@ -630,7 +623,7 @@ class DistanceTransformAndThresh(Node):
 class BinaryInRange(Node):
 
     def __init__(self):
-        super().__init__("inrange_bin", "BRNG", 1, 2)
+        super().__init__(1, 2)
 
     def call(self, x, args=None):
         lower = int(min(args[0], args[1]))
@@ -642,7 +635,7 @@ class BinaryInRange(Node):
 class InRange(Node):
 
     def __init__(self):
-        super().__init__("inrange", "RNG", 1, 2)
+        super().__init__(1, 2)
 
     def call(self, x, args=None):
         lower = int(min(args[0], args[1]))
