@@ -49,7 +49,7 @@ def cost(gen):
                     continue
                 arity = g.nodes[gen[node, 0]].arity
                 inputs = [output_map[c] for c in gen[node, 1:1 + arity]]
-                p = gen[node, g.par:]
+                p = gen[node, 1 + g.arity:]
                 output_map[node] = g.nodes[gen[node, 0]].call(inputs, p)
         y_pred = [output_map[j] for j in gen[g.out:, 1]]
         *rest, y_pred = g.wt.apply(y_pred[0],
@@ -117,7 +117,6 @@ g.o = 2
 g.arity = 2
 g.p = 2
 g.out = g.i + g.n
-g.par = 1 + g.arity
 g.w = 1 + g.arity + g.p
 g.h = g.i + g.n + g.o
 g.n_mutations = 15 * g.n * g.w // 100
@@ -139,7 +138,7 @@ for gen in g.individuals:
     for j in range(g.n):
         gen[g.i + j, 0] = random.randrange(len(g.nodes))
         gen[g.i + j, 1:1 + g.arity] = np.random.randint(g.i + j, size=g.arity)
-        gen[g.i + j, g.par:] = np.random.randint(g.max_val, size=g.p)
+        gen[g.i + j, 1 + g.arity:] = np.random.randint(g.max_val, size=g.p)
     for j in range(g.o):
         gen[g.out + j, 1] = random.randrange(g.out)
 current_generation = 0
@@ -157,10 +156,11 @@ while True:
             if j == 0:
                 gen[g.i + idx, 0] = random.randrange(len(g.nodes))
             elif j <= g.arity:
-                gen[g.i + idx, 1:g.par][j - 1] = random.randrange(g.i + idx)
-            else:
                 gen[g.i + idx,
-                    g.par:][j - g.arity - 1] = random.randrange(g.max_val)
+                    1:1 + g.arity][j - 1] = random.randrange(g.i + idx)
+            else:
+                gen[g.i + idx, 1 + g.arity:][j - g.arity -
+                                             1] = random.randrange(g.max_val)
         for idx in range(g.o):
             if random.random() < 0.2:
                 gen[g.out + idx, 1] = random.randrange(g.out)
