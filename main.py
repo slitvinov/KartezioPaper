@@ -126,9 +126,6 @@ def true_positive0(iou):
     match_ok = iou[true_ind, pred_ind] >= th
     return match_ok.sum()
 
-def mutate_connections0(genome, idx):
-    genome[g.inputs + idx, 1:g.para_idx] = np.random.randint(g.inputs + idx, size=g.arity)
-
 def mutate_connections1(genome, idx, only_one):
     new_connections = np.random.randint(g.inputs + idx, size=g.arity)
     new_value = new_connections[only_one]
@@ -207,7 +204,7 @@ for row in dataframe.itertuples():
 for genome in g.individuals:
     for j in range(g.n):
         genome[g.inputs + j, 0] = random.randrange(len(g.nodes))
-        mutate_connections0(genome, j)
+        genome[g.inputs + j, 1:g.para_idx] = np.random.randint(g.inputs + j, size=g.arity)
         new_parameters = np.random.randint(g.max_val, size=g.parameters)
         genome[g.inputs + j, g.para_idx:] = new_parameters
     for j in range(g.outputs):
