@@ -26,5 +26,5 @@ python -m coverage run main.py
 ```
 
 ```
-[i0 i1 i2 n0 .. nmax o0 o1][node arity0 arity1 p0 p2]
+[(i0 i1 i2) n0 .. nmax o0 o1][node arity0 arity1 p0 p2]
 ```
