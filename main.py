@@ -12,6 +12,20 @@ import os
 import pandas as pd
 import random
 
+DATA = [
+    ["dataset/03.png", "dataset/03.zip"],  #
+    ["dataset/07.png", "dataset/07.zip"],
+    ["dataset/09.png", "dataset/09.zip"],
+    ["dataset/10.png", "dataset/10.zip"],
+    ["dataset/11.png", "dataset/11.zip"],
+    ["dataset/14.png", "dataset/14.zip"],
+    ["dataset/17.png", "dataset/17.zip"],
+    ["dataset/19.png", "dataset/19.zip"],
+    ["dataset/21.png", "dataset/21.zip"],
+    ["dataset/23.png", "dataset/23.zip"],
+    ["dataset/24.png", "dataset/24.zip"],
+]
+
 
 def _parse_one_graph(genome, graph_source):
     next_indices = graph_source.copy()
