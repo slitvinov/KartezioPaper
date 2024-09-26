@@ -126,13 +126,6 @@ def true_positive0(iou):
     match_ok = iou[true_ind, pred_ind] >= th
     return match_ok.sum()
 
-def mutate_connections1(genome, idx, only_one):
-    new_connections = np.random.randint(g.inputs + idx, size=g.arity)
-    new_value = new_connections[only_one]
-    new_connections = genome[g.inputs + idx, 1:g.para_idx]
-    new_connections[only_one] = new_value
-    genome[g.inputs + idx, 1:g.para_idx] = new_connections
-
 
 def mutate_parameters1(genome, idx, only_one):
     new_parameters = np.random.randint(g.max_val, size=g.parameters)
@@ -152,7 +145,9 @@ def mutate1(genome):
             genome[g.inputs + idx, 0] = np.random.randint(len(g.nodes))
         elif mutation_parameter_index <= g.arity:
             connection_idx = mutation_parameter_index - 1
-            mutate_connections1(genome, idx, only_one=connection_idx)
+            genome[g.inputs + idx,
+                   1:g.para_idx][connection_idx] = random.randrange(g.inputs +
+                                                                    idx)
         else:
             parameter_idx = mutation_parameter_index - g.arity - 1
             mutate_parameters1(genome, idx, only_one=parameter_idx)
@@ -204,7 +199,8 @@ for row in dataframe.itertuples():
 for genome in g.individuals:
     for j in range(g.n):
         genome[g.inputs + j, 0] = random.randrange(len(g.nodes))
-        genome[g.inputs + j, 1:g.para_idx] = np.random.randint(g.inputs + j, size=g.arity)
+        genome[g.inputs + j, 1:g.para_idx] = np.random.randint(g.inputs + j,
+                                                               size=g.arity)
         new_parameters = np.random.randint(g.max_val, size=g.parameters)
         genome[g.inputs + j, g.para_idx:] = new_parameters
     for j in range(g.outputs):
