@@ -25,22 +25,21 @@ DATA = [
     ["dataset/24.png", "dataset/24.zip"],
 ]
 
+
 def cost(gen):
-    graphs = [ ]
+    graphs = []
     for source in gen[g.out_idx:, 1]:
-        next_indices = {source}
-        output_tree = {source}
-        while next_indices:
-            next_index = next_indices.pop()
-            if next_index < g.i:
+        q = {source}
+        graph = {source}
+        while q:
+            p = q.pop()
+            if p < g.i:
                 continue
-            idx = next_index - g.i
-            function_index = gen[g.i + idx, 0]
-            arity = g.nodes[function_index].arity
-            next_connections = set(gen[g.i + idx, 1:1 + arity])
-            next_indices = next_indices.union(next_connections)
-            output_tree = output_tree.union(next_connections)
-        graphs.append(sorted(output_tree))
+            arity = g.nodes[gen[p, 0]].arity
+            adj = gen[p, 1:1 + arity]
+            q.update(adj)
+            graph.update(adj)
+        graphs.append(sorted(graph))
     Cost = 0
     for x, y in zip(g.x, g.y):
         output_map = {i: x[i].copy() for i in range(g.i)}
@@ -55,7 +54,9 @@ def cost(gen):
                 inputs = [output_map[c] for c in connections]
                 p = gen[g.i + idx, g.para_idx:]
                 output_map[node] = g.nodes[function_index].call(inputs, p)
-        y_pred = [output_map[output_gene] for output_gene in gen[g.out_idx:, 1]]
+        y_pred = [
+            output_map[output_gene] for output_gene in gen[g.out_idx:, 1]
+        ]
         *rest, y_pred = g.wt.apply(y_pred[0],
                                    markers=y_pred[1],
                                    mask=y_pred[0] > 0)
