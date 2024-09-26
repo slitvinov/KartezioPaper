@@ -121,7 +121,7 @@ g.w = 1 + g.arity + g.p
 g.h = g.i + g.n + g.o
 g.n_mutations = 15 * g.n * g.w // 100
 g.indices = [[i, j] for i in range(g.n) for j in range(g.w)]
-g.individuals = [
+g.genes = [
     np.zeros((g.h, g.w), dtype=np.uint8) for i in range(g._lambda + 1)
 ]
 g.x = []
@@ -134,7 +134,7 @@ for sample, label in DATA:
     polygons = read_polygons_from_roi(label)
     fill_polygons_as_labels(label_mask, polygons)
     g.y.append(label_mask)
-for gen in g.individuals:
+for gen in g.genes:
     for j in range(g.n):
         gen[g.i + j, 0] = random.randrange(len(g.nodes))
         gen[g.i + j, 1:1 + g.arity] = np.random.randint(g.i + j, size=g.arity)
@@ -143,15 +143,15 @@ for gen in g.individuals:
         gen[g.out + j, 1] = random.randrange(g.out)
 current_generation = 0
 while True:
-    g.cost = [cost(gen) for gen in g.individuals]
+    g.cost = [cost(gen) for gen in g.genes]
     i = np.argmin(g.cost)
     print(f"{current_generation:08} {g.cost[i]:.16e}")
     if current_generation == g.generations:
         break
     current_generation += 1
-    elite = g.individuals[0] = g.individuals[i]
+    elite = g.genes[0] = g.genes[i]
     for i in range(1, g._lambda + 1):
-        gen = g.individuals[i] = elite.copy()
+        gen = g.genes[i] = elite.copy()
         for idx, j in random.sample(g.indices, g.n_mutations):
             if j == 0:
                 gen[g.i + idx, 0] = random.randrange(len(g.nodes))
