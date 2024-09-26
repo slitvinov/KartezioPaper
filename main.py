@@ -106,7 +106,7 @@ random.seed(1)
 np.random.seed(1)
 g = G()
 g.max_val = 256
-g._lambda = 5
+g.lmb = 5
 g.generations = 10
 g.wt = WatershedSkimage(use_dt=False, markers_distance=21, markers_area=None)
 g.nodes = [cls() for cls in registry.nodes.components]
@@ -122,7 +122,7 @@ g.h = g.i + g.n + g.o
 g.n_mutations = 15 * g.n * g.w // 100
 g.indices = [[i, j] for i in range(g.n) for j in range(g.w)]
 g.genes = [
-    np.zeros((g.h, g.w), dtype=np.uint8) for i in range(g._lambda + 1)
+    np.zeros((g.h, g.w), dtype=np.uint8) for i in range(g.lmb + 1)
 ]
 g.x = []
 g.y = []
@@ -150,7 +150,7 @@ while True:
         break
     current_generation += 1
     elite = g.genes[0] = g.genes[i]
-    for i in range(1, g._lambda + 1):
+    for i in range(1, g.lmb + 1):
         gen = g.genes[i] = elite.copy()
         for idx, j in random.sample(g.indices, g.n_mutations):
             if j == 0:
