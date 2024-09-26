@@ -42,10 +42,6 @@ def _parse_one_graph(genome, source):
     return sorted(output_tree)
 
 
-def parse_to_graphs(genome):
-    return [_parse_one_graph(genome, output) for output in genome[g.out_idx:, 1]]
-
-
 def _x_to_output_map(genome, graphs_list, x):
     output_map = {i: x[i].copy() for i in range(g.inputs)}
     for graph in graphs_list:
@@ -69,16 +65,16 @@ def _parse_one(genome, graphs_list, x):
     ]
 
 
-def parse0(genome, x):
-    all_y_pred = []
-    graphs = parse_to_graphs(genome)
-    for xi in x:
+def cost(genome):
+    graphs = [_parse_one_graph(genome, output) for output in genome[g.out_idx:, 1]]
+    Cost = 0
+    for xi, yi in zip(g.x, g.y):
         y_pred = _parse_one(genome, graphs, xi)
         mask, markers, y_pred = g.wt.apply(y_pred[0],
                                            markers=y_pred[1],
                                            mask=y_pred[0] > 0)
-        all_y_pred.append(y_pred)
-    return all_y_pred
+        Cost += diff(yi, y_pred)
+    return Cost / len(g.y)
 
 
 @jit(nopython=True)
@@ -100,7 +96,7 @@ def _intersection_over_union(masks_true, masks_pred):
     return iou
 
 
-def cost(y_true, y_pred):
+def diff(y_true, y_pred):
     n_true = np.max(y_true[0])
     n_pred = np.max(y_pred)
     tp = 0
@@ -149,6 +145,7 @@ def mutate1(genome):
         if random.random() < 0.2:
             genome[g.out_idx + idx, 1] = random.randrange(g.out_idx)
 
+
 class G:
     pass
 
@@ -175,12 +172,12 @@ g.indices = np.array([[i, j] for i in range(g.n) for j in range(g.w)])
 g.individuals = [
     np.zeros((g.h, g.w), dtype=np.uint8) for i in range(g._lambda + 1)
 ]
-x0 = []
+g.x = []
 g.y = []
 for sample, label in DATA:
     image = imread_color(sample, rgb=False)
     x, shape = image_split(image), image.shape[:2]
-    x0.append(x)
+    g.x.append(x)
     label_mask = image_new(shape)
     polygons = read_polygons_from_roi(label)
     fill_polygons_as_labels(label_mask, polygons)
@@ -196,10 +193,7 @@ for genome in g.individuals:
         genome[g.out_idx + j, 1] = random.randrange(g.out_idx)
 current_generation = 0
 while True:
-    y_pred = [parse0(genome, x0) for genome in g.individuals]
-    g.cost = [
-        sum(cost(u, v) for u, v in zip(g.y, y0)) / len(g.y) for y0 in y_pred
-    ]
+    g.cost = [cost(genome) for genome in g.individuals]
     i = np.argmin(g.cost)
     elite = g.individuals[i].copy()
     print(f"{current_generation:08} {g.cost[i]:.16e}")
