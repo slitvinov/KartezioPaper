@@ -116,10 +116,7 @@ def diff(y_true, y_pred):
         return (fp + fn) / (tp + fp + fn)
 
 def mutate1(genome):
-    sampling_indices = np.random.choice(range(len(g.indices)),
-                                        g.n_mutations,
-                                        replace=False)
-    sampling_indices = g.indices[sampling_indices]
+    sampling_indices = random.sample(g.indices, g.n_mutations)
     for idx, mutation_parameter_index in sampling_indices:
         if mutation_parameter_index == 0:
             genome[g.inputs + idx, 0] = np.random.randint(len(g.nodes))
@@ -160,7 +157,7 @@ g.para_idx = 1 + g.arity
 g.w = 1 + g.arity + g.parameters
 g.h = g.inputs + g.n + g.outputs
 g.n_mutations = 15 * g.n * g.w // 100
-g.indices = np.array([[i, j] for i in range(g.n) for j in range(g.w)])
+g.indices = [[i, j] for i in range(g.n) for j in range(g.w)]
 g.individuals = [
     np.zeros((g.h, g.w), dtype=np.uint8) for i in range(g._lambda + 1)
 ]
