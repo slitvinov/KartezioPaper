@@ -89,7 +89,7 @@ def _intersection_over_union(masks_true, masks_pred):
     return iou
 
 
-def call0(y_true, y_pred):
+def cost(y_true, y_pred):
     n_true = np.max(y_true[0])
     n_pred = np.max(y_pred)
     tp = 0
@@ -190,7 +190,7 @@ for genome in g.individuals:
         genome[g.out_idx + j, 1] = random.randrange(g.out_idx)
 y_pred = [parse(genome, x0) for genome in g.individuals]
 g.fitness = [
-    sum(call0(u, v) for u, v in zip(g.y, y0)) / len(g.y) for y0 in y_pred
+    sum(cost(u, v) for u, v in zip(g.y, y0)) / len(g.y) for y0 in y_pred
 ]
 print(f"{0:08} {g.fitness[0]:.16e}")
 current_generation = 0
@@ -208,7 +208,7 @@ while current_generation < g.generations:
                 break
     y_pred = [parse(genome, x0) for genome in g.individuals]
     g.fitness = [
-        sum(call0(u, v) for u, v in zip(g.y, y0)) / len(g.y) for y0 in y_pred
+        sum(cost(u, v) for u, v in zip(g.y, y0)) / len(g.y) for y0 in y_pred
     ]
     current_generation += 1
     print(f"{current_generation:08} {g.fitness[0]:.16e}")
