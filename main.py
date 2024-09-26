@@ -207,13 +207,8 @@ while current_generation < g.generations:
     elite = g.individuals[i].copy()
     for i in range(g._lambda + 1):
         g.individuals[i] = elite.copy()
-    active_nodes = parse_to_graphs(elite)
     for i in range(1, g._lambda + 1):
-        while True:
-            g.individuals[i] = mutate1(g.individuals[i])
-            new_active_nodes = parse_to_graphs(g.individuals[i])
-            if active_nodes != new_active_nodes:
-                break
+        g.individuals[i] = mutate1(g.individuals[i])
     y_pred = [parse0(genome, x0) for genome in g.individuals]
     g.cost = [
         sum(cost(u, v) for u, v in zip(g.y, y0)) / len(g.y) for y0 in y_pred
