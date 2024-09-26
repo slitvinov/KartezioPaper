@@ -127,14 +127,6 @@ def true_positive0(iou):
     return match_ok.sum()
 
 
-def mutate_parameters1(genome, idx, only_one):
-    new_parameters = np.random.randint(g.max_val, size=g.parameters)
-    old_parameters = genome[g.inputs + idx, g.para_idx:]
-    old_parameters[only_one] = new_parameters[only_one]
-    new_parameters = old_parameters.copy()
-    genome[g.inputs + idx, g.para_idx:] = new_parameters
-
-
 def mutate1(genome):
     sampling_indices = np.random.choice(range(len(g.indices)),
                                         g.n_mutations,
@@ -150,7 +142,9 @@ def mutate1(genome):
                                                                     idx)
         else:
             parameter_idx = mutation_parameter_index - g.arity - 1
-            mutate_parameters1(genome, idx, only_one=parameter_idx)
+            genome[g.inputs + idx,
+                   g.para_idx:][parameter_idx] = np.random.randint(
+                       g.max_val, size=g.parameters)[parameter_idx]
     for idx in range(g.outputs):
         if random.random() < 0.2:
             genome[g.out_idx + idx, 1] = random.randrange(g.out_idx)
