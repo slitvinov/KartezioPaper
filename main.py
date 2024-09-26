@@ -127,11 +127,10 @@ g.n = 30
 g.o = 2
 g.a = 2
 g.p = 2
-w = 1 + g.a + g.p
-g.n_mutations = 15 * g.n * w // 100
-g.indices = [[i, j] for i in range(g.n) for j in range(w)]
+g.n_mutations = 15 * g.n * (1 + g.a + g.p) // 100
+g.indices = [[i, j] for i in range(g.n) for j in range(1 + g.a + g.p)]
 g.genes = [
-    np.zeros((g.i + g.n + g.o, w), dtype=np.uint8) for i in range(g.lmb + 1)
+    np.zeros((g.i + g.n + g.o, 1 + g.a + g.p), dtype=np.uint8) for i in range(g.lmb + 1)
 ]
 for gen in g.genes:
     for j in range(g.n):
