@@ -207,8 +207,8 @@ while current_generation < g.generations:
     elite = g.individuals[i].copy()
     for i in range(g._lambda + 1):
         g.individuals[i] = elite.copy()
+    active_nodes = parse_to_graphs(elite)
     for i in range(1, g._lambda + 1):
-        active_nodes = parse_to_graphs(g.individuals[i])
         while True:
             g.individuals[i] = mutate1(g.individuals[i])
             new_active_nodes = parse_to_graphs(g.individuals[i])
