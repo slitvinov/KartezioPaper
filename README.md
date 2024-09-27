@@ -26,5 +26,9 @@ python -m coverage run main.py
 ```
 
 ```
+dot main.00000160.gv -o main.png -T png
+```
+
+```
 [(i0 i1 i2) n0 .. nmax (o0 o1)][node arity0 arity1 p0 p1]
 ```
