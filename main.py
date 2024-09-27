@@ -138,9 +138,9 @@ for gen in g.genes:
 generation = 0
 n_mutations = 15 * g.n * (1 + g.a + g.p) // 100
 while True:
-    g.cost = [cost(gen) for gen in g.genes]
+    cost = [cost(gen) for gen in g.genes]
     i = np.argmin(g.cost)
-    print(f"{generation:08} {g.cost[i]:.16e}")
+    print(f"{generation:08} {cost[i]:.16e}")
     if generation == max_generation:
         break
     generation += 1
