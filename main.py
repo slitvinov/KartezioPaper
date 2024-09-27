@@ -137,7 +137,7 @@ for sample, label in DATA:
     g.y.append(label_mask)
 g.max_val = 256
 g.lmb = 5
-max_generation = 100
+max_generation = 10000
 g.wt = WatershedSkimage(use_dt=False, markers_distance=21, markers_area=None)
 g.nodes = [cls() for cls in Nodes.values()]
 # input, maximum node, otuput, arity, parameters
@@ -164,23 +164,28 @@ n_mutations = 15 * g.n * (1 + g.a + g.p) // 100
 while True:
     cost = [fun(gen) for gen in genes]
     i = np.argmin(cost)
-    graph(genes[i], f"main.{generation:08}.gv")
+    if i % 10 == 0:
+        graph(genes[i], f"main.{generation:08}.gv")
     print(f"{generation:08} {cost[i]:.16e}")
     if generation == max_generation:
         break
     generation += 1
     elite = genes[0] = genes[i]
+    topo = stopo(elite)
     for i in range(1, g.lmb + 1):
-        gen = genes[i] = elite.copy()
-        for m in range(n_mutations):
-            j = randrange(g.n)
-            k = randrange(1 + g.a + g.p)
-            if k == 0:
-                gen[g.i + j, 0] = randrange(len(g.nodes))
-            elif k <= g.a:
-                gen[g.i + j, k] = randrange(g.i + j)
-            else:
-                gen[g.i + j, k] = randrange(g.max_val)
-        for k in range(g.o):
-            if random.random() < 0.2:
-                gen[g.i + g.n + k, 1] = randrange(g.i + g.n)
+        while True:
+            gen = genes[i] = elite.copy()
+            for m in range(n_mutations):
+                j = randrange(g.n)
+                k = randrange(1 + g.a + g.p)
+                if k == 0:
+                    gen[g.i + j, 0] = randrange(len(g.nodes))
+                elif k <= g.a:
+                    gen[g.i + j, k] = randrange(g.i + j)
+                else:
+                    gen[g.i + j, k] = randrange(g.max_val)
+            for k in range(g.o):
+                if random.random() < 0.2:
+                    gen[g.i + g.n + k, 1] = randrange(g.i + g.n)
+            if stopo(gen) != topo:
+                break
