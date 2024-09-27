@@ -26,27 +26,42 @@ DATA = [
     ["dataset/24.png", "dataset/24.zip"],
 ]
 
-
-def fun(gen):
+def stopo(gen):
     q = {x for x in gen[g.i + g.n:, 1]}
     topo = set()
     while q:
         n = q.pop()
-        topo.add(n)
         if n >= g.i:
+            topo.add(n)
             arity = g.nodes[gen[n, 0]].arity
             adj = gen[n, 1:1 + arity]
             q.update(adj)
+    return sorted(topo)
+
+def graph(gen):
+    label = dict(enumerate(Nodes.keys()))
+    edg = [ ]
+    for n in stopo(gen):
+        l0 = label[gen[n, 0]]
+        arity = g.nodes[gen[n, 0]].arity
+        args = g.nodes[gen[n, 0]].args
+        params = gen[n, 1 + g.a: 1 + g.a + args]
+        for c in range(arity):
+            j = gen[n, 1 + c]
+            l1 = label[gen[j, 0]] if j >= g.i else f"i{j:d}"
+            print(params)
+            print(l0, l1)
+
+def fun(gen):
+    topo = stopo(gen)
     Cost = 0
-    topo = sorted(topo)
     for x, y in zip(g.x, g.y):
         values = {i: x[i].copy() for i in range(g.i)}
         for n in topo:
-            if n >= g.i:
-                arity = g.nodes[gen[n, 0]].arity
-                inputs = [values[i] for i in gen[n, 1:1 + arity]]
-                params = gen[n, 1 + g.a:]
-                values[n] = g.nodes[gen[n, 0]].call(inputs, params)
+            arity = g.nodes[gen[n, 0]].arity
+            inputs = [values[i] for i in gen[n, 1:1 + arity]]
+            params = gen[n, 1 + g.a:]
+            values[n] = g.nodes[gen[n, 0]].call(inputs, params)
         y_pred = [values[j] for j in gen[g.i + g.n:, 1]]
         *rest, y_pred = g.wt.apply(y_pred[0],
                                    markers=y_pred[1],
@@ -137,6 +152,7 @@ for gen in g.genes:
         gen[g.i + g.n + j, 1] = randrange(g.i + g.n)
 generation = 0
 n_mutations = 15 * g.n * (1 + g.a + g.p) // 100
+
 while True:
     cost = [fun(gen) for gen in g.genes]
     i = np.argmin(cost)
