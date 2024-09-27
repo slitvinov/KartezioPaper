@@ -4,7 +4,7 @@ python -m pip install --no-deps git+https://github.com/slitvinov/KartezioPaper o
 ```
 
 ```
-python main.py
+python -W ignore main.py
 ```
 
 ```
