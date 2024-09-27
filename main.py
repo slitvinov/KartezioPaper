@@ -11,6 +11,7 @@ import numpy as np
 import os
 import random
 from random import randrange
+import multiprocessing
 
 DATA = [
     ["dataset/03.png", "dataset/03.zip"],  #
@@ -136,8 +137,8 @@ for sample, label in DATA:
     fill_polygons_as_labels(label_mask, polygons)
     g.y.append(label_mask)
 g.max_val = 256
-g.lmb = 5
-max_generation = 10000
+g.lmb = 100
+max_generation = 20000
 g.wt = WatershedSkimage(use_dt=False, markers_distance=21, markers_area=None)
 g.nodes = [cls() for cls in Nodes.values()]
 # input, maximum node, otuput, arity, parameters
@@ -162,9 +163,10 @@ for gen in genes:
 generation = 0
 n_mutations = 15 * g.n * (1 + g.a + g.p) // 100
 while True:
-    cost = [fun(gen) for gen in genes]
+    with multiprocessing.Pool() as pool:
+        cost = pool.map(fun, genes)
     i = np.argmin(cost)
-    if i % 10 == 0:
+    if generation % 10 == 0:
         graph(genes[i], f"main.{generation:08}.gv")
     print(f"{generation:08} {cost[i]:.16e}")
     if generation == max_generation:
