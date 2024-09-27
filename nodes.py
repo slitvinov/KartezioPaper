@@ -137,7 +137,7 @@ class Max(Node):
     def __init__(self):
         super().__init__(2, 0)
 
-    def call(self, x, args=None):
+    def call(self, x, args):
         return image_ew_max(x[0], x[1])
 
 
@@ -147,7 +147,7 @@ class Min(Node):
     def __init__(self):
         super().__init__(2, 0)
 
-    def call(self, x, args=None):
+    def call(self, x, args):
         return image_ew_min(x[0], x[1])
 
 
@@ -157,7 +157,7 @@ class Mean(Node):
     def __init__(self):
         super().__init__(2, 0)
 
-    def call(self, x, args=None):
+    def call(self, x, args):
         return image_ew_mean(x[0], x[1])
 
 
@@ -167,7 +167,7 @@ class Add(Node):
     def __init__(self):
         super().__init__(2, 0)
 
-    def call(self, x, args=None):
+    def call(self, x, args):
         return cv2.add(x[0], x[1])
 
 
@@ -177,7 +177,7 @@ class Subtract(Node):
     def __init__(self):
         super().__init__(2, 0)
 
-    def call(self, x, args=None):
+    def call(self, x, args):
         return cv2.subtract(x[0], x[1])
 
 
@@ -187,7 +187,7 @@ class BitwiseNot(Node):
     def __init__(self):
         super().__init__(1, 0)
 
-    def call(self, x, args=None):
+    def call(self, x, args):
         return cv2.bitwise_not(x[0])
 
 
@@ -197,7 +197,7 @@ class BitwiseOr(Node):
     def __init__(self):
         super().__init__(2, 0)
 
-    def call(self, x, args=None):
+    def call(self, x, args):
         return cv2.bitwise_or(x[0], x[1])
 
 
@@ -207,7 +207,7 @@ class BitwiseAnd(Node):
     def __init__(self):
         super().__init__(2, 0)
 
-    def call(self, x, args=None):
+    def call(self, x, args):
         return cv2.bitwise_and(x[0], x[1])
 
 
@@ -217,7 +217,7 @@ class BitwiseAndMask(Node):
     def __init__(self):
         super().__init__(2, 0)
 
-    def call(self, x, args=None):
+    def call(self, x, args):
         return cv2.bitwise_and(x[0], x[0], mask=x[1])
 
 
@@ -227,7 +227,7 @@ class BitwiseXor(Node):
     def __init__(self):
         super().__init__(2, 0)
 
-    def call(self, x, args=None):
+    def call(self, x, args):
         return cv2.bitwise_xor(x[0], x[1])
 
 
@@ -237,7 +237,7 @@ class SquareRoot(Node):
     def __init__(self):
         super().__init__(1, 0)
 
-    def call(self, x, args=None):
+    def call(self, x, args):
         return (cv2.sqrt(
             (x[0] / 255.0).astype(np.float32)) * 255).astype(np.uint8)
 
@@ -248,7 +248,7 @@ class Square(Node):
     def __init__(self):
         super().__init__(1, 0)
 
-    def call(self, x, args=None):
+    def call(self, x, args):
         return (cv2.pow(
             (x[0] / 255.0).astype(np.float32), 2) * 255).astype(np.uint8)
 
@@ -259,7 +259,7 @@ class Exp(Node):
     def __init__(self):
         super().__init__(1, 0)
 
-    def call(self, x, args=None):
+    def call(self, x, args):
         return (cv2.exp(
             (x[0] / 255.0).astype(np.float32), 2) * 255).astype(np.uint8)
 
@@ -270,7 +270,7 @@ class Log(Node):
     def __init__(self):
         super().__init__(1, 0)
 
-    def call(self, x, args=None):
+    def call(self, x, args):
         return np.log1p(x[0]).astype(np.uint8)
 
 
@@ -280,7 +280,7 @@ class MedianBlur(Node):
     def __init__(self):
         super().__init__(1, 1)
 
-    def call(self, x, args=None):
+    def call(self, x, args):
         ksize = correct_ksize(args[0])
         return cv2.medianBlur(x[0], ksize)
 
@@ -291,7 +291,7 @@ class GaussianBlur(Node):
     def __init__(self):
         super().__init__(1, 1)
 
-    def call(self, x, args=None):
+    def call(self, x, args):
         ksize = correct_ksize(args[0])
         return cv2.GaussianBlur(x[0], (ksize, ksize), 0)
 
@@ -302,7 +302,7 @@ class Laplacian(Node):
     def __init__(self):
         super().__init__(1, 0)
 
-    def call(self, x, args=None):
+    def call(self, x, args):
         return cv2.Laplacian(x[0], cv2.CV_64F).astype(np.uint8)
 
 
@@ -312,7 +312,7 @@ class Sobel(Node):
     def __init__(self):
         super().__init__(1, 2)
 
-    def call(self, x, args=None):
+    def call(self, x, args):
         ksize = correct_ksize(args[0])
         if args[1] < 128:
             return cv2.Sobel(x[0], cv2.CV_64F, 1, 0,
@@ -326,7 +326,7 @@ class RobertCross(Node):
     def __init__(self):
         super().__init__(1, 1)
 
-    def call(self, x, args=None):
+    def call(self, x, args):
         img = (x[0] / 255.0).astype(np.float32)
         h = cv2.filter2D(img, -1, ROBERT_CROSS_H_KERNEL)
         v = cv2.filter2D(img, -1, ROBERT_CROSS_V_KERNEL)
@@ -339,7 +339,7 @@ class Canny(Node):
     def __init__(self):
         super().__init__(1, 2)
 
-    def call(self, x, args=None):
+    def call(self, x, args):
         return cv2.Canny(x[0], args[0], args[1])
 
 
@@ -349,7 +349,7 @@ class Sharpen(Node):
     def __init__(self):
         super().__init__(1, 0)
 
-    def call(self, x, args=None):
+    def call(self, x, args):
         return cv2.filter2D(x[0], -1, SHARPEN_KERNEL)
 
 
@@ -360,7 +360,7 @@ class GaborFilter(Node):
         super().__init__(1, 2)
         self.ksize = ksize
 
-    def call(self, x, args=None):
+    def call(self, x, args):
         gabor_k = gabor_kernel(self.ksize, args[0], args[1])
         return cv2.filter2D(x[0], -1, gabor_k)
 
@@ -372,7 +372,7 @@ class AbsoluteDifference(Node):
     def __init__(self):
         super().__init__(1, 2)
 
-    def call(self, x, args=None):
+    def call(self, x, args):
         ksize = correct_ksize(args[0])
         image = x[0].copy()
         return image - cv2.GaussianBlur(image, (ksize, ksize), 0) + args[1]
@@ -384,7 +384,7 @@ class AbsoluteDifference2(Node):
     def __init__(self):
         super().__init__(2, 0)
 
-    def call(self, x, args=None):
+    def call(self, x, args):
         return 255 - cv2.absdiff(x[0], x[1])
 
 
@@ -402,7 +402,7 @@ class FluoTopHat(Node):
         output_img = (output_img - min_val) / (max_val - min_val) * 255
         return output_img.astype(np.uint8)
 
-    def call(self, x, args=None):
+    def call(self, x, args):
         kernel = kernel_from_parameters(args)
         img = cv2.morphologyEx(x[0], cv2.MORPH_TOPHAT, kernel, iterations=10)
         kur = np.mean(kurtosis(img, fisher=True))
@@ -421,7 +421,7 @@ class RelativeDifference(Node):
     def __init__(self):
         super().__init__(1, 1)
 
-    def call(self, x, args=None):
+    def call(self, x, args):
         img = x[0]
         max_img = np.max(img)
         min_img = np.min(img)
@@ -526,7 +526,7 @@ class RemoveSmallObjects(Node):
     def __init__(self):
         super().__init__(1, 1)
 
-    def call(self, x, args=None):
+    def call(self, x, args):
         return remove_small_objects(x[0] > 0, args[0]).astype(np.uint8)
 
 
@@ -537,7 +537,7 @@ class RemoveSmallHoles(Node):
 
         super().__init__(1, 1)
 
-    def call(self, x, args=None):
+    def call(self, x, args):
         return remove_small_holes(x[0] > 0, args[0]).astype(np.uint8)
 
 
@@ -547,7 +547,7 @@ class Threshold(Node):
     def __init__(self):
         super().__init__(1, 2)
 
-    def call(self, x, args=None):
+    def call(self, x, args):
         if args[0] < 128:
             return threshold_binary(x[0], args[1])
         return threshold_tozero(x[0], args[1])
@@ -559,7 +559,7 @@ class ThresholdAt1(Node):
     def __init__(self):
         super().__init__(1, 1)
 
-    def call(self, x, args=None):
+    def call(self, x, args):
         if args[0] < 128:
             return threshold_binary(x[0], 1)
         return threshold_tozero(x[0], 1)
@@ -571,7 +571,7 @@ class ThresholdAdaptive(Node):
     def __init__(self):
         super().__init__(1, 2)
 
-    def call(self, x, args=None):
+    def call(self, x, args):
         ksize = correct_ksize(args[0])
         C = args[1] - 128  # to allow negative values
         return cv2.adaptiveThreshold(
@@ -590,7 +590,7 @@ class DistanceTransform(Node):
     def __init__(self):
         super().__init__(1, 1)
 
-    def call(self, x, args=None):
+    def call(self, x, args):
         return cv2.normalize(
             cv2.distanceTransform(x[0].copy(), cv2.DIST_L2, 3),
             None,
@@ -607,7 +607,7 @@ class DistanceTransformAndThresh(Node):
     def __init__(self):
         super().__init__(1, 2)
 
-    def call(self, x, args=None):
+    def call(self, x, args):
         d = cv2.normalize(
             cv2.distanceTransform(x[0].copy(), cv2.DIST_L2, 3),
             None,
@@ -625,7 +625,7 @@ class BinaryInRange(Node):
     def __init__(self):
         super().__init__(1, 2)
 
-    def call(self, x, args=None):
+    def call(self, x, args):
         lower = int(min(args[0], args[1]))
         upper = int(max(args[0], args[1]))
         return cv2.inRange(x[0], lower, upper)
@@ -637,7 +637,7 @@ class InRange(Node):
     def __init__(self):
         super().__init__(1, 2)
 
-    def call(self, x, args=None):
+    def call(self, x, args):
         lower = int(min(args[0], args[1]))
         upper = int(max(args[0], args[1]))
         return cv2.bitwise_and(
