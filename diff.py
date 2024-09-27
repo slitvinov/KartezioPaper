@@ -150,8 +150,8 @@ y0 = np.full((N, N), 2 + 2 * 2)
 g.x = [[x0]]
 g.y = [[y0]]
 g.max_val = 256
-g.lmb = 15
-max_generation = 20
+g.lmb = 20
+max_generation = 2000
 g.nodes = [cls() for cls in Nodes.values()]
 # input, maximum node, otuput, arity, parameters
 g.i = 1
@@ -175,11 +175,11 @@ for gen in genes:
 generation = 0
 n_mutations = 15 * g.n * (1 + g.a + g.p) // 100
 while True:
-    # with multiprocessing.Pool() as pool: cost = pool.map(fun, genes)
-    cost = [fun(gen) for gen in genes]
+    with multiprocessing.Pool() as pool:
+        cost = pool.map(fun, genes)
     i = np.argmin(cost)
     if generation % 10 == 0:
-        graph(genes[i], f"main.{generation:08}.gv")
+        graph(genes[i], f"diff.{generation:08}.gv")
         print(f"{generation:08} {cost[i]:.16e}")
     if generation == max_generation:
         break
