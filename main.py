@@ -40,19 +40,26 @@ def stopo(gen):
     return sorted(topo)
 
 
-def graph(gen):
+def graph(gen, path):
     names = dict(enumerate(Nodes.keys()))
-    edg = []
-    with open("main.gv", "w") as f:
+    with open(path, "w") as f:
         f.write("digraph {\n")
-        for n in range(g.i):
-            f.write(f"  {n} [label = i{n}]\n")
+        for j in range(g.i):
+            f.write(f"  {j} [label = i{j}]\n")
         for n in stopo(gen):
-            print(n, g.i, g.i + g.n)
-            name = names[gen[n, 0]]
-            f.write(f"  {n} [label = {name}]\n")
+            arity = g.nodes[gen[n, 0]].arity
+            args = g.nodes[gen[n, 0]].args
+            f.write(f'  {n} [label = "{names[gen[n, 0]]}')
+            for j in range(args):
+                f.write(f", {gen[n, 1 + g.a + j]}")
+            f.write('"]\n')
+            for j in range(arity):
+                f.write(f"  {gen[n, 1 + j]} -> {n}\n")
+        for j in range(g.o):
+            f.write(f"  {g.i + g.n + j} [label = o{j}]\n")
+            f.write(f"  {gen[g.i + g.n + j, 1]} -> {g.i + g.n + j}\n")
         f.write("}\n")
-    exit(0)
+
 
 def fun(gen):
     topo = stopo(gen)
@@ -130,7 +137,7 @@ for sample, label in DATA:
     g.y.append(label_mask)
 g.max_val = 256
 g.lmb = 5
-max_generation = 10
+max_generation = 100
 g.wt = WatershedSkimage(use_dt=False, markers_distance=21, markers_area=None)
 g.nodes = [cls() for cls in Nodes.values()]
 # input, maximum node, otuput, arity, parameters
@@ -154,10 +161,10 @@ for gen in genes:
         gen[g.i + g.n + j, 1] = randrange(g.i + g.n)
 generation = 0
 n_mutations = 15 * g.n * (1 + g.a + g.p) // 100
-# graph(genes[0])
 while True:
     cost = [fun(gen) for gen in genes]
     i = np.argmin(cost)
+    graph(genes[i], f"main.{generation:08}.gv")
     print(f"{generation:08} {cost[i]:.16e}")
     if generation == max_generation:
         break
