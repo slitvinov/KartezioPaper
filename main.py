@@ -27,7 +27,7 @@ DATA = [
 ]
 
 
-def cost(gen):
+def fun(gen):
     q = {x for x in gen[g.i + g.n:, 1]}
     topo = set()
     while q:
@@ -138,8 +138,8 @@ for gen in g.genes:
 generation = 0
 n_mutations = 15 * g.n * (1 + g.a + g.p) // 100
 while True:
-    cost = [cost(gen) for gen in g.genes]
-    i = np.argmin(g.cost)
+    cost = [fun(gen) for gen in g.genes]
+    i = np.argmin(cost)
     print(f"{generation:08} {cost[i]:.16e}")
     if generation == max_generation:
         break
