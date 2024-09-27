@@ -26,6 +26,7 @@ DATA = [
     ["dataset/24.png", "dataset/24.zip"],
 ]
 
+
 def stopo(gen):
     q = {x for x in gen[g.i + g.n:, 1]}
     topo = set()
@@ -38,19 +39,20 @@ def stopo(gen):
             q.update(adj)
     return sorted(topo)
 
+
 def graph(gen):
-    label = dict(enumerate(Nodes.keys()))
-    edg = [ ]
-    for n in stopo(gen):
-        l0 = label[gen[n, 0]]
-        arity = g.nodes[gen[n, 0]].arity
-        args = g.nodes[gen[n, 0]].args
-        params = gen[n, 1 + g.a: 1 + g.a + args]
-        for c in range(arity):
-            j = gen[n, 1 + c]
-            l1 = label[gen[j, 0]] if j >= g.i else f"i{j:d}"
-            print(params)
-            print(l0, l1)
+    names = dict(enumerate(Nodes.keys()))
+    edg = []
+    with open("main.gv", "w") as f:
+        f.write("digraph {\n")
+        for n in range(g.i):
+            f.write(f"  {n} [label = i{n}]\n")
+        for n in stopo(gen):
+            print(n, g.i, g.i + g.n)
+            name = names[gen[n, 0]]
+            f.write(f"  {n} [label = {name}]\n")
+        f.write("}\n")
+    exit(0)
 
 def fun(gen):
     topo = stopo(gen)
@@ -137,11 +139,11 @@ g.n = 30
 g.o = 2
 g.a = 2
 g.p = 2
-g.genes = [
+genes = [
     np.zeros((g.i + g.n + g.o, 1 + g.a + g.p), dtype=np.uint8)
     for i in range(g.lmb + 1)
 ]
-for gen in g.genes:
+for gen in genes:
     for j in range(g.n):
         gen[g.i + j, 0] = randrange(len(g.nodes))
         for k in range(g.a):
@@ -152,17 +154,17 @@ for gen in g.genes:
         gen[g.i + g.n + j, 1] = randrange(g.i + g.n)
 generation = 0
 n_mutations = 15 * g.n * (1 + g.a + g.p) // 100
-
+# graph(genes[0])
 while True:
-    cost = [fun(gen) for gen in g.genes]
+    cost = [fun(gen) for gen in genes]
     i = np.argmin(cost)
     print(f"{generation:08} {cost[i]:.16e}")
     if generation == max_generation:
         break
     generation += 1
-    elite = g.genes[0] = g.genes[i]
+    elite = genes[0] = genes[i]
     for i in range(1, g.lmb + 1):
-        gen = g.genes[i] = elite.copy()
+        gen = genes[i] = elite.copy()
         for m in range(n_mutations):
             j = randrange(g.n)
             k = randrange(1 + g.a + g.p)
