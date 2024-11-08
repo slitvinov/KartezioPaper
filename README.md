@@ -23,7 +23,8 @@ known reference segmentation.
 # Run
 
 ```
-python -W ignore diff.py
+python diff.py
+for i in diff.*.gv; do dot $i -T png -o ${i/.gv/.png}; done
 ```
 
 ```
