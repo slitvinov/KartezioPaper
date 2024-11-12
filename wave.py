@@ -27,6 +27,5 @@ while t < tend:
         u[m] = (v[m - 1] + v[m + 1]) / 2 - lmb * (v[m + 1] - v[m - 1]) / 2
     u[M] = u[M - 1]
     u, v = v, u
-plt.plot(x, v, 'ko-')
-plt.plot(x, [u1(t, x) for x in x], '-k')
-plt.show()
+plt.plot(x, v, 'ko-', x, [u1(t, x) for x in x], '-k', x, [u0(x) for x in x], '--k')
+plt.savefig("wave.png")
