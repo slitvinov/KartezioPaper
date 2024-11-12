@@ -11,7 +11,7 @@ def u1(t, x):
 
 
 tend = 1.6
-lmb = 0.8
+lmb = 0.1
 M = 50
 lo, hi = -2, 3
 h = (hi - lo) / M
@@ -23,7 +23,11 @@ u = [None] * (M + 1)
 while t < tend:
     u[0] = 0
     for m in range(1, M):
-        u[m] = (v[m - 1] + v[m + 1]) / 2 - lmb * (v[m + 1] - v[m - 1]) / 2
+        # forward-time, forward-space
+        u[m] = v[m] - lmb * (v[m + 1] - v[m - 1]) / 2
+
+        # Lax-Friedrichs
+        # u[m] = (v[m - 1] + v[m + 1]) / 2 - lmb * (v[m + 1] - v[m - 1]) / 2
     u[M] = u[M - 1]
     t += k
     u, v = v, u
