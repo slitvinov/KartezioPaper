@@ -21,11 +21,11 @@ t = 0
 v = [u0(x) for x in x]
 u = [None] * (M + 1)
 while t < tend:
-    t += k
     u[0] = 0
     for m in range(1, M):
         u[m] = (v[m - 1] + v[m + 1]) / 2 - lmb * (v[m + 1] - v[m - 1]) / 2
     u[M] = u[M - 1]
+    t += k
     u, v = v, u
 plt.plot(x, v, 'ko-', x, [u1(t, x) for x in x], '-k', x, [u0(x) for x in x], '--k')
 plt.savefig("wave.png")
