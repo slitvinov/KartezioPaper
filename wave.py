@@ -27,5 +27,12 @@ while t < tend:
     u[M] = u[M - 1]
     t += k
     u, v = v, u
-plt.plot(x, v, 'ko-', x, [u1(t, x) for x in x], '-k', x, [u0(x) for x in x], '--k')
+plt.plot(x,
+         v,
+         'ko-',
+         x, [u1(t, x) for x in x],
+         '-k',
+         x, [u0(x) for x in x],
+         '--k',
+         mfc='none')
 plt.savefig("wave.png")
