@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import sys
 
 
 def u0(x):
@@ -10,8 +11,19 @@ def u1(t, x):
     return u0(t - x)
 
 
+def forward_forward():
+    u[m] = v[m] - lmb * (v[m + 1] - v[m - 1]) / 2
+
+
+def lax_friedrichs():
+    u[m] = (v[m - 1] + v[m + 1]) / 2 - lmb * (v[m + 1] - v[m - 1]) / 2
+
+
+# scheme, lmb  = forward_forward, 0.1
+scheme, lmb = lax_friedrichs, 0.8
+
 tend = 1.6
-lmb = 0.1
+lmb = 0.8
 M = 50
 lo, hi = -2, 3
 h = (hi - lo) / M
@@ -23,11 +35,7 @@ u = [None] * (M + 1)
 while t < tend:
     u[0] = 0
     for m in range(1, M):
-        # forward-time, forward-space
-        u[m] = v[m] - lmb * (v[m + 1] - v[m - 1]) / 2
-
-        # Lax-Friedrichs
-        # u[m] = (v[m - 1] + v[m + 1]) / 2 - lmb * (v[m + 1] - v[m - 1]) / 2
+        scheme()
     u[M] = u[M - 1]
     t += k
     u, v = v, u
@@ -39,4 +47,6 @@ plt.plot(x,
          x, [u0(x) for x in x],
          '--k',
          mfc='none')
-plt.savefig("wave.png")
+path = "wave.png"
+plt.savefig(path)
+sys.stderr.write("wave.py: %s\n" % path)
