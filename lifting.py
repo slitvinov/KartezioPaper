@@ -13,9 +13,10 @@ class Odd:
     def call(self, inp, args):
         x, = inp
         y = np.zeros(N)
-        for i in range(N//2):
-            x[i] = y[2 * i + 1]
+        for i in range(N // 2):
+            y[i] = x[2 * i + 1]
         return y
+
 
 class Even:
     arity = 1
@@ -24,9 +25,10 @@ class Even:
     def call(self, inp, args):
         x, = inp
         y = np.zeros(N)
-        for i in range(N//2):
-            x[i] = y[2 * i]
+        for i in range(N // 2):
+            y[i] = x[2 * i]
         return y
+
 
 class Plus:
     arity = 2
@@ -36,6 +38,7 @@ class Plus:
         x, y = inp
         return x + y
 
+
 class Minus:
     arity = 2
     args = 0
@@ -44,16 +47,6 @@ class Minus:
         x, y = inp
         return x - y
 
-class U:
-    arity = 1
-    args = 0
-
-    def call(self, inp, args):
-        x, = inp
-        y = np.zeros(N)
-        for i in range(N//2):
-            y[i] = x[i]/2
-        return y
 
 class P:
     arity = 1
@@ -61,10 +54,17 @@ class P:
 
     def call(self, inp, args):
         x, = inp
-        y = np.zeros(N)
-        for i in range(N//2):
-            y[i] = x[i]
-        return y
+        return x
+
+
+class U:
+    arity = 1
+    args = 0
+
+    def call(self, inp, args):
+        x, = inp
+        return x / 2
+
 
 class Merge:
     arity = 2
@@ -72,11 +72,12 @@ class Merge:
 
     def call(self, inp, args):
         x, y = inp
-        z = np.zeros(N)
-        for i in range(N//2):
-            z[2 * i] = x[i]
-            z[2 * i + 1] = y[i]
+        z = np.empty(N)
+        for i in range(N // 2):
+            z[i] = x[i]
+            z[i + N // 2] = y[i]
         return z
+
 
 Nodes = {
     "Odd": Odd,
@@ -87,6 +88,7 @@ Nodes = {
     "P": P,
     "Merge": Merge,
 }
+
 
 def stopo(gen):
     q = {x for x in gen[g.i + g.n:, 1]}
@@ -142,8 +144,11 @@ def diff(a, b):
     b, = b
     diff = a - b
     return np.mean(diff**2)
+
+
 class G:
     pass
+
 
 random.seed(2)
 np.random.seed(2)
@@ -151,12 +156,14 @@ g = G()
 
 x0 = np.array([56, 40, 8, 24, 48, 48, 40, 16], dtype=float)
 N = len(x0)
-y0 = np.array([48, 16, 48, 28, 8, -8, 0, 12], dtype=float)
+# y0 = np.array([40, 56, 24, 8, 48, 48, 16, 40], dtype=float)
+y0 = np.array([56, 8, 48, 40, 40, 24, 48, 16], dtype=float)
+
 g.x = [[x0]]
 g.y = [[y0]]
 g.max_val = 256
 g.lmb = 20
-max_generation = 1000
+max_generation = 100
 g.nodes = [cls() for cls in Nodes.values()]
 # input, maximum node, otuput, arity, parameters
 g.i = 1
