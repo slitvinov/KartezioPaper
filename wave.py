@@ -12,6 +12,14 @@ def u1(t, x):
 
 
 def forward_forward():
+    u[m] = v[m] - lmb * (v[m + 1] - v[m])
+
+
+def forward_backward():
+    u[m] = v[m] - lmb * (v[m] - v[m - 1])
+
+
+def forward_central():
     u[m] = v[m] - lmb * (v[m + 1] - v[m - 1]) / 2
 
 
@@ -19,11 +27,12 @@ def lax_friedrichs():
     u[m] = (v[m - 1] + v[m + 1]) / 2 - lmb * (v[m + 1] - v[m - 1]) / 2
 
 
-# scheme, lmb  = forward_forward, 0.1
+#scheme, lmb = forward_forward, 0.25
+#scheme, lmb  = forward_backward, 0.8
+#scheme, lmb  = forward_central, 0.9
 scheme, lmb = lax_friedrichs, 0.8
 
 tend = 1.6
-lmb = 0.8
 M = 50
 lo, hi = -2, 3
 h = (hi - lo) / M
