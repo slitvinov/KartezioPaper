@@ -1,9 +1,7 @@
 from random import randrange
 import multiprocessing
 import numpy as np
-import os
 import random
-import functools
 
 
 class Forward_X:

@@ -1,22 +1,7 @@
 from random import randrange
 import multiprocessing
 import numpy as np
-import os
 import random
-import functools
-
-
-class Odd:
-    arity = 1
-    args = 0
-
-    def call(self, inp, args):
-        x, = inp
-        y = np.zeros(N)
-        for i in range(N // 2):
-            y[i] = x[2 * i + 1]
-        return y
-
 
 class Even:
     arity = 1
@@ -29,6 +14,16 @@ class Even:
             y[i] = x[2 * i]
         return y
 
+class Odd:
+    arity = 1
+    args = 0
+
+    def call(self, inp, args):
+        x, = inp
+        y = np.zeros(N)
+        for i in range(N // 2):
+            y[i] = x[2 * i + 1]
+        return y
 
 class Plus:
     arity = 2
@@ -82,11 +77,11 @@ class Merge:
 Nodes = {
     "Odd": Odd,
     "Even": Even,
+    "Merge": Merge,
     "Plus": Plus,
     "Minus": Minus,
     "U": U,
-    "P": P,
-    "Merge": Merge,
+#    "P": P,
 }
 
 
@@ -156,18 +151,27 @@ g = G()
 
 x0 = np.array([56, 40, 8, 24, 48, 48, 40, 16], dtype=float)
 N = len(x0)
-# y0 = np.array([40, 56, 24, 8, 48, 48, 16, 40], dtype=float)
-y0 = np.array([56, 8, 48, 40, 40, 24, 48, 16], dtype=float)
+y0 = np.array([48, 16, 48, 28, -16, 16, 0, -24], dtype=float)
+
+'''
+even = Even().call([x0], [])
+odd = Odd().call([x0], [])
+d = Minus().call([odd, even], [])
+u = U().call([d], [])
+s = Plus().call([even, u], [])
+print(Merge().call([s, d], []))
+exit(0)
+'''
 
 g.x = [[x0]]
 g.y = [[y0]]
 g.max_val = 256
-g.lmb = 20
-max_generation = 100
+g.lmb = 20000
+max_generation = 100000
 g.nodes = [cls() for cls in Nodes.values()]
 # input, maximum node, otuput, arity, parameters
 g.i = 1
-g.n = 10
+g.n = 12
 g.o = 1
 g.a = 2
 g.p = 0
