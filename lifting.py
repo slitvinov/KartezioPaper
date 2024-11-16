@@ -90,7 +90,7 @@ Nodes = {
     "Plus": Plus,
     "Minus": Minus,
     "U": U,
-    #    "P": P,
+    "P": P,
 }
 Names = dict(enumerate(Nodes.keys()))
 
