@@ -34,7 +34,10 @@ class Plus:
 
     def call(self, inp, args):
         x, y = inp
-        return x + y
+        z = np.zeros(N)
+        for i in range(N):
+            z[i] = x[i] + y[i]
+        return z
 
 
 class Minus:
@@ -43,7 +46,10 @@ class Minus:
 
     def call(self, inp, args):
         x, y = inp
-        return x - y
+        z = np.zeros(N)
+        for i in range(N // 2):
+            z[i] = x[i] - y[i]
+        return z
 
 
 class P:
@@ -164,12 +170,12 @@ max_generation = 100
 g.nodes = [cls() for cls in Nodes.values()]
 # input, maximum node, otuput, arity, parameters
 g.i = 1
-g.n = 10
+g.n = 9
 g.o = 1
 g.a = 2
 g.p = 0
 genes = [
-    np.zeros((g.i + g.n + g.o, 1 + g.a + g.p), dtype=np.uint8)
+    np.empty((g.i + g.n + g.o, 1 + g.a + g.p), dtype=np.uint8)
     for i in range(g.lmb + 1)
 ]
 for gen in genes:
@@ -187,7 +193,7 @@ while True:
     with multiprocessing.Pool() as pool:
         cost = pool.map(fun, genes)
     i = np.argmin(cost)
-    if generation % 1 == 0:
+    if generation % 10 == 0:
         graph(genes[i], f"lifting.{generation:08}.gv")
         print(f"{generation:08} {cost[i]:.16e} {max(cost):.16e}")
     '''
