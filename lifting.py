@@ -92,6 +92,7 @@ Nodes = {
     "U": U,
     #    "P": P,
 }
+Names = dict(enumerate(Nodes.keys()))
 
 
 def stopo(gen):
@@ -108,7 +109,6 @@ def stopo(gen):
 
 
 def graph(gen, path):
-    names = dict(enumerate(Nodes.keys()))
     with open(path, "w") as f:
         f.write("digraph {\n")
         for j in range(g.i):
@@ -116,7 +116,7 @@ def graph(gen, path):
         for n in stopo(gen):
             arity = g.nodes[gen[n, 0]].arity
             args = g.nodes[gen[n, 0]].args
-            f.write(f'  {n} [label = "{names[gen[n, 0]]}')
+            f.write(f'  {n} [label = "{Names[gen[n, 0]]}')
             for j in range(args):
                 f.write(f", {gen[n, 1 + g.a + j]}")
             f.write('"]\n')
@@ -140,7 +140,7 @@ def fun(gen):
             values[n] = g.nodes[gen[n, 0]].call(inputs, params)
         y_pred = [values[j] for j in gen[g.i + g.n:, 1]]
         Cost += diff(y, y_pred)
-    return Cost / len(g.y)
+    return Cost / len(g.y) + len(topo)
 
 
 def diff(a, b):
@@ -148,6 +148,13 @@ def diff(a, b):
     b, = b
     diff = a - b
     return np.mean(diff**2)
+
+
+def good(gen):
+    j = gen[g.i + g.n + 0, 1]
+    if j > g.i and Names[gen[j, 0]] == "Merge":
+        return True
+    return False
 
 
 class G:
@@ -165,7 +172,7 @@ y0 = np.array([48, 16, 48, 28, -16, 16, 0, -24], dtype=float)
 g.x = [[x0]]
 g.y = [[y0]]
 g.max_val = 256
-g.lmb = 500
+g.lmb = 5000
 max_generation = 100
 g.nodes = [cls() for cls in Nodes.values()]
 # input, maximum node, otuput, arity, parameters
@@ -179,14 +186,17 @@ genes = [
     for i in range(g.lmb + 1)
 ]
 for gen in genes:
-    for j in range(g.n):
-        gen[g.i + j, 0] = randrange(len(g.nodes))
-        for k in range(g.a):
-            gen[g.i + j, 1 + k] = randrange(g.i + j)
-        for k in range(g.p):
-            gen[g.i + j, 1 + g.a + k] = randrange(g.max_val)
-    for j in range(g.o):
-        gen[g.i + g.n + j, 1] = randrange(g.i + g.n)
+    while True:
+        for j in range(g.n):
+            gen[g.i + j, 0] = randrange(len(g.nodes))
+            for k in range(g.a):
+                gen[g.i + j, 1 + k] = randrange(g.i + j)
+            for k in range(g.p):
+                gen[g.i + j, 1 + g.a + k] = randrange(g.max_val)
+        for j in range(g.o):
+            gen[g.i + g.n + j, 1] = randrange(g.i + g.n)
+        if good(gen):
+            break
 generation = 0
 n_mutations = 30 * g.n * (1 + g.a + g.p) // 100
 while True:
@@ -222,5 +232,5 @@ while True:
             for k in range(g.o):
                 if random.random() < 0.2:
                     gen[g.i + g.n + k, 1] = randrange(g.i + g.n)
-            if stopo(gen) != topo:
+            if stopo(gen) != topo and good(gen):
                 break
