@@ -30,3 +30,14 @@ for i in diff.*.gv; do dot $i -T png -o ${i/.gv/.png}; done
 ```
 dot main.00000160.gv -o main.png -T png
 ```
+
+# Examples
+
+```
+even = Even().call([x0], [])
+odd = Odd().call([x0], [])
+d = Minus().call([odd, even], [])
+u = U().call([d], [])
+s = Plus().call([even, u], [])
+print(Merge().call([s, d], []))
+```

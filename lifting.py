@@ -3,6 +3,7 @@ import multiprocessing
 import numpy as np
 import random
 
+
 class Even:
     arity = 1
     args = 0
@@ -14,6 +15,7 @@ class Even:
             y[i] = x[2 * i]
         return y
 
+
 class Odd:
     arity = 1
     args = 0
@@ -24,6 +26,7 @@ class Odd:
         for i in range(N // 2):
             y[i] = x[2 * i + 1]
         return y
+
 
 class Plus:
     arity = 2
@@ -81,7 +84,7 @@ Nodes = {
     "Plus": Plus,
     "Minus": Minus,
     "U": U,
-#    "P": P,
+    #    "P": P,
 }
 
 
@@ -153,25 +156,15 @@ x0 = np.array([56, 40, 8, 24, 48, 48, 40, 16], dtype=float)
 N = len(x0)
 y0 = np.array([48, 16, 48, 28, -16, 16, 0, -24], dtype=float)
 
-'''
-even = Even().call([x0], [])
-odd = Odd().call([x0], [])
-d = Minus().call([odd, even], [])
-u = U().call([d], [])
-s = Plus().call([even, u], [])
-print(Merge().call([s, d], []))
-exit(0)
-'''
-
 g.x = [[x0]]
 g.y = [[y0]]
 g.max_val = 256
-g.lmb = 20000
-max_generation = 100000
+g.lmb = 500
+max_generation = 100
 g.nodes = [cls() for cls in Nodes.values()]
 # input, maximum node, otuput, arity, parameters
 g.i = 1
-g.n = 12
+g.n = 10
 g.o = 1
 g.a = 2
 g.p = 0
@@ -189,14 +182,20 @@ for gen in genes:
     for j in range(g.o):
         gen[g.i + g.n + j, 1] = randrange(g.i + g.n)
 generation = 0
-n_mutations = 15 * g.n * (1 + g.a + g.p) // 100
+n_mutations = 30 * g.n * (1 + g.a + g.p) // 100
 while True:
     with multiprocessing.Pool() as pool:
         cost = pool.map(fun, genes)
     i = np.argmin(cost)
-    if generation % 10 == 0:
+    if generation % 1 == 0:
         graph(genes[i], f"lifting.{generation:08}.gv")
-        print(f"{generation:08} {cost[i]:.16e}")
+        print(f"{generation:08} {cost[i]:.16e} {max(cost):.16e}")
+    '''
+    for j in range(g.lmb):
+        graph(genes[j], f"lifting.{generation:08}.{j:04}.gv")
+        print(f"{generation:08}.{j:04} {cost[i]:.16e}")
+    '''
+
     if generation == max_generation:
         break
     generation += 1
