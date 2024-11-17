@@ -174,7 +174,7 @@ g.x = [[x0]]
 g.y = [[y0]]
 g.max_val = 256
 g.lmb = 5000
-max_generation = 100
+max_generation = 150
 g.nodes = [cls() for cls in Nodes.values()]
 # input, maximum node, otuput, arity, parameters
 g.i = 1
