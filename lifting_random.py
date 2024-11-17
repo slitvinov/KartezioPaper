@@ -3,6 +3,51 @@ import multiprocessing
 import numpy as np
 import random
 
+
+# Forward Lifting Haar Wavelet Transform
+def lifting_haar_wavelet_transform(signal):
+    # Ensure the signal length is even
+    if len(signal) % 2 != 0:
+        signal = np.append(signal, 0)
+
+    N = len(signal)
+
+    # Split the signal into even and odd indices
+    even = signal[::2]
+    odd = signal[1::2]
+
+    # Prediction step (Lift the odd coefficients)
+    odd -= even
+
+    # Update step (Update even coefficients)
+    even += 0.5 * odd
+
+    return even,odd
+
+# Inverse Lifting Haar Wavelet Transform
+def inverse_lifting_haar_wavelet_transform(approx, detail):
+    N = len(approx)+len(detail)
+    signal = np.zeros(N)
+
+    # Split the coefficients into approximation and detail parts
+    even = approx
+    odd = detail
+
+    # Inverse update step
+    even -= 0.5 * odd
+
+    # Inverse prediction step
+    odd += even
+
+    # Reconstruct the signal
+    signal[::2] = even
+    signal[1::2] = odd
+
+    return signal
+
+
+
+
 class Even:
     arity = 1
     args = 0
