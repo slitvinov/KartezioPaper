@@ -189,7 +189,7 @@ g.x = [[x0]]
 g.y = [[y0]]
 g.max_val = 256
 g.lmb = 20000
-max_generation = 50
+max_generation = 130
 g.nodes = [cls() for cls in Nodes.values()]
 # input, maximum node, otuput, arity, parameters
 g.i = 1
@@ -218,7 +218,7 @@ while True:
     idx = sorted((cost, i) for i, cost in enumerate(costs))
     os.makedirs(f"{generation:08}", exist_ok=True)
     with open(os.path.join(f"{generation:08}", "cost"), "w") as f:
-        for j, (cost, i) in enumerate(idx[:100]):
+        for j, (cost, i) in enumerate(idx[:500]):
             graph(genes[i], os.path.join(f"{generation:08}", f"{j:08}.gv"))
             f.write(f"{cost:.16e}\n")
     print(f"{generation:08} {costs[idx[0][1]]:8.2e} {costs[idx[1][1]]:8.2e}")
