@@ -35,11 +35,11 @@ dot main.00000160.gv -o main.png -T png
 
 Finite differences:
 
-https://raw.githubusercontent.com/slitvinov/KartezioPaper/master/img/diff.mp4
+https://github.com/user-attachments/assets/766a621f-3687-4aca-94d3-78c3ddd98161
 
 Discrete wavelet transform:
 
-https://raw.githubusercontent.com/slitvinov/KartezioPaper/master/img/visual.mp4
+https://github.com/user-attachments/assets/8568b3c6-5560-4250-95a6-7aa492525926
 
 # Examples
 
