@@ -31,6 +31,16 @@ for i in diff.*.gv; do dot $i -T png -o ${i/.gv/.png}; done
 dot main.00000160.gv -o main.png -T png
 ```
 
+# Results
+
+Finite differences:
+
+https://github.com/slitvinov/KartezioPaper/blob/master/img/diff.mp4
+
+Discrete wavelet transform:
+
+https://github.com/slitvinov/KartezioPaper/blob/master/img/visual.mp4
+
 # Examples
 
 ```
