@@ -194,7 +194,11 @@ def fun2(gen):
             values[n] = g.nodes[gen[n, 0]].call(inputs, params)
         y_pred = [values[j] for j in gen[g.i + g.n:, 1]]
         Cost += diff(y, y_pred)
-    return Cost / len(g.y)/2. +  len(topo)
+    if len(topo) ==0:
+      Cost_final= Cost / len(g.y)/2. +  len(topo)
+    else:
+      Cost_final= Cost / len(g.y)/2. +  len(topo) + np.max(topo)
+    return Cost_final
 
 def diff(a, b):
     a, = a
