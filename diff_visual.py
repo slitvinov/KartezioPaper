@@ -2,6 +2,7 @@ from random import randrange
 import multiprocessing
 import numpy as np
 import random
+import os
 
 
 class Forward_X:
@@ -69,12 +70,22 @@ class Plus:
         return x + y
 
 
+class Minus:
+    arity = 2
+    args = 0
+
+    def call(self, inp, args):
+        x, y = inp
+        return x - y
+
+
 Nodes = {
     "Backward_X": Backward_X,
     "Backward_Y": Backward_Y,
     "Forward_X": Forward_X,
     "Forward_Y": Forward_Y,
     "Plus": Plus,
+    #    "Minus": Minus,
 }
 
 
@@ -124,7 +135,7 @@ def fun(gen):
             values[n] = g.nodes[gen[n, 0]].call(inputs, params)
         y_pred = [values[j] for j in gen[g.i + g.n:, 1]]
         Cost += diff(y, y_pred)
-    return Cost / len(g.y)
+    return Cost / len(g.y) + len(topo)
 
 
 def diff(a, b):
@@ -142,14 +153,14 @@ g = G()
 
 N = 10
 Y, X = np.meshgrid(range(N), range(N))
-x0 = Y**2 + 2 * X**2
-y0 = np.full((N, N), 2 + 2 * 2)
+x0 = Y**3 + 2 * X**3
+y0 = np.full((N, N), 6 * Y + 12 * X)
 
 g.x = [[x0]]
 g.y = [[y0]]
 g.max_val = 256
 g.lmb = 20
-max_generation = 50
+max_generation = 10
 g.nodes = [cls() for cls in Nodes.values()]
 # input, maximum node, otuput, arity, parameters
 g.i = 1
