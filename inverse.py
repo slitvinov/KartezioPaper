@@ -140,13 +140,14 @@ def compute(gen, topo, x):
 
 def fun(pair):
     gen_forward, gen_inverse = pair
-    gen = gen_forward
-    topo = stopo(gen)
+    topo_forward = stopo(gen_forward)
+    topo_inverse = stopo(gen_inverse)
     Cost = 0
-    for x, y in zip(g.x, g.y):
-        y_pred = compute(gen, topo, x)
-        Cost += diff(y, y_pred)
-    return Cost / len(g.y) + len(topo)
+    for x in g.x:
+        y = compute(gen_forward, topo_forward, x)
+        z = compute(gen_inverse, topo_inverse, y)
+        Cost += diff(x, z)
+    return Cost / len(g.x) + len(topo_forward) / 2 + len(topo_inverse) / 2
 
 
 def diff(a, b):
@@ -218,7 +219,6 @@ N = len(x0)
 y0 = np.array([48, -16, 16, 16, 48, 0, 28, -24], dtype=float)
 
 g.x = [[x0]]
-g.y = [[y0]]
 g.max_val = 256
 g.lmb = 5000
 max_generation = 100
