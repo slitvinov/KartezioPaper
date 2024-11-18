@@ -128,7 +128,10 @@ def graph(gen, path):
         f.write("}\n")
 
 
-def fun(gen):
+def fun(pair):
+    gen_forward, gen_inverse = pair
+    gen = gen_forward
+
     topo = stopo(gen)
     Cost = 0
     for x, y in zip(g.x, g.y):
@@ -224,17 +227,20 @@ g.o = 1
 g.a = 2
 g.p = 0
 
-genes = init()
+genes_forward = init()
+genes_inverse = init()
 generation = 0
 n_mutations = 30 * g.n * (1 + g.a + g.p) // 100
 while True:
     with multiprocessing.Pool() as pool:
-        cost = pool.map(fun, genes)
+        cost = pool.map(fun, zip(genes_forward, genes_inverse))
     i = np.argmin(cost)
     if generation % 10 == 0:
-        graph(genes[i], f"inverse.{generation:08}.gv")
+        graph(genes_forward[i], f"forward.{generation:08}.gv")
+        graph(genes_inverse[i], f"inverse.{generation:08}.gv")
         print(f"{generation:08} {cost[i]:.16e} {max(cost):.16e}")
     if generation == max_generation:
         break
     generation += 1
-    mutate(i, genes)
+    mutate(i, genes_forward)
+    mutate(i, genes_inverse)
