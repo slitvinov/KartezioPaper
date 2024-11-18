@@ -157,6 +157,48 @@ def good(gen):
     return False
 
 
+def init():
+    genes = [
+        np.empty((g.i + g.n + g.o, 1 + g.a + g.p), dtype=np.uint8)
+        for i in range(g.lmb + 1)
+    ]
+    for gen in genes:
+        while True:
+            for j in range(g.n):
+                gen[g.i + j, 0] = randrange(len(g.nodes))
+                for k in range(g.a):
+                    gen[g.i + j, 1 + k] = randrange(g.i + j)
+                for k in range(g.p):
+                    gen[g.i + j, 1 + g.a + k] = randrange(g.max_val)
+            for j in range(g.o):
+                gen[g.i + g.n + j, 1] = randrange(g.i + g.n)
+            if good(gen):
+                break
+    return genes
+
+
+def mutate(i, genes):
+    elite = genes[0] = genes[i]
+    topo = stopo(elite)
+    for i in range(1, g.lmb + 1):
+        while True:
+            gen = genes[i] = elite.copy()
+            for m in range(n_mutations):
+                j = randrange(g.n)
+                k = randrange(1 + g.a + g.p)
+                if k == 0:
+                    gen[g.i + j, 0] = randrange(len(g.nodes))
+                elif k <= g.a:
+                    gen[g.i + j, k] = randrange(g.i + j)
+                else:
+                    gen[g.i + j, k] = randrange(g.max_val)
+            for k in range(g.o):
+                if random.random() < 0.2:
+                    gen[g.i + g.n + k, 1] = randrange(g.i + g.n)
+            if stopo(gen) != topo and good(gen):
+                break
+
+
 class G:
     pass
 
@@ -181,22 +223,8 @@ g.n = 9
 g.o = 1
 g.a = 2
 g.p = 0
-genes = [
-    np.empty((g.i + g.n + g.o, 1 + g.a + g.p), dtype=np.uint8)
-    for i in range(g.lmb + 1)
-]
-for gen in genes:
-    while True:
-        for j in range(g.n):
-            gen[g.i + j, 0] = randrange(len(g.nodes))
-            for k in range(g.a):
-                gen[g.i + j, 1 + k] = randrange(g.i + j)
-            for k in range(g.p):
-                gen[g.i + j, 1 + g.a + k] = randrange(g.max_val)
-        for j in range(g.o):
-            gen[g.i + g.n + j, 1] = randrange(g.i + g.n)
-        if good(gen):
-            break
+
+genes = init()
 generation = 0
 n_mutations = 30 * g.n * (1 + g.a + g.p) // 100
 while True:
@@ -209,22 +237,4 @@ while True:
     if generation == max_generation:
         break
     generation += 1
-    elite = genes[0] = genes[i]
-    topo = stopo(elite)
-    for i in range(1, g.lmb + 1):
-        while True:
-            gen = genes[i] = elite.copy()
-            for m in range(n_mutations):
-                j = randrange(g.n)
-                k = randrange(1 + g.a + g.p)
-                if k == 0:
-                    gen[g.i + j, 0] = randrange(len(g.nodes))
-                elif k <= g.a:
-                    gen[g.i + j, k] = randrange(g.i + j)
-                else:
-                    gen[g.i + j, k] = randrange(g.max_val)
-            for k in range(g.o):
-                if random.random() < 0.2:
-                    gen[g.i + g.n + k, 1] = randrange(g.i + g.n)
-            if stopo(gen) != topo and good(gen):
-                break
+    mutate(i, genes)
