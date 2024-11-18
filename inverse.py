@@ -78,8 +78,8 @@ class Merge:
         x, y = inp
         z = np.empty(N)
         for i in range(N // 2):
-            z[i] = x[i]
-            z[i + N // 2] = y[i]
+            z[2 * i] = x[i]
+            z[2 * i + 1] = y[i]
         return z
 
 
@@ -167,7 +167,7 @@ g = G()
 
 x0 = np.array([56, 40, 8, 24, 48, 48, 40, 16], dtype=float)
 N = len(x0)
-y0 = np.array([48, 16, 48, 28, -16, 16, 0, -24], dtype=float)
+y0 = np.array([48, -16, 16, 16, 48, 0, 28, -24], dtype=float)
 
 g.x = [[x0]]
 g.y = [[y0]]
