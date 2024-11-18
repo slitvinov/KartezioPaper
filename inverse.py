@@ -128,20 +128,23 @@ def graph(gen, path):
         f.write("}\n")
 
 
+def compute(gen, topo, x):
+    values = {i: x[i] for i in range(g.i)}
+    for n in topo:
+        arity = g.nodes[gen[n, 0]].arity
+        inputs = [values[i] for i in gen[n, 1:1 + arity]]
+        params = gen[n, 1 + g.a:]
+        values[n] = g.nodes[gen[n, 0]].call(inputs, params)
+    return [values[j] for j in gen[g.i + g.n:, 1]]
+
+
 def fun(pair):
     gen_forward, gen_inverse = pair
     gen = gen_forward
-
     topo = stopo(gen)
     Cost = 0
     for x, y in zip(g.x, g.y):
-        values = {i: x[i] for i in range(g.i)}
-        for n in topo:
-            arity = g.nodes[gen[n, 0]].arity
-            inputs = [values[i] for i in gen[n, 1:1 + arity]]
-            params = gen[n, 1 + g.a:]
-            values[n] = g.nodes[gen[n, 0]].call(inputs, params)
-        y_pred = [values[j] for j in gen[g.i + g.n:, 1]]
+        y_pred = compute(gen, topo, x)
         Cost += diff(y, y_pred)
     return Cost / len(g.y) + len(topo)
 
