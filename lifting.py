@@ -206,12 +206,6 @@ while True:
     if generation % 10 == 0:
         graph(genes[i], f"lifting.{generation:08}.gv")
         print(f"{generation:08} {cost[i]:.16e} {max(cost):.16e}")
-    '''
-    for j in range(g.lmb):
-        graph(genes[j], f"lifting.{generation:08}.{j:04}.gv")
-        print(f"{generation:08}.{j:04} {cost[i]:.16e}")
-    '''
-
     if generation == max_generation:
         break
     generation += 1
