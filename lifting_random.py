@@ -22,11 +22,12 @@ def lifting_haar_wavelet_transform(signal):
     # Update step (Update even coefficients)
     even += 0.5 * odd
 
-    return even,odd
+    return even, odd
+
 
 # Inverse Lifting Haar Wavelet Transform
 def inverse_lifting_haar_wavelet_transform(approx, detail):
-    N = len(approx)+len(detail)
+    N = len(approx) + len(detail)
     signal = np.zeros(N)
 
     # Split the coefficients into approximation and detail parts
@@ -46,8 +47,6 @@ def inverse_lifting_haar_wavelet_transform(approx, detail):
     return signal
 
 
-
-
 class Even:
     arity = 1
     args = 0
@@ -59,6 +58,7 @@ class Even:
             y[i] = x[2 * i]
         return y
 
+
 class Odd:
     arity = 1
     args = 0
@@ -69,6 +69,7 @@ class Odd:
         for i in range(N // 2):
             y[i] = x[2 * i + 1]
         return y
+
 
 class Plus:
     arity = 2
@@ -126,7 +127,7 @@ Nodes = {
     "Plus": Plus,
     "Minus": Minus,
     "U": U,
-#    "P": P,
+    #    "P": P,
 }
 
 
@@ -183,9 +184,9 @@ def fun2(gen):
     topo = stopo(gen)
     Cost = 0
     for count in range(2):
-        x = [np.floor(np.random.uniform(1, 100,size=(8,)))]
-        coarse,detail = lifting_haar_wavelet_transform(np.copy(x[0]))
-        y=[np.append(coarse,detail)]
+        x = [np.floor(np.random.uniform(1, 100, size=(8, )))]
+        coarse, detail = lifting_haar_wavelet_transform(np.copy(x[0]))
+        y = [np.append(coarse, detail)]
         values = {i: x[i] for i in range(g.i)}
         for n in topo:
             arity = g.nodes[gen[n, 0]].arity
@@ -194,11 +195,12 @@ def fun2(gen):
             values[n] = g.nodes[gen[n, 0]].call(inputs, params)
         y_pred = [values[j] for j in gen[g.i + g.n:, 1]]
         Cost += diff(y, y_pred)
-    if len(topo) ==0:
-      Cost_final= Cost / len(g.y)/2. +  len(topo)
+    if len(topo) == 0:
+        Cost_final = Cost / len(g.y) / 2. + len(topo)
     else:
-      Cost_final= Cost / len(g.y)/2. +  len(topo) + np.max(topo)
+        Cost_final = Cost / len(g.y) / 2. + len(topo) + np.max(topo)
     return Cost_final
+
 
 def diff(a, b):
     a, = a
@@ -218,7 +220,6 @@ g = G()
 x0 = np.array([56, 40, 8, 24, 48, 48, 40, 16], dtype=float)
 N = len(x0)
 y0 = np.array([48, 16, 48, 28, -16, 16, 0, -24], dtype=float)
-
 '''
 even = Even().call([x0], [])
 odd = Odd().call([x0], [])
