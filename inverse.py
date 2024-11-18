@@ -138,14 +138,17 @@ def compute(gen, topo, x):
     return [values[j] for j in gen[g.i + g.n:, 1]]
 
 
-def fun(pair):
+def fun(pair, Verbose=False):
     gen_forward, gen_inverse = pair
     topo_forward = stopo(gen_forward)
     topo_inverse = stopo(gen_inverse)
     Cost = 0
     for x in g.x:
         y = compute(gen_forward, topo_forward, x)
+        y[0][5] = 0
         z = compute(gen_inverse, topo_inverse, y)
+        if Verbose:
+            print(x[0], y[0], z[0], diff(x, z))
         Cost += diff(x, z)
     return Cost / len(g.x) + len(topo_forward) / 2 + len(topo_inverse) / 2
 
@@ -215,9 +218,8 @@ np.random.seed(2)
 g = G()
 
 x0 = np.array([56, 40, 8, 24, 48, 48, 40, 16], dtype=float)
+# x0 = np.array([56, 40, 8, 24, 48, 48, 40, 16, 34, 36], dtype=float)
 N = len(x0)
-y0 = np.array([48, -16, 16, 16, 48, 0, 28, -24], dtype=float)
-
 g.x = [[x0]]
 g.max_val = 256
 g.lmb = 5000
@@ -238,6 +240,7 @@ while True:
     with multiprocessing.Pool() as pool:
         cost = pool.map(fun, zip(genes_forward, genes_inverse))
     i = np.argmin(cost)
+    fun([genes_forward[i], genes_inverse[i]], True)
     if generation % 10 == 0:
         graph(genes_forward[i], f"forward.{generation:08}.gv")
         graph(genes_inverse[i], f"inverse.{generation:08}.gv")
