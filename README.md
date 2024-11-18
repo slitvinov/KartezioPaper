@@ -23,12 +23,19 @@ known reference segmentation.
 # Run
 
 ```
-python diff.py
-for i in diff.*.gv; do dot $i -T png -o ${i/.gv/.png}; done
+$ python diff.py
+$ for i in diff.*.gv; do dot $i -T png -o ${i/.gv/.png}; done
 ```
 
 ```
-dot main.00000160.gv -o main.png -T png
+$ dot main.00000160.gv -o main.png -T png
+```
+
+# Dependncies
+
+```
+$ python -m pip install numpy
+$ apt-get install graphviz imagemagick
 ```
 
 # Results
