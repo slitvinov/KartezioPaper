@@ -145,10 +145,12 @@ def fun(pair, Verbose=False):
     Cost = 0
     for x in g.x:
         y = compute(gen_forward, topo_forward, x)
-        y[0][5] = 0
+        idx = np.argsort(abs(y[0][1::2]))
+        y[0][1::2][idx[0]] = 0
+        y[0][1::2][idx[1]] = 0
         z = compute(gen_inverse, topo_inverse, y)
         if Verbose:
-            print(x[0], y[0], z[0], diff(x, z))
+            print(x[0], y[0], idx, z[0], diff(x, z))
         Cost += diff(x, z)
     return Cost / len(g.x) + len(topo_forward) / 2 + len(topo_inverse) / 2
 
@@ -209,6 +211,17 @@ def mutate(i, genes):
                 break
 
 
+def example():
+    N = 8
+    p = 2
+    q = 10
+    x = [random.randint(-p, p)]
+    for i in range(N - 1):
+        x.append(x[-1] + random.randint(-p, p))
+        p, q = q, p
+    return np.array(x, dtype=float)
+
+
 class G:
     pass
 
@@ -217,12 +230,10 @@ random.seed(2)
 np.random.seed(2)
 g = G()
 
-x0 = np.array([56, 40, 8, 24, 48, 48, 40, 16], dtype=float)
-# x0 = np.array([56, 40, 8, 24, 48, 48, 40, 16, 34, 36], dtype=float)
-N = len(x0)
-g.x = [[x0]]
+g.x = [[example()] for i in range(100)]
+N = len(g.x[0][0])
 g.max_val = 256
-g.lmb = 5000
+g.lmb = 500
 max_generation = 100
 g.nodes = [cls() for cls in Nodes.values()]
 # input, maximum node, otuput, arity, parameters
