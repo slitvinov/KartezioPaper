@@ -234,7 +234,7 @@ g.x = [[example()] for i in range(100)]
 N = len(g.x[0][0])
 g.max_val = 256
 g.lmb = 500
-max_generation = 100
+max_generation = 100000
 g.nodes = [cls() for cls in Nodes.values()]
 # input, maximum node, otuput, arity, parameters
 g.i = 1
@@ -251,7 +251,7 @@ while True:
     with multiprocessing.Pool() as pool:
         cost = pool.map(fun, zip(genes_forward, genes_inverse))
     i = np.argmin(cost)
-    fun([genes_forward[i], genes_inverse[i]], True)
+    # fun([genes_forward[i], genes_inverse[i]], True)
     if generation % 10 == 0:
         graph(genes_forward[i], f"forward.{generation:08}.gv")
         graph(genes_inverse[i], f"inverse.{generation:08}.gv")
