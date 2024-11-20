@@ -4,7 +4,7 @@ import numpy as np
 import random
 import os
 import itertools
-
+import collections
 
 class Even:
     arity = 1
@@ -49,7 +49,7 @@ class Minus:
     def call(self, inp, args):
         x, y = inp
         z = np.zeros(N)
-        for i in range(N // 2):
+        for i in range(N):
             z[i] = x[i] - y[i]
         return z
 
@@ -149,7 +149,8 @@ def fun(pair, Verbose=False):
     for x in g.x:
         y = compute(gen_forward, topo_forward, x)
         idx = np.argsort(abs(y[0][1::2]))
-        y[0][1::2][idx[0]] = 0
+        # y[0][1::2][idx[0]] = 0
+        # y[0][1::2][idx[1]] = 0
         z = compute(gen_inverse, topo_inverse, y)
         if Verbose:
             print(x[0], y[0], z[0], diff(x, z))
@@ -168,8 +169,11 @@ def diff(a, b):
 
 
 def good(gen):
+    topo = stopo(gen)
+    N = collections.Counter(Names[gen[n, 0]] for n in topo)
+    N0 = collections.Counter(["Merge", "Plus", "Minus", "U", "Even", "Odd"])
     j = gen[g.i + g.n + 0, 1]
-    if j > g.i and Names[gen[j, 0]] == "Merge":
+    if j > g.i and Names[gen[j, 0]] == "Merge" and N == N0:
         return True
     return False
 
@@ -252,15 +256,15 @@ random.seed(2)
 np.random.seed(2)
 g = G()
 
-g.x = [[example()] for i in range(100)]
+g.x = [[example()] for i in range(10)]
 N = len(g.x[0][0])
 g.max_val = 256
-g.lmb = 500
-max_generation = 61200
+g.lmb = 10
+max_generation = 1000
 g.nodes = [cls() for cls in Nodes.values()]
 # input, maximum node, otuput, arity, parameters
 g.i = 1
-g.n = 9
+g.n = 10
 g.o = 1
 g.a = 2
 g.p = 0
@@ -268,13 +272,13 @@ g.p = 0
 genes_forward = init()
 genes_inverse = init()
 generation = 0
-n_mutations = 30 * g.n * (1 + g.a + g.p) // 10
+n_mutations = 50 * g.n * (1 + g.a + g.p) // 100
 while True:
     with multiprocessing.Pool() as pool:
         paris = pool.map(fun, zip(genes_forward, genes_inverse))
     costs, errs = zip(*paris)
     i = np.argmin(costs)
-    if generation % 100 == 0:
+    if generation % 10 == 0:
         dump_state()
         print(f"{generation:08} {costs[i]:.16e} {max(costs):.16e}")
     if generation == max_generation:
