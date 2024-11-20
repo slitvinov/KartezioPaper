@@ -274,8 +274,7 @@ while True:
         paris = pool.map(fun, zip(genes_forward, genes_inverse))
     costs, errs = zip(*paris)
     i = np.argmin(costs)
-    # fun([genes_forward[i], genes_inverse[i]], True)
-    if generation % 10 == 0:
+    if generation % 100 == 0:
         dump_state()
         print(f"{generation:08} {costs[i]:.16e} {max(costs):.16e}")
     if generation == max_generation:
