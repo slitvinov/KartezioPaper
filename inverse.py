@@ -147,12 +147,12 @@ def fun(pair, Verbose=False):
         y = compute(gen_forward, topo_forward, x)
         idx = np.argsort(abs(y[0][1::2]))
         y[0][1::2][idx[0]] = 0
-        y[0][1::2][idx[1]] = 0
+        # y[0][1::2][idx[1]] = 0
         z = compute(gen_inverse, topo_inverse, y)
         if Verbose:
-            print(x[0], y[0], idx, z[0], diff(x, z))
+            print(x[0], y[0], z[0], diff(x, z))
         Cost += diff(x, z)
-    return Cost / len(g.x) + len(topo_forward) / 2 + len(topo_inverse) / 2
+    return Cost / len(g.x) + len(topo_forward) / 20 + len(topo_inverse) / 20
 
 
 def diff(a, b):
