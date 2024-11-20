@@ -147,7 +147,6 @@ def fun(pair, Verbose=False):
         y = compute(gen_forward, topo_forward, x)
         idx = np.argsort(abs(y[0][1::2]))
         y[0][1::2][idx[0]] = 0
-        # y[0][1::2][idx[1]] = 0
         z = compute(gen_inverse, topo_inverse, y)
         if Verbose:
             print(x[0], y[0], z[0], diff(x, z))
@@ -234,7 +233,7 @@ g.x = [[example()] for i in range(100)]
 N = len(g.x[0][0])
 g.max_val = 256
 g.lmb = 500
-max_generation = 100000
+max_generation = 61200
 g.nodes = [cls() for cls in Nodes.values()]
 # input, maximum node, otuput, arity, parameters
 g.i = 1
