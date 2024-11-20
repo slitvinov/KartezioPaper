@@ -3,6 +3,8 @@ import multiprocessing
 import numpy as np
 import random
 import os
+import itertools
+
 
 class Even:
     arity = 1
@@ -139,6 +141,7 @@ def compute(gen, topo, x):
 
 
 def fun(pair, Verbose=False):
+    err = np.zeros(N, dtype=float)
     gen_forward, gen_inverse = pair
     topo_forward = stopo(gen_forward)
     topo_inverse = stopo(gen_inverse)
@@ -151,7 +154,10 @@ def fun(pair, Verbose=False):
         if Verbose:
             print(x[0], y[0], z[0], diff(x, z))
         Cost += diff(x, z)
-    return Cost / len(g.x) + len(topo_forward) / 20 + len(topo_inverse) / 20
+        err += (x[0] - y[0])**2
+    err /= len(g.x)
+    return Cost / len(
+        g.x) + len(topo_forward) / 20 + len(topo_inverse) / 20, err
 
 
 def diff(a, b):
@@ -221,6 +227,23 @@ def example():
     return np.array(x, dtype=float)
 
 
+def dump_state():
+    idx = sorted((cost, i) for i, cost in enumerate(costs))
+    os.makedirs(f"{generation:08}", exist_ok=True)
+    with open(os.path.join(f"{generation:08}", "cost"),
+              "w") as f, open(os.path.join(f"{generation:08}", "err"),
+                              "w") as e:
+        for j, (cost, i) in enumerate(itertools.islice(idx, 500)):
+            graph(genes_forward[i],
+                  os.path.join(f"{generation:08}", f"forward.{j:08}.gv"))
+            graph(genes_inverse[i],
+                  os.path.join(f"{generation:08}", f"inverse.{j:08}.gv"))
+            f.write(f"{cost:.16e}\n")
+            for x in errs[j]:
+                e.write(f"{x:.16e} ")
+            e.write("\n")
+
+
 class G:
     pass
 
@@ -245,16 +268,16 @@ g.p = 0
 genes_forward = init()
 genes_inverse = init()
 generation = 0
-n_mutations = 30 * g.n * (1 + g.a + g.p) // 100
+n_mutations = 30 * g.n * (1 + g.a + g.p) // 10
 while True:
     with multiprocessing.Pool() as pool:
-        cost = pool.map(fun, zip(genes_forward, genes_inverse))
-    i = np.argmin(cost)
+        paris = pool.map(fun, zip(genes_forward, genes_inverse))
+    costs, errs = zip(*paris)
+    i = np.argmin(costs)
     # fun([genes_forward[i], genes_inverse[i]], True)
     if generation % 10 == 0:
-        graph(genes_forward[i], f"forward.{generation:08}.gv")
-        graph(genes_inverse[i], f"inverse.{generation:08}.gv")
-        print(f"{generation:08} {cost[i]:.16e} {max(cost):.16e}")
+        dump_state()
+        print(f"{generation:08} {costs[i]:.16e} {max(costs):.16e}")
     if generation == max_generation:
         break
     generation += 1
