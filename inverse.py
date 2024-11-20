@@ -2,7 +2,7 @@ from random import randrange
 import multiprocessing
 import numpy as np
 import random
-
+import os
 
 class Even:
     arity = 1
