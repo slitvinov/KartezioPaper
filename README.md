@@ -34,7 +34,7 @@ $ dot main.00000160.gv -o main.png -T png
 # Dependncies
 
 ```
-$ python -m pip install numpy
+$ python -m pip install numpy matplotlib
 $ apt-get install graphviz imagemagick
 ```
 
@@ -50,6 +50,7 @@ https://github.com/user-attachments/assets/8568b3c6-5560-4250-95a6-7aa492525926
 
 # Examples
 
+
 ```
 even = Even().call([x0], [])
 odd = Odd().call([x0], [])
@@ -58,3 +59,7 @@ u = U().call([d], [])
 s = Plus().call([even, u], [])
 print(Merge().call([s, d], []))
 ```
+
+# References
+
+<https://forums.developer.nvidia.com/t/genetic-programming-on-gpu-enabled-hpc-cluster/159593/2>
