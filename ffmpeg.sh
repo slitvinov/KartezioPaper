@@ -1,5 +1,6 @@
 #!/bin/sh
 
+: ${FFMPEG=ffmpeg}
 prog=co.ffmpeg
 msg () { echo >&2 "$@" ; }
 err () { msg "$prog: $@"; exit 2 ; }
@@ -16,12 +17,8 @@ usg () {
     exit
 }
 
-: ${FFMPEG=ffmpeg}
-
 filep() { if test ! -f "$1"; then err "not a file '$1'"; fi; }
 intp()  { echo "$1" | grep -q '^[0-9][0-9]*$'; }
-
-
 if test $# -ne 0 && test "$1" = -h; then usg; fi
 
 if ! e $FFMPEG -version '>/dev/null' '2>/dev/null'
@@ -33,11 +30,11 @@ while test $# -ne 0
 do case "$1" in
        -o) shift
 	   if test $# -eq 0; then err '-o needs a file'; fi
-	   Output="$1"; shift
+	   Output=$1; shift
 	   ;;
        -r) shift
 	   if test $# -eq 0; then err '-r needs an argument'; fi
-	   R="$1"; shift
+	   R=$1; shift
 	   ;;
        -*) err "unknown option '$1'" ;;
        *) break ;;
