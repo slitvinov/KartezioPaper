@@ -1,6 +1,6 @@
 #!/bin/sh
 
-: ${FFMPEG=ffmpeg}
+: "${FFMPEG=ffmpeg}"
 prog=co.ffmpeg
 msg () { echo >&2 "$@" ; }
 err () { msg "$prog: $@"; exit 2 ; }
