@@ -11,17 +11,20 @@ e   () {
     eval "$@"
 }
 
-usg () {
-    msg "$prog -o OUTPUT.mp4 IMAGES.."
-    msg "-r rate    frame rate (default: 5)"
-    exit
-}
-
 filep() { if test ! -f "$1"; then err "not a file '$1'"; fi; }
 intp()  { echo "$1" | grep -q '^[0-9][0-9]*$'; }
-if test $# -ne 0 && test "$1" = -h; then usg; fi
+if test $# -ne 0 && test "$1" = -h
+then
+    cat <<'!'
+Usage: $prog [-r INT] -o OUTPUT.mp4 IMAGES...
 
-if ! e $FFMPEG -version '>/dev/null' '2>/dev/null'
+Options:
+  -r rate    Set frame rate (default: 5)
+!
+    exit 1
+fi
+
+if ! $FFMPEG -version >/dev/null 2>/dev/null
 then err "$FFMPEG command not found"
 fi
 
@@ -45,12 +48,10 @@ if test -z "$Output"; then err "OUTPUT.mp4 is not given"; fi
 if test $# -eq 0; then err 'no IMAGES..'; fi
 for i; do filep "$i"; done
 if ! intp "$R"; then err "not an integer '$R'"; fi
-
 t=/tmp/co.ffmpeg.$$
 trap 'rm -f $t; exit 2' 1 2 3 15
-p=`pwd`
-for i; do echo file \'"$p/$i"\'; done > $t
-e ffmpeg \
+for i; do printf 'file %s\n' "$i"; done > $t
+ffmpeg \
   -fflags +genpts \
    -r $R \
   -safe 0 -f concat -i $t \
