@@ -2,8 +2,8 @@
 
 ```
 Each individual is represented as a 2D array, where i0, i1, etc., are
-possible values rather than dimensions. I guess, this structure is
-from Cartesian Genetic Programming (CGP):
+possible values rather than dimensions. This structure is from
+Cartesian Genetic Programming (CGP):
 
 gen[i0, i1, i2, n0 ... n30, o0, o1][node_type, arity0, arity1, p0, p1]
 
